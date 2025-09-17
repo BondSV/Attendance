@@ -2,6 +2,7 @@ const http = require('http');
 const fs = require('fs');
 const path = require('path');
 const url = require('url');
+const WebSocket = require('ws');
 
 const { hash32, validateBits } = require('./validator');
 const { issueVerification, consumeVerification, acquireDeviceLock } = require('./memoryState');
@@ -18,11 +19,14 @@ const PUBLIC_DIR = path.join(__dirname, '..', 'public');
  */
 function sendJson(res, payload, statusCode = 200) {
   const data = JSON.stringify(payload);
-  res.writeHead(statusCode, {
+  // Restrict CORS to same origin in production; for local testing allow all
+  const corsOrigin = process.env.ALLOW_CORS_ALL === '1' ? '*' : (res && res.getHeader && res.getHeader('origin')) || undefined;
+  const headers = {
     'Content-Type': 'application/json',
     'Content-Length': Buffer.byteLength(data),
-    'Access-Control-Allow-Origin': '*',
-  });
+  };
+  if (corsOrigin) headers['Access-Control-Allow-Origin'] = corsOrigin;
+  res.writeHead(statusCode, headers);
   res.end(data);
 }
 
@@ -114,7 +118,11 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/validate' && req.method === 'POST') {
       const body = await parseRequestBody(req);
       const { sid, phase, seed, delta, bits, page_session_id } = body;
-      if (!sid || !phase || typeof seed !== 'number' || !Array.isArray(bits)) {
+      // Input validation per spec
+      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      const phaseRe = /^(start|break|end)$/;
+      const studentBitsOk = Array.isArray(bits) && bits.every(b => b === 0 || b === 1);
+      if (!sid || !sidRe.test(sid) || !phase || !phaseRe.test(phase) || typeof seed !== 'number' || !studentBitsOk) {
         return sendJson(res, { error: 'Invalid payload' }, 400);
       }
       const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
@@ -129,11 +137,16 @@ const server = http.createServer(async (req, res) => {
     }
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, student_id, verification_id } = body;
-      if (!sid || !phase || !student_id || !verification_id) {
+      const { sid, phase, student_id, verification_id, page_session_id } = body;
+      // Validate inputs per spec
+      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      const phaseRe = /^(start|break|end)$/;
+      const studentIdRe = /^[0-9]{6,12}$/;
+      if (!sid || !sidRe.test(sid) || !phase || !phaseRe.test(phase) || !student_id || !studentIdRe.test(student_id) || !verification_id) {
         return sendJson(res, { error: 'Invalid payload' }, 400);
       }
-      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, ''].join('|');
+      // Build connection key using the same shape as /api/validate and WS init
+      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
       // Consume token
       const ok = consumeVerification(verification_id, connectionKey);
       if (!ok) {
@@ -160,6 +173,68 @@ const server = http.createServer(async (req, res) => {
   } catch (err) {
     console.error(err);
     return sendJson(res, { error: 'Server error' }, 500);
+  }
+});
+
+// Attach WebSocket server for live validation
+const wss = new WebSocket.Server({ noServer: true });
+
+// Simple per-socket state: awaiting init then bits messages
+wss.on('connection', (ws, req) => {
+  ws.isAlive = true;
+  ws.on('pong', () => { ws.isAlive = true; });
+
+  let connectionKey = null;
+  let pageSessionId = null;
+
+  ws.on('message', (msg) => {
+    let data;
+    try { data = JSON.parse(msg); } catch (err) { return; }
+    if (data.type === 'init') {
+      // Expect: { type: 'init', sid, phase, delta, seed, page_session_id }
+      pageSessionId = data.page_session_id || '';
+      connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], data.sid, data.phase, pageSessionId].join('|');
+      ws._connectionKey = connectionKey;
+      ws._sid = data.sid;
+      ws._phase = data.phase;
+      ws._delta = data.delta || 300;
+      ws._seed = data.seed;
+      ws.send(JSON.stringify({ type: 'init_ack' }));
+      return;
+    }
+    if (data.type === 'bits') {
+      if (!ws._seed || !ws._delta) return ws.send(JSON.stringify({ type: 'error', error: 'Not initialised' }));
+      const ok = validateBits(data.bits, ws._seed, ws._delta);
+      if (!ok) {
+        return ws.send(JSON.stringify({ type: 'progress', matched: 0, needed: data.bits.length }));
+      }
+      // Issue verification token bound to the connectionKey
+      const token = issueVerification(ws._connectionKey);
+      ws.send(JSON.stringify({ type: 'verified', verification_id: token, ttl_ms: 30000 }));
+    }
+  });
+
+  ws.on('close', () => {});
+});
+
+// Health-check for dead sockets
+setInterval(() => {
+  wss.clients.forEach((ws) => {
+    if (ws.isAlive === false) return ws.terminate();
+    ws.isAlive = false;
+    ws.ping();
+  });
+}, 30000);
+
+// Upgrade HTTP server to handle WebSocket at /ws/validate
+server.on('upgrade', (req, socket, head) => {
+  const parsed = url.parse(req.url);
+  if (parsed.pathname === '/ws/validate') {
+    wss.handleUpgrade(req, socket, head, (ws) => {
+      wss.emit('connection', ws, req);
+    });
+  } else {
+    socket.destroy();
   }
 });
 

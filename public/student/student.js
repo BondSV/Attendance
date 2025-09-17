@@ -25,6 +25,17 @@
     return;
   }
 
+  // Generate a page_session_id to bind WS/init -> checkin
+  function generatePageSessionId() {
+    // RFC4122-style simple random UUID v4 (not cryptographically strong here)
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+      const r = Math.random() * 16 | 0;
+      const v = c === 'x' ? r : (r & 0x3 | 0x8);
+      return v.toString(16);
+    });
+  }
+  const pageSessionId = generatePageSessionId();
+
   const video = document.getElementById('video');
   const overlay = document.getElementById('overlay');
   const ctx = overlay.getContext('2d');
@@ -33,6 +44,8 @@
   const idInput = document.getElementById('student-id');
   const submitBtn = document.getElementById('submit-btn');
   let verificationId = null;
+  let ws = null;
+  let useWebSocket = false;
 
   // Start camera
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
@@ -94,12 +107,24 @@
       await new Promise((r) => setTimeout(r, delta));
     }
     statusEl.textContent = 'Validating…';
-    // Send bits to server for validation
+    // Prefer WebSocket validation when available
+    if (useWebSocket && ws && ws.readyState === WebSocket.OPEN) {
+      try {
+        ws.send(JSON.stringify({ type: 'bits', bits }));
+        // The WS handler will set verificationId on 'verified' message
+        return;
+      } catch (err) {
+        console.error('WS send failed', err);
+        // fall through to POST fallback
+      }
+    }
+
+    // Fallback to POST /api/validate
     try {
       const resp = await fetch('/api/validate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, phase, seed, delta, bits }),
+        body: JSON.stringify({ sid, phase, seed, delta, bits, page_session_id: pageSessionId }),
       });
       const data = await resp.json();
       if (data.verified) {
@@ -121,6 +146,34 @@
     setTimeout(captureAndValidate, 500);
   });
 
+  // Try to open WebSocket connection for live validation
+  try {
+    ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/validate');
+    ws.addEventListener('open', () => {
+      useWebSocket = true;
+      // Send init
+      ws.send(JSON.stringify({ type: 'init', sid, phase, delta, seed, page_session_id: pageSessionId }));
+    });
+    ws.addEventListener('message', (ev) => {
+      try {
+        const msg = JSON.parse(ev.data);
+        if (msg.type === 'init_ack') return;
+        if (msg.type === 'progress') {
+          statusEl.textContent = `Progress ${msg.matched || 0}/${msg.needed || 12}`;
+        }
+        if (msg.type === 'verified') {
+          verificationId = msg.verification_id;
+          statusEl.textContent = 'Verified! Enter your ID.';
+          idForm.classList.remove('hidden');
+        }
+      } catch (err) { console.error(err); }
+    });
+    ws.addEventListener('close', () => { useWebSocket = false; });
+    ws.addEventListener('error', () => { useWebSocket = false; });
+  } catch (err) {
+    console.warn('WebSocket not available, falling back to POST');
+  }
+
   // Handle submit
   submitBtn.addEventListener('click', async () => {
     const studentId = idInput.value.trim();
@@ -137,7 +190,7 @@
       const resp = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, phase, student_id: studentId, verification_id: verificationId }),
+    body: JSON.stringify({ sid, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId }),
       });
       const data = await resp.json();
       if (data.ok) {

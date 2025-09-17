@@ -72,15 +72,14 @@
   <!-- QRCode library from CDN; fallback to available cached library. -->
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-  // Hash function copied from server/validator.js to generate a 32‑bit integer seed.
+  // Hash function (aligned with server/validator.js) to generate a 32‑bit integer seed.
   function hash32(str) {
-    let h = 0;
+    let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const chr = str.charCodeAt(i);
-      h = (h << 5) - h + chr;
-      h |= 0; // Convert to 32bit integer
+      hash = (hash * 31 + chr) | 0;
     }
-    return h >>> 0; // Unsigned
+    return hash;
   }
 
   // Simple mulberry32 PRNG; returns a function that yields floats in [0,1).

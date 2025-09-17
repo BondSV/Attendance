@@ -1,0 +1,301 @@
+{
+  "version": "1.0",
+  "generated_at_utc": "2025-09-17T14:22:35.551458Z",
+  "apps": {
+    "studentCollector": {
+      "name": "Student/Collector (Hosted)",
+      "goal": "Serve student UI, perform live server-side validation of a moving pixel-bear visual against server time, and append verified check-ins to a CSV under university control.",
+      "stack": {
+        "backend": "Node.js (LTS) + Express + ws",
+        "frontend": "Vanilla HTML/CSS/JS (no framework)",
+        "storage": "CSV append on disk (dev) or university file share (prod)",
+        "notes": [
+          "HTTPS in production (TLS terminated by university reverse proxy).",
+          "No cookies or localStorage required.",
+          "CORS locked to same origin."
+        ]
+      },
+      "phases_supported": [
+        "start",
+        "break",
+        "end"
+      ],
+      "project_structure": [
+        "server/index.js            # Express + WebSocket endpoints",
+        "server/validator.js        # PRNG + server-time bit matching",
+        "server/csvWriter.js        # append + daily rotation",
+        "server/memoryState.js      # verification handles and (optional) anomaly flags",
+        "server/config.js           # env, thresholds, paths",
+        "public/student/index.html  # student UI",
+        "public/student/student.js  # camera + ROI sampling + WS client",
+        "public/student/styles.css  # minimal UI",
+        "public/health.html         # simple ok page"
+      ],
+      "routes_and_protocols": {
+        "GET /student": "Serves the student UI (parameters come via URL fragment).",
+        "GET /api/time": "Returns { now_ms } for teacher-time resyncs.",
+        "WS /ws/validate": {
+          "purpose": "Live validation while camera is aimed at the bear sign.",
+          "client_init_payload": {
+            "type": "init",
+            "sid": "OPS101-2025-10-03-0900",
+            "phase": "start|break|end",
+            "delta": 300,
+            "seed": 2147481111,
+            "page_session_id": "uuid-v4"
+          },
+          "client_bits_message": {
+            "type": "bits",
+            "bits": [
+              0,
+              1,
+              0,
+              1
+            ]
+          },
+          "server_responses": [
+            {
+              "type": "progress",
+              "matched": 8,
+              "needed": 10
+            },
+            {
+              "type": "verified",
+              "verification_id": "abc123",
+              "ttl_ms": 30000
+            }
+          ]
+        },
+        "POST /api/validate (fallback)": {
+          "body": {
+            "sid": "string",
+            "phase": "start|break|end",
+            "delta": 300,
+            "seed": "int32",
+            "bits": [
+              0,
+              1,
+              1,
+              0
+            ],
+            "page_session_id": "uuid-v4"
+          },
+          "response": {
+            "verified": "boolean",
+            "matched": "number",
+            "verification_id?": "string",
+            "ttl_ms?": "number"
+          }
+        },
+        "POST /api/checkin": {
+          "body": {
+            "sid": "string",
+            "phase": "start|break|end",
+            "student_id": "string",
+            "verification_id": "string"
+          },
+          "validations": [
+            "verification_id exists, bound to this connection key, not expired, unused",
+            "student_id passes regex and length checks"
+          ],
+          "on_success": "Append CSV row and return { ok: true }"
+        }
+      },
+      "qr_deeplink": {
+        "url_format": "https://attendance.uni.ac.uk/student#<base64url(payload)>",
+        "payload_json": {
+          "v": 1,
+          "sid": "OPS101-2025-10-03-0900",
+          "p": "start|break|end",
+          "d": 300,
+          "sd": 2147481111
+        },
+        "reason_fragment": "Fragments are not sent in HTTP requests; avoids accidental logging of parameters."
+      },
+      "bit_pattern_and_validation": {
+        "delta_ms": 300,
+        "sequence_length_bits": 12,
+        "match_threshold_bits": 10,
+        "prng": "mulberry32 or xorshift32; bit = (rng(seed + i) * 2) | 0",
+        "index_now": "i_now = floor((Date.now() - windowStart)/delta) [server time]",
+        "tolerance": "bit-exact expected; allow ±1 index for jitter if needed; noise tolerance by requiring >=10/12 matches",
+        "why_live": "Live server time defeats forwarded/recorded video due to streaming latency."
+      },
+      "student_ui_flow": [
+        "Parse fragment payload: { sid, p (phase), d (delta), sd (seed) }.",
+        "Start getUserMedia and show preview with fixed ROI box covering the bear's sign region.",
+        "Open WebSocket to /ws/validate; send init payload with sid, phase, delta, seed, page_session_id.",
+        "Every delta ms (~300) for ~3.6s, sample ROI: compute average luminance of left vs right halves; bit = right>left ? 1 : 0; send bits.",
+        "Show progress ring; when server sends { type: 'verified', verification_id }, show big Verified state.",
+        "Reveal Student ID field and Submit button.",
+        "POST /api/checkin with { sid, phase, student_id, verification_id }; show success/failure toast."
+      ],
+      "roi_and_detection": {
+        "roi_position": "Top-right quadrant relative to the bear; provide 'Flip horizontally' toggle if projector mirrors image.",
+        "luminance": "L = 0.2126R + 0.7152G + 0.0722B; compare means of left vs right halves.",
+        "contrast_hint": "If |right-left| < epsilon, prompt: Move closer / reduce glare / centre the ROI."
+      },
+      "csv_storage": {
+        "path_dev": "./data/YYYY-MM-DD.csv",
+        "path_prod": "/var/lib/attendance/YYYY-MM-DD.csv (or mapped file share)",
+        "header": [
+          "ts_utc",
+          "sid",
+          "phase",
+          "student_id",
+          "ip",
+          "ua_short"
+        ],
+        "row_fields": "ISO timestamp (UTC), sid, phase, student_id, req.ip (or X-Forwarded-For), normalized UA",
+        "writer": "Single append stream per current day; rotate at UTC midnight; sanitize fields; fsync periodically."
+      },
+      "security_privacy": {
+        "https": "Required in production",
+        "cors": "Same origin only",
+        "logging": "No request bodies; only route, status, duration",
+        "verification_id": "128-bit random; TTL 30s; one-use; bound to (ip|ua|sid|phase|page_session_id)",
+        "rate_limits": {
+          "checkin_per_min_per_ip": 10,
+          "ws_max_concurrent_per_ip": 2,
+          "ws_idle_timeout_ms": 20000
+        },
+        "input_validation": {
+          "sid": "^[A-Za-z0-9\\-_:]{3,80}$",
+          "phase": "start|break|end",
+          "student_id": "^[0-9]{6,12}$",
+          "delta": "integer 200..500",
+          "seed": "int32"
+        },
+        "anomaly_logging": "Flag (do not block) if same IP+UA submits multiple different student_ids in same sid+phase."
+      },
+      "parameters": {
+        "delta_ms": 300,
+        "sequence_length_bits": 12,
+        "match_threshold_bits": 10,
+        "verification_ttl_ms": 30000
+      },
+      "acceptance_tests": [
+        "GET /api/time returns JSON.",
+        "/student loads, parses fragment, shows camera and ROI.",
+        "Pointing at the bear achieves Verified in ~3–4 s.",
+        "POST /api/checkin appends CSV row with correct columns.",
+        "verification_id single-use and expires after 30 s.",
+        "Recorded or forwarded video fails validation (out of phase)."
+      ]
+    },
+    "teacherApp": {
+      "name": "Teacher App (Standalone Local HTML)",
+      "goal": "Render the pixel bear animation synchronized to server time and display one QR link to the student app containing static parameters. Supports 3 phases.",
+      "phases_supported": [
+        "start",
+        "break",
+        "end"
+      ],
+      "dependencies": [
+        "qrcode.min.js (QR rendering)"
+      ],
+      "ui_inputs": [
+        "Session ID text input",
+        "Phase dropdown: start|break|end",
+        "Start button",
+        "Stop button"
+      ],
+      "sync_with_server": {
+        "endpoint": "GET /api/time",
+        "on_start": "Fetch now_ms, compute offset = now_ms - Date.now()",
+        "resync_interval_ms": 30000,
+        "now_fn": "Date.now() + offset"
+      },
+      "animation": {
+        "delta_ms": 300,
+        "seed": "hash32(sessionId + '|' + phase)",
+        "index_i": "floor((now() - windowStart)/delta)",
+        "bit_rule": "bit = prng(seed + i) & 1; 0 => bear holds sign LEFT, 1 => RIGHT",
+        "canvas": {
+          "width": 240,
+          "height": 160,
+          "notes": "High-contrast sign rectangle; smooth pose change; no strobe"
+        }
+      },
+      "qr_code": {
+        "target_url": "https://attendance.uni.ac.uk/student#<base64url(payload)>",
+        "payload": {
+          "v": 1,
+          "sid": "<sessionId>",
+          "p": "<phase>",
+          "d": 300,
+          "sd": "<seed:int32>"
+        },
+        "when_update": "Regenerate when Session ID or Phase changes"
+      },
+      "workflow": [
+        "Open teacher.html locally.",
+        "Enter Session ID and select Phase.",
+        "Click Start: time sync + begin animation; show QR.",
+        "Students scan QR; validation happens live on server.",
+        "Click Stop to end animation and hide QR."
+      ],
+      "acceptance_tests": [
+        "QR payload updates correctly for phase changes (start/break/end).",
+        "Bear sign flips left/right every 300 ms and remains in sync after 30 s resyncs.",
+        "Student app opened via QR validates within ~3–4 s when aimed correctly."
+      ]
+    },
+    "analysisApp": {
+      "name": "Analysis App (Standalone Local HTML)",
+      "goal": "Load CSV logs, compute attendance across 3 phases per session, classify statuses, and generate .eml emails to students.",
+      "runs_client_side_only": true,
+      "inputs": {
+        "csv_files": "One or more CSVs exported from Student/Collector",
+        "roster_optional": "Optional CSV of expected Student IDs",
+        "filters": [
+          "date range",
+          "module/session pattern",
+          "min phases required (default 3)"
+        ]
+      },
+      "csv_schema": {
+        "header": [
+          "ts_utc",
+          "sid",
+          "phase",
+          "student_id",
+          "ip",
+          "ua_short"
+        ],
+        "example_row": "2025-10-03T09:15:22.123Z,OPS101-2025-10-03-0900,start,22012345,10.8.14.22,ios_safari_17"
+      },
+      "logic": {
+        "group_by": "sid (session)",
+        "per_student": [
+          "start present? break present? end present?",
+          "status rules:",
+          "Present = all 3 phases present",
+          "Late = missing start, present break+end",
+          "Left early = present start, missing end",
+          "Break missing = present start+end, missing break",
+          "Partial = exactly 1 phase present",
+          "Absent = no phases present"
+        ],
+        "dedupe": "Multiple entries for same student_id+phase count once"
+      },
+      "ui_outputs": [
+        "Interactive table per session: student_id, start, break, end, status",
+        "Filters for status categories (Present/Late/Left early/Break missing/Partial/Absent)",
+        "Export analysed CSV",
+        "Generate .eml drafts per student or grouped"
+      ],
+      "email_generation": {
+        "to": "student_id@rave.ac.uk (configurable domain)",
+        "subject_template": "[Attendance] {sid} attendance update",
+        "body_template_example": "Dear Student,\\n\\nOur records for {sid} show:\\n- Start: {start_status}\\n- Break: {break_status}\\n- End: {end_status}\\n\\nPlease be aware that attendance is monitored and may affect academic progress and visa compliance.\\n\\nRegards,\\nRavensbourne University London",
+        "filetype": ".eml"
+      },
+      "acceptance_tests": [
+        "Loads CSV(s) and groups by session (sid).",
+        "Classifies students correctly into Present/Late/Left early/Break missing/Partial/Absent.",
+        "Exports analysed CSV and generates .eml files."
+      ]
+    }
+  }
+}

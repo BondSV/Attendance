@@ -1,6 +1,11 @@
 const fs = require('fs');
 const path = require('path');
 
+// Writer state for current open stream
+let currentDateStr = null;
+let currentStream = null;
+let flushIntervalId = null;
+
 /**
  * CSV writer module. Each check‑in record is appended to a daily CSV file.  The
  * file path is derived from the UTC date (e.g. `2025‑10‑03.csv`).  If the
@@ -23,28 +28,69 @@ fs.mkdirSync(CSV_DIR, { recursive: true });
  *   [ts_utc, sid, phase, student_id, ip, ua_short].  Fields containing
  *   commas or newlines are sanitised.
  */
+function getUtcDateStr(d = new Date()) {
+  const yyyy = d.getUTCFullYear();
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  return `${yyyy}-${mm}-${dd}`;
+}
+
+function openStreamForDate(dateStr) {
+  const filePath = path.join(CSV_DIR, `${dateStr}.csv`);
+  const exists = fs.existsSync(filePath);
+  const stream = fs.createWriteStream(filePath, { flags: 'a' });
+  if (!exists) {
+    stream.write('ts_utc,sid,phase,student_id,ip,ua_short\n');
+  }
+  return stream;
+}
+
+function rotateIfNeeded() {
+  const today = getUtcDateStr();
+  if (currentDateStr !== today) {
+    // Close old stream
+    if (currentStream) {
+      try { currentStream.end(); } catch (e) { /* ignore */ }
+      currentStream = null;
+    }
+    currentDateStr = today;
+    currentStream = openStreamForDate(currentDateStr);
+  }
+}
+
+// Periodically flush (fsync) to reduce data loss on crash
+function startFlusher() {
+  if (flushIntervalId) return;
+  flushIntervalId = setInterval(() => {
+    if (!currentStream) return;
+    const fd = currentStream.fd;
+    if (typeof fd === 'number') {
+      try { fs.fsyncSync(fd); } catch (e) { /* ignore */ }
+    }
+  }, 5000);
+}
+
 async function appendCsvRow(fields) {
-  const date = new Date();
-  const yyyy = date.getUTCFullYear();
-  const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(date.getUTCDate()).padStart(2, '0');
-  const fileName = `${yyyy}-${mm}-${dd}.csv`;
-  const filePath = path.join(CSV_DIR, fileName);
+  rotateIfNeeded();
+  startFlusher();
 
   // Sanitize fields: replace commas and newlines with spaces
   const safeFields = fields.map((f) => String(f).replace(/[,\n]/g, ' '));
   const row = safeFields.join(',') + '\n';
 
-  // Determine whether we need to write a header row
-  const exists = fs.existsSync(filePath);
-  let header = '';
-  if (!exists) {
-    header = 'ts_utc,sid,phase,student_id,ip,ua_short\n';
-  }
-
-  // Append the header (if needed) and row
-  await fs.promises.appendFile(filePath, header + row);
+  return new Promise((resolve, reject) => {
+    currentStream.write(row, (err) => {
+      if (err) return reject(err);
+      resolve();
+    });
+  });
 }
+
+// Ensure streams closed on process exit
+process.on('exit', () => {
+  if (currentStream) try { currentStream.end(); } catch (e) {}
+  if (flushIntervalId) clearInterval(flushIntervalId);
+});
 
 module.exports = {
   appendCsvRow,
