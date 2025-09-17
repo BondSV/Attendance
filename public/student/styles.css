@@ -47,3 +47,24 @@ h1 {
 .hidden {
   display: none;
 }
+
+#controls {
+  margin-top: 0.5rem;
+}
+
+#roi-hint {
+  font-size: 0.9rem;
+  color: #555;
+  margin-top: 0.25rem;
+}
+
+#progress-container {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 0.75rem;
+}
+
+#progress-ring { border-radius: 50%; }
+
+#progress-text { font-weight: bold; }

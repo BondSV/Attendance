@@ -91,15 +91,15 @@ function acquireDeviceLock(deviceKey, studentId) {
   const expiresAt = now + DEVICE_LOCK_TTL_MS;
   if (!entry) {
     deviceLocks.set(deviceKey, { studentId, expiresAt });
-    return true;
+    return { ok: true };
   }
   if (entry.studentId === studentId) {
     // refresh expiry
     entry.expiresAt = expiresAt;
-    return true;
+    return { ok: true };
   }
   // another studentId attempted to use the same device
-  return false;
+  return { ok: false, existingStudentId: entry.studentId };
 }
 
 /**

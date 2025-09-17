@@ -10,6 +10,10 @@ const { appendCsvRow } = require('./csvWriter');
 
 // Configuration
 const PORT = process.env.PORT || 8080;
+const CHECKIN_PER_MIN = parseInt(process.env.CHECKIN_PER_MIN || '10', 10);
+const WS_MAX_PER_IP = parseInt(process.env.WS_MAX_PER_IP || '2', 10);
+const WS_IDLE_TIMEOUT_MS = parseInt(process.env.WS_IDLE_TIMEOUT_MS || '20000', 10);
+const ANOMALY_LOG_PATH = process.env.ANOMALY_LOG_PATH || null; // optional file path
 // Directory containing static assets for the student UI
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
@@ -55,6 +59,15 @@ function parseRequestBody(req) {
       }
     });
   });
+}
+
+// Simple anomaly logger (console + optional file)
+function logAnomaly(obj) {
+  const msg = `[ANOMALY] ${new Date().toISOString()} ${JSON.stringify(obj)}`;
+  console.warn(msg);
+  if (ANOMALY_LOG_PATH) {
+    try { fs.appendFileSync(ANOMALY_LOG_PATH, msg + '\n'); } catch (e) { /* ignore */ }
+  }
 }
 
 /**
@@ -154,16 +167,16 @@ const server = http.createServer(async (req, res) => {
       }
       // Acquire device lock
       const deviceKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase].join('|');
-      const lockOk = acquireDeviceLock(deviceKey, student_id);
-      if (!lockOk) {
-        // Still accept submission, but flag in response
-        // Do not reject; but include warning
+      const lock = acquireDeviceLock(deviceKey, student_id);
+      if (!lock.ok) {
+        // Log anomaly: device used for multiple students
+        logAnomaly({ type: 'device_lock_conflict', deviceKey, student_id, existingStudentId: lock.existingStudentId, sid, phase, ip: req.socket.remoteAddress });
       }
       // Log to CSV
       const tsUtc = new Date().toISOString();
       const ua = uaShort(req.headers['user-agent']);
       await appendCsvRow([tsUtc, sid, phase, student_id, req.socket.remoteAddress, ua]);
-      return sendJson(res, { ok: true, warning: lockOk ? undefined : 'Device used for multiple students' });
+      return sendJson(res, { ok: true, warning: lock.ok ? undefined : 'Device used for multiple students' });
     }
     // Health check or not found
     if (pathname === '/health') {
@@ -215,6 +228,16 @@ wss.on('connection', (ws, req) => {
   });
 
   ws.on('close', () => {});
+  // enforce idle timeout per socket
+  ws._idleTimer = setTimeout(() => {
+    try { ws.terminate(); } catch (e) {}
+  }, WS_IDLE_TIMEOUT_MS);
+  const refreshIdle = () => {
+    if (ws._idleTimer) clearTimeout(ws._idleTimer);
+    ws._idleTimer = setTimeout(() => { try { ws.terminate(); } catch (e) {} }, WS_IDLE_TIMEOUT_MS);
+  };
+  ws.on('message', refreshIdle);
+  ws.on('pong', refreshIdle);
 });
 
 // Health-check for dead sockets
@@ -230,7 +253,15 @@ setInterval(() => {
 server.on('upgrade', (req, socket, head) => {
   const parsed = url.parse(req.url);
   if (parsed.pathname === '/ws/validate') {
+    // Enforce per-IP concurrent WS limit
+    const ip = req.socket.remoteAddress || 'unknown';
+    const count = Array.from(wss.clients).filter(c => c._remoteIp === ip).length;
+    if (count >= WS_MAX_PER_IP) {
+      socket.destroy();
+      return;
+    }
     wss.handleUpgrade(req, socket, head, (ws) => {
+      ws._remoteIp = req.socket.remoteAddress;
       wss.emit('connection', ws, req);
     });
   } else {

@@ -46,6 +46,10 @@
   let verificationId = null;
   let ws = null;
   let useWebSocket = false;
+  const flipToggle = document.getElementById('flip-toggle');
+  const progressCanvas = document.getElementById('progress-ring');
+  const progressText = document.getElementById('progress-text');
+  const progressCtx = progressCanvas.getContext('2d');
 
   // Start camera
   navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
@@ -71,7 +75,15 @@
     const roiW = Math.floor(w * 0.4);
     const roiH = Math.floor(h * 0.3);
     // Draw current video frame to overlay
-    ctx.drawImage(video, 0, 0, w, h);
+    if (flipToggle && flipToggle.checked) {
+      // Flip horizontally
+      ctx.save();
+      ctx.scale(-1, 1);
+      ctx.drawImage(video, -w, 0, w, h);
+      ctx.restore();
+    } else {
+      ctx.drawImage(video, 0, 0, w, h);
+    }
     // Visualize ROI
     ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
     ctx.lineWidth = 2;
@@ -104,6 +116,7 @@
     const count = 12;
     for (let i = 0; i < count; i++) {
       bits.push(sampleBit());
+      drawProgress(i + 1, count);
       await new Promise((r) => setTimeout(r, delta));
     }
     statusEl.textContent = 'Validating…';
@@ -138,6 +151,27 @@
       console.error(err);
       statusEl.textContent = 'Validation error.';
     }
+  }
+
+  function drawProgress(current, total) {
+    const pct = current / total;
+    const ctx = progressCtx;
+    const w = progressCanvas.width;
+    const h = progressCanvas.height;
+    ctx.clearRect(0, 0, w, h);
+    // background circle
+    ctx.beginPath();
+    ctx.arc(w/2, h/2, w/2 - 4, 0, Math.PI * 2);
+    ctx.fillStyle = '#eee';
+    ctx.fill();
+    // progress arc
+    ctx.beginPath();
+    ctx.moveTo(w/2, h/2);
+    ctx.fillStyle = '#4caf50';
+    ctx.arc(w/2, h/2, w/2 - 4, -Math.PI/2, -Math.PI/2 + pct * Math.PI * 2);
+    ctx.lineTo(w/2, h/2);
+    ctx.fill();
+    progressText.textContent = `${current}/${total}`;
   }
 
   // Kick off capture after video is ready

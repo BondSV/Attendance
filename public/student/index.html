@@ -13,6 +13,14 @@
     <canvas id="overlay" width="640" height="480"></canvas>
   </div>
   <div id="status">Point your camera at the bear's sign…</div>
+  <div id="controls">
+    <label><input type="checkbox" id="flip-toggle"> Flip horizontally</label>
+    <div id="roi-hint">ROI: top-right quadrant. If contrast low, move closer or reduce glare.</div>
+  </div>
+  <div id="progress-container" aria-hidden="true">
+    <canvas id="progress-ring" width="64" height="64"></canvas>
+    <div id="progress-text">0/12</div>
+  </div>
   <div id="id-form" class="hidden">
     <label for="student-id">Student ID:</label>
     <input type="text" id="student-id" placeholder="Enter your ID" maxlength="12">

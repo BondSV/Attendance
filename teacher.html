@@ -54,6 +54,9 @@
   <label for="sessionId">Session ID</label>
   <input id="sessionId" type="text" placeholder="e.g., OPS101-2025-10-03-0900" />
 
+  <label for="studentOrigin">Student App Origin (default current origin)</label>
+  <input id="studentOrigin" type="text" placeholder="https://attendance.uni.ac.uk" />
+
   <label for="phase">Phase</label>
   <select id="phase">
     <option value="start">Start</option>
@@ -171,6 +174,8 @@
   document.getElementById('startBtn').addEventListener('click', async () => {
     const sid = document.getElementById('sessionId').value.trim();
     const phase = document.getElementById('phase').value;
+    const studentOriginInput = document.getElementById('studentOrigin').value.trim();
+    const studentOrigin = studentOriginInput || window.location.origin;
     if (!sid) {
       alert('Please enter a session ID.');
       return;
@@ -178,11 +183,11 @@
     // Sync time
     await resync();
     // Derive seed
-    seed = hash32(`${sid}|${phase}`);
+    seed = hash32(`${sid}|${phase}`) | 0; // ensure signed 32-bit int like server
     // Build QR payload
     const payload = { v: 1, sid: sid, p: phase, d: delta, sd: seed };
     const frag = toBase64Url(payload);
-    const url = `${window.location.origin}/student#${frag}`;
+    const url = `${studentOrigin.replace(/\/$/, '')}/student#${frag}`;
     // Generate QR
     qrContainer.innerHTML = '';
     new QRCode(qrContainer, { text: url, width: 200, height: 200 });
