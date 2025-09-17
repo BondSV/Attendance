@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Teacher Attendance QR</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #f9f9f9;
+      color: #222;
+    }
+    h1 {
+      font-size: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    label {
+      display: block;
+      margin-top: 0.5rem;
+    }
+    input[type="text"], select {
+      padding: 0.4rem 0.5rem;
+      margin-top: 0.2rem;
+      width: 100%;
+      max-width: 300px;
+      box-sizing: border-box;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+    }
+    #display {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 1.5rem;
+      gap: 2rem;
+    }
+    #bearCanvas {
+      border: 1px solid #ccc;
+    }
+    #qrContainer {
+      border: 1px solid #ccc;
+      padding: 0.5rem;
+      background: #fff;
+    }
+  </style>
+</head>
+<body>
+  <h1>Attendance Session QR Generator</h1>
+  <p>Enter session details and start the check‑in window. The animated bear will indicate a live signal for students to scan. A single QR code links students to the attendance page with the required parameters.</p>
+
+  <label for="sessionId">Session ID</label>
+  <input id="sessionId" type="text" placeholder="e.g., OPS101-2025-10-03-0900" />
+
+  <label for="phase">Phase</label>
+  <select id="phase">
+    <option value="start">Start</option>
+    <option value="break">Break</option>
+    <option value="end">End</option>
+  </select>
+
+  <button id="startBtn">Start</button>
+  <button id="stopBtn" disabled>Stop</button>
+
+  <div id="display" style="display:none;">
+    <canvas id="bearCanvas" width="240" height="160"></canvas>
+    <div id="qrContainer"></div>
+  </div>
+
+  <!-- QRCode library from CDN; fallback to available cached library. -->
+  <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+  // Hash function copied from server/validator.js to generate a 32‑bit integer seed.
+  function hash32(str) {
+    let h = 0;
+    for (let i = 0; i < str.length; i++) {
+      const chr = str.charCodeAt(i);
+      h = (h << 5) - h + chr;
+      h |= 0; // Convert to 32bit integer
+    }
+    return h >>> 0; // Unsigned
+  }
+
+  // Simple mulberry32 PRNG; returns a function that yields floats in [0,1).
+  function mulberry32(a) {
+    return function() {
+      let t = a += 0x6D2B79F5;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+
+  // Compute a single bit for a given seed and index i
+  function getBit(seed, i) {
+    // Derive a new seed based on index to avoid reinitialising each time
+    const prng = mulberry32(seed + i);
+    return (prng() * 2) | 0;
+  }
+
+  // Base64URL encoding helper
+  function toBase64Url(obj) {
+    const json = JSON.stringify(obj);
+    let base64 = btoa(unescape(encodeURIComponent(json)));
+    // Convert to base64url
+    return base64.replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+  }
+
+  // Variables to control animation
+  let running = false;
+  let offset = 0; // server time offset
+  const delta = 300; // ms per bit
+  let seed = 0;
+  let resyncIntervalId;
+
+  const bearCanvas = document.getElementById('bearCanvas');
+  const ctx = bearCanvas.getContext('2d');
+  const qrContainer = document.getElementById('qrContainer');
+  const displayDiv = document.getElementById('display');
+
+  // Draw the pixel bear; bit=0 means sign left, bit=1 means sign right
+  function drawBear(bit) {
+    ctx.clearRect(0, 0, bearCanvas.width, bearCanvas.height);
+    // Body and head
+    ctx.fillStyle = '#7b5d3b';
+    // Body rectangle
+    ctx.fillRect(100, 60, 40, 60);
+    // Head circle
+    ctx.beginPath();
+    ctx.arc(120, 50, 20, 0, Math.PI * 2);
+    ctx.fill();
+    // Ears
+    ctx.beginPath();
+    ctx.arc(105, 35, 8, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc(135, 35, 8, 0, Math.PI * 2);
+    ctx.fill();
+    // Sign
+    const signX = bit === 1 ? 150 : 30;
+    const signY = 70;
+    ctx.fillStyle = '#f2f2f2';
+    ctx.fillRect(signX, signY, 50, 35);
+    ctx.strokeStyle = '#222';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(signX, signY, 50, 35);
+  }
+
+  // Resync to server time every 30 seconds
+  async function resync() {
+    try {
+      const resp = await fetch('/api/time');
+      const data = await resp.json();
+      offset = data.now_ms - Date.now();
+    } catch (err) {
+      console.error('Time sync failed', err);
+    }
+  }
+
+  // Animation loop
+  function animate() {
+    if (!running) return;
+    const now = Date.now() + offset;
+    const i = Math.floor(now / delta);
+    const bit = getBit(seed, i);
+    drawBear(bit);
+    requestAnimationFrame(animate);
+  }
+
+  document.getElementById('startBtn').addEventListener('click', async () => {
+    const sid = document.getElementById('sessionId').value.trim();
+    const phase = document.getElementById('phase').value;
+    if (!sid) {
+      alert('Please enter a session ID.');
+      return;
+    }
+    // Sync time
+    await resync();
+    // Derive seed
+    seed = hash32(`${sid}|${phase}`);
+    // Build QR payload
+    const payload = { v: 1, sid: sid, p: phase, d: delta, sd: seed };
+    const frag = toBase64Url(payload);
+    const url = `${window.location.origin}/student#${frag}`;
+    // Generate QR
+    qrContainer.innerHTML = '';
+    new QRCode(qrContainer, { text: url, width: 200, height: 200 });
+    // Show display
+    displayDiv.style.display = 'flex';
+    running = true;
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').disabled = false;
+    animate();
+    // Start periodic resync
+    if (resyncIntervalId) clearInterval(resyncIntervalId);
+    resyncIntervalId = setInterval(resync, 30000);
+  });
+
+  document.getElementById('stopBtn').addEventListener('click', () => {
+    running = false;
+    document.getElementById('startBtn').disabled = false;
+    document.getElementById('stopBtn').disabled = true;
+    displayDiv.style.display = 'none';
+    qrContainer.innerHTML = '';
+    if (resyncIntervalId) clearInterval(resyncIntervalId);
+  });
+  </script>
+</body>
+</html>
