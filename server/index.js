@@ -182,6 +182,27 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/health') {
       return sendJson(res, { ok: true });
     }
+
+    // Testing helper: stream the current UTC day's CSV
+    if (pathname === '/api/csv/current' && req.method === 'GET') {
+      const CSV_DIR = process.env.CSV_DIR || path.join(__dirname, '..', 'data');
+      const date = new Date();
+      const yyyy = date.getUTCFullYear();
+      const mm = String(date.getUTCMonth() + 1).padStart(2, '0');
+      const dd = String(date.getUTCDate()).padStart(2, '0');
+      const fileName = `${yyyy}-${mm}-${dd}.csv`;
+      const filePath = path.join(CSV_DIR, fileName);
+      if (!fs.existsSync(filePath)) {
+        return sendJson(res, { error: 'CSV not found' }, 404);
+      }
+      const headers = { 'Content-Type': 'text/csv', 'Content-Disposition': `attachment; filename="${fileName}"` };
+      if (process.env.ALLOW_CORS_ALL === '1') headers['Access-Control-Allow-Origin'] = '*';
+      res.writeHead(200, headers);
+      const stream = fs.createReadStream(filePath);
+      stream.pipe(res);
+      return;
+    }
+
     return sendJson(res, { error: 'Not found' }, 404);
   } catch (err) {
     console.error(err);
