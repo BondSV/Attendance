@@ -96,6 +96,18 @@ function serveStatic(req, res) {
   let pathname = parsed.pathname;
   // Normalize and prevent directory traversal
   pathname = path.normalize(pathname).replace(/^\/+/, '');
+  // Special-case: /student should serve the student index
+  if (pathname === 'student' || pathname === 'student/') {
+    const filePathIndex = path.join(PUBLIC_DIR, 'student', 'index.html');
+    try {
+      const data = fs.readFileSync(filePathIndex);
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
   // Serve student static files under public/student
   if (pathname.startsWith('student')) {
     const filePath = path.join(PUBLIC_DIR, pathname);
