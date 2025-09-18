@@ -164,9 +164,10 @@ const server = http.createServer(async (req, res) => {
       }
       const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
       // Validate bits using server time with strict threshold (exact match)
-      const ok = validateBits(bits, seed, delta || 300, { lenWindow: 3, threshold: bits.length });
-      if (!ok) {
-        return sendJson(res, { verified: false, matched: 0 });
+      const vres = validateBits(bits, seed, delta || 300, { lenWindow: 3, threshold: bits.length });
+      if (!vres || !vres.ok) {
+        // return progress info so client can show matched/needed/offset
+        return sendJson(res, { verified: false, matched: vres ? vres.matched : 0, needed: vres ? vres.needed : bits.length, offset: vres ? vres.offset : 0 });
       }
       // Issue verification token
       const token = issueVerification(connectionKey);
@@ -262,9 +263,9 @@ wss.on('connection', (ws, req) => {
     }
     if (data.type === 'bits') {
       if (!ws._seed || !ws._delta) return ws.send(JSON.stringify({ type: 'error', error: 'Not initialised' }));
-      const ok = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 3, threshold: data.bits.length });
-      if (!ok) {
-        return ws.send(JSON.stringify({ type: 'progress', matched: 0, needed: data.bits.length }));
+      const vres = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 3, threshold: data.bits.length });
+      if (!vres || !vres.ok) {
+        return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: vres ? vres.needed : data.bits.length }));
       }
       // Issue verification token bound to the connectionKey
       const token = issueVerification(ws._connectionKey);

@@ -148,7 +148,11 @@
         // Stop capture loop on verified
         stopCaptureLoop();
       } else {
-        statusEl.textContent = 'Verification failed. Try again.';
+        // Show server progress details if provided
+        const matched = typeof data.matched === 'number' ? data.matched : 0;
+        const needed = typeof data.needed === 'number' ? data.needed : 12;
+        const offset = typeof data.offset === 'number' ? data.offset : 0;
+        statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
       }
     } catch (err) {
       console.error(err);
@@ -218,14 +222,17 @@
         const msg = JSON.parse(ev.data);
         if (msg.type === 'init_ack') return;
         if (msg.type === 'progress') {
-          statusEl.textContent = `Progress ${msg.matched || 0}/${msg.needed || 12}`;
+          const matched = typeof msg.matched === 'number' ? msg.matched : 0;
+          const needed = typeof msg.needed === 'number' ? msg.needed : 12;
+          const offset = typeof msg.offset === 'number' ? msg.offset : 0;
+          statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
         }
         if (msg.type === 'verified') {
           verificationId = msg.verification_id;
           statusEl.textContent = 'Verified! Enter your ID.';
           idForm.classList.remove('hidden');
-        // Stop capture loop on verified
-        stopCaptureLoop();
+          // Stop capture loop on verified
+          stopCaptureLoop();
         }
       } catch (err) { console.error(err); }
     });

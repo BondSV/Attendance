@@ -70,6 +70,10 @@ function validateBits(bits, seed, delta, opts = {}) {
   const windowSize = opts.lenWindow ?? 4;
   const threshold = opts.threshold ?? Math.max(0, len - 2);
   const iNow = Math.floor(now / delta);
+
+  let bestMatches = 0;
+  let bestOffset = 0;
+
   // Try offsets from 0 down to −(windowSize−1). Offset 0 means we
   // assume the last bit corresponds to index iNow; offset −1 means
   // the last bit corresponds to iNow − 1; etc. This allows for
@@ -80,11 +84,15 @@ function validateBits(bits, seed, delta, opts = {}) {
       const expectedBit = getBit(seed, iNow + offset - (len - 1 - j));
       if (bits[j] === expectedBit) matches++;
     }
+    if (matches > bestMatches) {
+      bestMatches = matches;
+      bestOffset = offset;
+    }
     if (matches >= threshold) {
-      return true;
+      return { ok: true, matched: matches, needed: threshold, offset: bestOffset };
     }
   }
-  return false;
+  return { ok: false, matched: bestMatches, needed: threshold, offset: bestOffset };
 }
 
 module.exports = {
