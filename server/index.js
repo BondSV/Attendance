@@ -96,24 +96,36 @@ function serveStatic(req, res) {
   let pathname = parsed.pathname;
   // Normalize and prevent directory traversal
   pathname = path.normalize(pathname).replace(/^\/+/, '');
-  // Only serve under 'student'
-  if (!pathname.startsWith('student')) return false;
-  const filePath = path.join(PUBLIC_DIR, pathname);
-  if (!filePath.startsWith(PUBLIC_DIR)) return false;
-  fs.readFile(filePath, (err, data) => {
-    if (err) {
-      return sendJson(res, { error: 'Not found' }, 404);
+  // Serve student static files under public/student
+  if (pathname.startsWith('student')) {
+    const filePath = path.join(PUBLIC_DIR, pathname);
+    if (!filePath.startsWith(PUBLIC_DIR)) return false;
+    fs.readFile(filePath, (err, data) => {
+      if (err) return sendJson(res, { error: 'Not found' }, 404);
+      let contentType = 'text/plain';
+      if (filePath.endsWith('.html')) contentType = 'text/html';
+      else if (filePath.endsWith('.js')) contentType = 'application/javascript';
+      else if (filePath.endsWith('.css')) contentType = 'text/css';
+      else if (filePath.endsWith('.png')) contentType = 'image/png';
+      res.writeHead(200, { 'Content-Type': contentType });
+      res.end(data);
+    });
+    return true;
+  }
+
+  // Serve teacher.html from repo root at '/teacher.html' or '/'
+  if (pathname === '' || pathname === 'teacher.html') {
+    const filePath = path.join(__dirname, '..', 'teacher.html');
+    try {
+      const data = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.end(data);
+      return true;
+    } catch (err) {
+      return false;
     }
-    // Infer content type
-    let contentType = 'text/plain';
-    if (filePath.endsWith('.html')) contentType = 'text/html';
-    else if (filePath.endsWith('.js')) contentType = 'application/javascript';
-    else if (filePath.endsWith('.css')) contentType = 'text/css';
-    else if (filePath.endsWith('.png')) contentType = 'image/png';
-    res.writeHead(200, { 'Content-Type': contentType });
-    res.end(data);
-  });
-  return true;
+  }
+  return false;
 }
 
 // HTTP server
