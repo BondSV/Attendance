@@ -163,8 +163,8 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, { error: 'Invalid payload' }, 400);
       }
       const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
-      // Validate bits using server time
-      const ok = validateBits(bits, seed, delta || 300);
+      // Validate bits using server time with strict threshold (exact match)
+      const ok = validateBits(bits, seed, delta || 300, { lenWindow: 3, threshold: bits.length });
       if (!ok) {
         return sendJson(res, { verified: false, matched: 0 });
       }
@@ -262,7 +262,7 @@ wss.on('connection', (ws, req) => {
     }
     if (data.type === 'bits') {
       if (!ws._seed || !ws._delta) return ws.send(JSON.stringify({ type: 'error', error: 'Not initialised' }));
-      const ok = validateBits(data.bits, ws._seed, ws._delta);
+      const ok = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 3, threshold: data.bits.length });
       if (!ok) {
         return ws.send(JSON.stringify({ type: 'progress', matched: 0, needed: data.bits.length }));
       }

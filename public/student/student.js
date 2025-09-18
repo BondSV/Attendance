@@ -46,6 +46,7 @@
   let verificationId = null;
   let ws = null;
   let useWebSocket = false;
+  let captureLoopActive = false;
   const flipToggle = document.getElementById('flip-toggle');
   const progressCanvas = document.getElementById('progress-ring');
   const progressText = document.getElementById('progress-text');
@@ -144,6 +145,8 @@
         verificationId = data.verification_id;
         statusEl.textContent = 'Verified! Enter your ID.';
         idForm.classList.remove('hidden');
+        // Stop capture loop on verified
+        stopCaptureLoop();
       } else {
         statusEl.textContent = 'Verification failed. Try again.';
       }
@@ -174,10 +177,32 @@
     progressText.textContent = `${current}/${total}`;
   }
 
-  // Kick off capture after video is ready
+  // Capture loop control
+  function startCaptureLoop() {
+    if (captureLoopActive) return;
+    captureLoopActive = true;
+    (async function loop() {
+      // small initial delay for auto-exposure
+      await new Promise((r) => setTimeout(r, 500));
+      while (captureLoopActive && !verificationId) {
+        try {
+          await captureAndValidate();
+        } catch (e) {
+          console.error('capture error', e);
+        }
+        // brief pause between attempts to avoid tight looping
+        await new Promise((r) => setTimeout(r, 200));
+      }
+    })();
+  }
+
+  function stopCaptureLoop() {
+    captureLoopActive = false;
+  }
+
+  // Kick off capture loop after video is ready
   video.addEventListener('playing', () => {
-    // Wait a brief moment for camera auto‑exposure
-    setTimeout(captureAndValidate, 500);
+    startCaptureLoop();
   });
 
   // Try to open WebSocket connection for live validation
@@ -199,6 +224,8 @@
           verificationId = msg.verification_id;
           statusEl.textContent = 'Verified! Enter your ID.';
           idForm.classList.remove('hidden');
+        // Stop capture loop on verified
+        stopCaptureLoop();
         }
       } catch (err) { console.error(err); }
     });
