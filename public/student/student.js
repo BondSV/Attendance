@@ -56,8 +56,9 @@
   const downloadBtn = document.getElementById('download-log');
   const clearLogBtn = document.getElementById('clear-log');
   const debugRows = [];
+  let serverOffsetMs = 0;
 
-  // Start camera with mobile-friendly constraints
+  // Start camera with mobile-friendly constraints and request continuous focus
   navigator.mediaDevices.getUserMedia({
     video: {
       facingMode: { ideal: 'environment' },
@@ -70,11 +71,35 @@
   })
   .then((stream) => {
     video.srcObject = stream;
+    // Try to enforce continuous autofocus if supported
+    const track = stream.getVideoTracks && stream.getVideoTracks()[0];
+    if (track && track.getCapabilities) {
+      const caps = track.getCapabilities();
+      const constraints = {};
+      if (caps.focusMode && caps.focusMode.includes('continuous')) {
+        constraints.advanced = [{ focusMode: 'continuous' }];
+      }
+      if (Object.keys(constraints).length) {
+        try { track.applyConstraints(constraints); } catch (e) {}
+      }
+    }
   })
   .catch((err) => {
     console.error('Camera error', err);
     statusEl.textContent = 'Unable to access camera.';
   });
+
+  // Sync to server time to align sampling to bit boundaries
+  async function syncServerTime() {
+    try {
+      const r = await fetch('/api/time');
+      const j = await r.json();
+      serverOffsetMs = j.now_ms - Date.now();
+    } catch (e) {
+      serverOffsetMs = 0;
+    }
+  }
+  syncServerTime();
 
   /**
    * Sample the ROI for a single bit. The ROI is defined relative to the
@@ -84,9 +109,11 @@
    */
   function sampleBit() {
     // Ensure overlay size matches video element size
-    if (overlay.width !== video.clientWidth || overlay.height !== video.clientHeight) {
-      overlay.width = video.clientWidth;
-      overlay.height = video.clientHeight;
+    const vw = video.clientWidth || overlay.width || 320;
+    const vh = video.clientHeight || overlay.height || 240;
+    if (overlay.width !== vw || overlay.height !== vh) {
+      overlay.width = vw;
+      overlay.height = vh;
     }
     const w = overlay.width;
     const h = overlay.height;
@@ -121,8 +148,9 @@
     const mean = (data) => {
       let sum = 0;
       for (let i = 0; i < data.length; i += 4) {
-        // luminance: simple average of R,G,B
-        sum += (data[i] + data[i + 1] + data[i + 2]) / 3;
+        // luminance (Rec. 709): 0.2126R + 0.7152G + 0.0722B
+        const r = data[i], g = data[i + 1], b = data[i + 2];
+        sum += 0.2126 * r + 0.7152 * g + 0.0722 * b;
       }
       return sum / (data.length / 4);
     };
@@ -141,6 +169,10 @@
     statusEl.textContent = 'Capturing…';
     const bits = [];
     const count = 12;
+    // Align to server time bit boundary to reduce phase error
+    const nowAdj = Date.now() + serverOffsetMs;
+    const waitMs = delta - (nowAdj % delta);
+    await new Promise((r) => setTimeout(r, waitMs));
     for (let i = 0; i < count; i++) {
       bits.push(sampleBit());
       drawProgress(i + 1, count);
