@@ -163,8 +163,8 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, { error: 'Invalid payload' }, 400);
       }
       const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
-      // Validate bits using server time with strict threshold (exact match)
-      const vres = validateBits(bits, seed, delta || 300, { lenWindow: 3, threshold: bits.length });
+      // Validate bits using server time with tolerance per spec (>=10/12, small jitter)
+      const vres = validateBits(bits, seed, delta || 300, { lenWindow: 4, threshold: 10 });
       if (!vres || !vres.ok) {
         // return progress info so client can show matched/needed/offset
         return sendJson(res, { verified: false, matched: vres ? vres.matched : 0, needed: vres ? vres.needed : bits.length, offset: vres ? vres.offset : 0 });
@@ -263,9 +263,9 @@ wss.on('connection', (ws, req) => {
     }
     if (data.type === 'bits') {
       if (!ws._seed || !ws._delta) return ws.send(JSON.stringify({ type: 'error', error: 'Not initialised' }));
-      const vres = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 3, threshold: data.bits.length });
+      const vres = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 4, threshold: 10 });
       if (!vres || !vres.ok) {
-        return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: vres ? vres.needed : data.bits.length }));
+        return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: vres ? vres.needed : 12, offset: vres ? vres.offset : 0 }));
       }
       // Issue verification token bound to the connectionKey
       const token = issueVerification(ws._connectionKey);

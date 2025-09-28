@@ -79,6 +79,11 @@
       if (caps.focusMode && caps.focusMode.includes('continuous')) {
         constraints.advanced = [{ focusMode: 'continuous' }];
       }
+      if (caps.zoom && typeof caps.zoom.max === 'number') {
+        // Slight zoom helps some phones focus on the sign region
+        const midZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min || 1, (caps.zoom.max || 2) * 0.3));
+        (constraints.advanced || (constraints.advanced = [])).push({ zoom: midZoom });
+      }
       if (Object.keys(constraints).length) {
         try { track.applyConstraints(constraints); } catch (e) {}
       }
