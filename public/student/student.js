@@ -52,6 +52,10 @@
   const progressCanvas = document.getElementById('progress-ring');
   const progressText = document.getElementById('progress-text');
   const progressCtx = progressCanvas.getContext('2d');
+  const fullframeToggle = document.getElementById('fullframe-toggle');
+  const downloadBtn = document.getElementById('download-log');
+  const clearLogBtn = document.getElementById('clear-log');
+  const debugRows = [];
 
   // Start camera with mobile-friendly constraints
   navigator.mediaDevices.getUserMedia({
@@ -86,11 +90,16 @@
     }
     const w = overlay.width;
     const h = overlay.height;
-    // Smaller ROI for performance and easier framing
-    const roiX = Math.floor(w * 0.6);
-    const roiY = Math.floor(h * 0.20);
-    const roiW = Math.floor(w * 0.30);
-    const roiH = Math.floor(h * 0.25);
+    // ROI selection. If fullframe is enabled, use entire frame; otherwise use a centered region.
+    let roiX, roiY, roiW, roiH;
+    if (fullframeToggle && fullframeToggle.checked) {
+      roiX = 0; roiY = 0; roiW = w; roiH = h;
+    } else {
+      roiW = Math.floor(w * 0.5);
+      roiH = Math.floor(h * 0.4);
+      roiX = Math.floor((w - roiW) / 2);
+      roiY = Math.floor((h - roiH) / 2);
+    }
     // Draw current video frame to overlay
     if (flipToggle && flipToggle.checked) {
       // Flip horizontally
@@ -170,6 +179,7 @@
         const needed = typeof data.needed === 'number' ? data.needed : 12;
         const offset = typeof data.offset === 'number' ? data.offset : 0;
         statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+        debugRows.push({ ts: Date.now(), type: 'post_progress', matched, needed, offset });
       }
     } catch (err) {
       console.error(err);
@@ -243,6 +253,7 @@
           const needed = typeof msg.needed === 'number' ? msg.needed : 12;
           const offset = typeof msg.offset === 'number' ? msg.offset : 0;
           statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+          debugRows.push({ ts: Date.now(), type: 'ws_progress', matched, needed, offset });
           if (debugEl) debugEl.textContent += `  off:${offset}`;
         }
         if (msg.type === 'verified') {
@@ -290,4 +301,26 @@
       statusEl.textContent = 'Submission error.';
     }
   });
+
+  // Download debug log as CSV
+  function downloadCsv(rows) {
+    const header = 'ts,source,matched,needed,offset\n';
+    const body = rows.map(r => `${new Date(r.ts).toISOString()},${r.type},${r.matched},${r.needed},${r.offset}`).join('\n');
+    const blob = new Blob([header + body], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'debug_log.csv';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  }
+
+  if (downloadBtn) {
+    downloadBtn.addEventListener('click', () => downloadCsv(debugRows));
+  }
+  if (clearLogBtn) {
+    clearLogBtn.addEventListener('click', () => { debugRows.length = 0; if (debugEl) debugEl.textContent = ''; });
+  }
 })();

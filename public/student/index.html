@@ -16,7 +16,12 @@
   <div id="debug" class="debug"></div>
   <div id="controls">
     <label><input type="checkbox" id="flip-toggle"> Flip horizontally</label>
+    <label style="margin-left:12px;"><input type="checkbox" id="fullframe-toggle"> Use full frame</label>
     <div id="roi-hint">ROI: top-right quadrant. If contrast low, move closer or reduce glare.</div>
+    <div style="margin-top:6px;">
+      <button id="download-log" type="button">Download debug log (CSV)</button>
+      <button id="clear-log" type="button">Clear log</button>
+    </div>
   </div>
   <div id="progress-container" aria-hidden="true">
     <canvas id="progress-ring" width="64" height="64"></canvas>
