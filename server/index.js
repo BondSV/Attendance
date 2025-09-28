@@ -140,6 +140,7 @@ const server = http.createServer(async (req, res) => {
       const lock = acquireDeviceLock(deviceKey, student_id);
       if (!lock.ok) {
         logAnomaly({ type: 'device_lock_conflict', deviceKey, student_id, existingStudentId: lock.existingStudentId, sid, phase, ip: req.socket.remoteAddress });
+        return sendJson(res, { error: 'This device has already been used for submitting a student ID in this verification session.' }, 409);
       }
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
