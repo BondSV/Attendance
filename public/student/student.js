@@ -40,6 +40,7 @@
   const overlay = document.getElementById('overlay');
   const ctx = overlay.getContext('2d');
   const statusEl = document.getElementById('status');
+  const debugEl = document.getElementById('debug');
   const idForm = document.getElementById('id-form');
   const idInput = document.getElementById('student-id');
   const submitBtn = document.getElementById('submit-btn');
@@ -52,15 +53,24 @@
   const progressText = document.getElementById('progress-text');
   const progressCtx = progressCanvas.getContext('2d');
 
-  // Start camera
-  navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' }, audio: false })
-    .then((stream) => {
-      video.srcObject = stream;
-    })
-    .catch((err) => {
-      console.error('Camera error', err);
-      statusEl.textContent = 'Unable to access camera.';
-    });
+  // Start camera with mobile-friendly constraints
+  navigator.mediaDevices.getUserMedia({
+    video: {
+      facingMode: { ideal: 'environment' },
+      width: { ideal: 1280 },
+      height: { ideal: 720 },
+      focusMode: 'continuous',
+      advanced: [{ focusMode: 'continuous' }]
+    },
+    audio: false
+  })
+  .then((stream) => {
+    video.srcObject = stream;
+  })
+  .catch((err) => {
+    console.error('Camera error', err);
+    statusEl.textContent = 'Unable to access camera.';
+  });
 
   /**
    * Sample the ROI for a single bit. The ROI is defined relative to the
@@ -69,12 +79,18 @@
    * right halves. If right > left, bit = 1; else 0.
    */
   function sampleBit() {
+    // Ensure overlay size matches video element size
+    if (overlay.width !== video.clientWidth || overlay.height !== video.clientHeight) {
+      overlay.width = video.clientWidth;
+      overlay.height = video.clientHeight;
+    }
     const w = overlay.width;
     const h = overlay.height;
-    const roiX = Math.floor(w * 0.5);
-    const roiY = Math.floor(h * 0.15);
-    const roiW = Math.floor(w * 0.4);
-    const roiH = Math.floor(h * 0.3);
+    // Smaller ROI for performance and easier framing
+    const roiX = Math.floor(w * 0.6);
+    const roiY = Math.floor(h * 0.20);
+    const roiW = Math.floor(w * 0.30);
+    const roiH = Math.floor(h * 0.25);
     // Draw current video frame to overlay
     if (flipToggle && flipToggle.checked) {
       // Flip horizontally
@@ -103,6 +119,7 @@
     };
     const leftAvg = mean(leftData);
     const rightAvg = mean(rightData);
+    if (debugEl) debugEl.textContent = `L:${leftAvg.toFixed(1)} R:${rightAvg.toFixed(1)}`;
     return rightAvg > leftAvg ? 1 : 0;
   }
 
@@ -226,6 +243,7 @@
           const needed = typeof msg.needed === 'number' ? msg.needed : 12;
           const offset = typeof msg.offset === 'number' ? msg.offset : 0;
           statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+          if (debugEl) debugEl.textContent += `  off:${offset}`;
         }
         if (msg.type === 'verified') {
           verificationId = msg.verification_id;
