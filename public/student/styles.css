@@ -12,11 +12,8 @@ h1 {
   margin-bottom: 1rem;
 }
 
-#camera-wrapper {
-  display: flex;
-  justify-content: center;
-  margin: 0 auto;
-}
+#camera-wrapper { display: flex; justify-content: center; margin: 0 auto; }
+#controls { margin-top: 0.5rem; text-align: center; }
 
 #camera-container {
   position: relative;
@@ -53,11 +50,6 @@ h1 {
 
 .hidden {
   display: none;
-}
-
-#controls {
-  margin-top: 0.5rem;
-  text-align: center;
 }
 
 #roi-hint {
