@@ -383,4 +383,25 @@
   if (clearLogBtn) {
     clearLogBtn.addEventListener('click', () => { debugRows.length = 0; if (debugEl) debugEl.textContent = ''; });
   }
+
+  // Refocus button (if supported)
+  const refocusBtn = document.createElement('button');
+  refocusBtn.textContent = 'Try refocus';
+  refocusBtn.type = 'button';
+  refocusBtn.style.marginLeft = '12px';
+  if (clearLogBtn && clearLogBtn.parentElement) {
+    clearLogBtn.parentElement.appendChild(refocusBtn);
+    refocusBtn.addEventListener('click', async () => {
+      const stream = video.srcObject;
+      if (!stream) return;
+      const track = stream.getVideoTracks && stream.getVideoTracks()[0];
+      if (track && track.applyConstraints) {
+        try {
+          await track.applyConstraints({ advanced: [{ focusMode: 'continuous', focusDistance: 'near' }] });
+        } catch (e) {
+          console.warn('Refocus not supported', e);
+        }
+      }
+    });
+  }
 })();

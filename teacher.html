@@ -39,6 +39,7 @@
     }
     #bearCanvas {
       border: 1px solid #ccc;
+      background: #111;
     }
     #qrContainer {
       border: 1px solid #ccc;
@@ -125,29 +126,50 @@
   // Draw the pixel bear; bit=0 means sign left, bit=1 means sign right
   function drawBear(bit) {
     ctx.clearRect(0, 0, bearCanvas.width, bearCanvas.height);
-    // Body and head
-    ctx.fillStyle = '#7b5d3b';
-    // Body rectangle
-    ctx.fillRect(100, 60, 40, 60);
-    // Head circle
+    // Background glow
+    const gradient = ctx.createRadialGradient(120, 80, 20, 120, 80, 120);
+    gradient.addColorStop(0, '#222');
+    gradient.addColorStop(1, '#000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, bearCanvas.width, bearCanvas.height);
+
+    // Body and head (simplified for contrast)
+    ctx.fillStyle = '#6b4a2a';
+    ctx.fillRect(105, 70, 30, 45);
     ctx.beginPath();
-    ctx.arc(120, 50, 20, 0, Math.PI * 2);
-    ctx.fill();
-    // Ears
-    ctx.beginPath();
-    ctx.arc(105, 35, 8, 0, Math.PI * 2);
+    ctx.arc(120, 55, 18, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(135, 35, 8, 0, Math.PI * 2);
+    ctx.arc(108, 42, 6, 0, Math.PI * 2);
     ctx.fill();
-    // Sign
-    const signX = bit === 1 ? 150 : 30;
+    ctx.beginPath();
+    ctx.arc(132, 42, 6, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Glowing sign background
+    const signWidth = 70;
+    const signHeight = 40;
+    const signX = bit === 1 ? 150 : 40;
     const signY = 70;
-    ctx.fillStyle = '#f2f2f2';
-    ctx.fillRect(signX, signY, 50, 35);
-    ctx.strokeStyle = '#222';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(signX, signY, 50, 35);
+    const glowColor = bit === 1 ? '#ff1438' : '#00f6ff';
+    ctx.shadowColor = glowColor;
+    ctx.shadowBlur = 20;
+    ctx.fillStyle = glowColor;
+    ctx.fillRect(signX - 6, signY - 6, signWidth + 12, signHeight + 12);
+
+    // Foreground sign contrasting halves
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = '#000000';
+    ctx.fillRect(signX, signY, signWidth / 2, signHeight);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(signX + signWidth / 2, signY, signWidth / 2, signHeight);
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(signX, signY, signWidth, signHeight);
+
+    // Divider accent
+    ctx.fillStyle = glowColor;
+    ctx.fillRect(signX + signWidth / 2 - 2, signY, 4, signHeight);
   }
 
   // Resync to server time every 30 seconds
