@@ -3,241 +3,430 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Attendance QR</title>
+  <title>Teacher Attendance Console</title>
   <style>
-    body {
-      font-family: sans-serif;
-      padding: 1rem;
-      background: #f9f9f9;
-      color: #222;
+    :root {
+      color-scheme: light dark;
+      --bg: #f4f6fb;
+      --surface: #ffffff;
+      --surface-soft: rgba(255, 255, 255, 0.92);
+      --border: rgba(15, 23, 42, 0.08);
+      --shadow: rgba(15, 23, 42, 0.15);
+      --accent: #2563eb;
+      --accent-soft: rgba(37, 99, 235, 0.12);
+      --text: #101828;
+      --muted: #475467;
+      --danger: #dc2626;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     }
-    h1 {
-      font-size: 1.5rem;
-      margin-bottom: 1rem;
-    }
-    label {
-      display: block;
-      margin-top: 0.5rem;
-    }
-    input[type="text"], select {
-      padding: 0.4rem 0.5rem;
-      margin-top: 0.2rem;
-      width: 100%;
-      max-width: 300px;
+    * {
       box-sizing: border-box;
     }
-    button {
-      margin-top: 1rem;
-      padding: 0.5rem 1rem;
-      font-size: 1rem;
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.1), transparent 60%),
+        var(--bg);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: clamp(20px, 4vw, 40px);
+      color: var(--text);
     }
-    #display {
+    .shell {
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(520px, 720px);
+      gap: clamp(20px, 4vw, 40px);
+      width: min(1180px, 100%);
+    }
+    .card {
+      background: var(--surface);
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
+      padding: clamp(22px, 3vw, 36px);
       display: flex;
       flex-direction: column;
+      gap: clamp(18px, 2.4vw, 28px);
+    }
+    h1 {
+      margin: 0;
+      font-size: clamp(26px, 3vw, 34px);
+      font-weight: 600;
+      letter-spacing: -0.3px;
+    }
+    p.lead {
+      margin: 4px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+    .form-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+    label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    input[type="text"], select {
+      border-radius: 14px;
+      border: 1px solid rgba(15, 23, 42, 0.16);
+      padding: 12px 14px;
+      font-size: 15px;
+      background: rgba(255, 255, 255, 0.9);
+      transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 4px var(--accent-soft);
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    button {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    button.primary {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.25);
+    }
+    button.primary:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
+    }
+    button.primary:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    button.ghost {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+    }
+    button.ghost:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
+      border-color: rgba(15, 23, 42, 0.18);
+    }
+    button.ghost:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    .step-card {
+      background: rgba(255, 255, 255, 0.86);
+      border-radius: 18px;
+      border: 1px dashed rgba(15, 23, 42, 0.2);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
       align-items: center;
-      margin-top: 1.5rem;
-      gap: 1.5rem;
+      text-align: center;
     }
-    #bearCanvas {
-      border: 1px solid #ccc;
-      background: #000;
-      max-width: 100%;
+    .step-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(37, 99, 235, 0.12);
+      color: var(--accent);
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
     }
-    #qrContainer {
-      border: 1px solid #ccc;
-      padding: 0.5rem;
-      background: #fff;
+    .step-card h3 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 600;
+    }
+    .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+    }
+    .qr-box {
+      width: clamp(240px, 36vw, 360px);
+      aspect-ratio: 1 / 1;
+      border-radius: 24px;
+      background: var(--surface-soft);
+      display: grid;
+      place-items: center;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 32px 64px rgba(15, 23, 42, 0.16);
+      border: 1px solid rgba(37, 99, 235, 0.12);
+    }
+    .qr-box.small {
+      width: clamp(160px, 24vw, 210px);
+      border-radius: 18px;
+      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+    }
+    .qr-box canvas {
+      width: 84%;
+      height: 84%;
+    }
+    .qr-placeholder {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+      padding: 0 18px;
+      line-height: 1.5;
+    }
+    .countdown {
+      font-size: 14px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .status-line {
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .status-line strong {
+      color: var(--accent);
+    }
+    .verify-card h2 {
+      margin: 0;
+      font-size: clamp(24px, 2.6vw, 30px);
+      font-weight: 600;
+    }
+    .verify-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    @media (max-width: 980px) {
+      body {
+        align-items: flex-start;
+      }
+      .shell {
+        grid-template-columns: 1fr;
+      }
+      .qr-box {
+        width: clamp(260px, 70vw, 360px);
+      }
+      .qr-box.small {
+        width: clamp(200px, 50vw, 240px);
+      }
     }
   </style>
 </head>
 <body>
-  <h1>Attendance Session QR Generator</h1>
-  <p>Enter session details and start the check‑in window. The animated bear will indicate a live signal for students to scan. A single QR code links students to the attendance page with the required parameters.</p>
+  <div class="shell">
+    <section class="card">
+      <div>
+        <h1>Attendance Session</h1>
+        <p class="lead">Configure the session parameters, show the two QR steps on the projector, and track in-class attendance securely.</p>
+      </div>
+      <div class="form-stack">
+        <label for="sessionId">Session ID
+          <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
+        </label>
+        <label for="studentOrigin">Student App Origin
+          <input id="studentOrigin" type="text" placeholder="https://attendance.example.edu" autocomplete="off">
+        </label>
+        <label for="phase">Phase
+          <select id="phase">
+            <option value="start">Start</option>
+            <option value="break">Break</option>
+            <option value="end">End</option>
+          </select>
+        </label>
+      </div>
+      <div class="actions">
+        <button class="primary" id="startBtn">Start session</button>
+        <button class="ghost" id="stopBtn" disabled>Stop session</button>
+      </div>
+      <div class="step-card" id="step1Card">
+        <span class="step-pill">Step 1</span>
+        <h3>Scan to open Student App</h3>
+        <div class="qr-box small" id="sessionQr">
+          <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
+        </div>
+        <p>Display this so students can launch the check-in app on their phones.</p>
+      </div>
+      <div id="sessionStatus" class="status-line"></div>
+    </section>
 
-  <label for="sessionId">Session ID</label>
-  <input id="sessionId" type="text" placeholder="e.g., OPS101-2025-10-03-0900" />
-
-  <label for="studentOrigin">Student App Origin (default current origin)</label>
-  <input id="studentOrigin" type="text" placeholder="https://attendance.uni.ac.uk" />
-
-  <label for="phase">Phase</label>
-  <select id="phase">
-    <option value="start">Start</option>
-    <option value="break">Break</option>
-    <option value="end">End</option>
-  </select>
-
-  <button id="startBtn">Start</button>
-  <button id="stopBtn" disabled>Stop</button>
-
-  <div id="display" style="display:none;">
-    <canvas id="bearCanvas" width="480" height="240"></canvas>
-    <div id="qrContainer"></div>
+    <section class="card verify-card">
+      <span class="step-pill">Step 2</span>
+      <h2>Verify attendance in the room</h2>
+      <p>Students open the in-app scanner and point it at this live code while staying in class.</p>
+      <div class="qr-box" id="verificationQr">
+        <div class="qr-placeholder">Start the session to display the verification QR.</div>
+      </div>
+      <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
+    </section>
   </div>
 
-  <!-- QRCode library from CDN; fallback to available cached library. -->
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-  const DIGIT_WIDTH_UNITS = 3;
-  const DIGIT_HEIGHT_UNITS = 5;
-  const DIGIT_GAP_UNITS = 1;
-  const CHAR_PATTERNS = {
-    '0': [1,1,1, 1,0,1, 1,0,1, 1,0,1, 1,1,1],
-    '1': [0,1,0, 1,1,0, 0,1,0, 0,1,0, 1,1,1],
-    '2': [1,1,1, 0,0,1, 1,1,1, 1,0,0, 1,1,1],
-    '3': [1,1,1, 0,0,1, 1,1,1, 0,0,1, 1,1,1],
-    '4': [1,0,1, 1,0,1, 1,1,1, 0,0,1, 0,0,1],
-    '5': [1,1,1, 1,0,0, 1,1,1, 0,0,1, 1,1,1],
-    '6': [1,1,1, 1,0,0, 1,1,1, 1,0,1, 1,1,1],
-    '7': [1,1,1, 0,0,1, 0,1,0, 1,0,0, 1,0,0],
-    '8': [1,1,1, 1,0,1, 1,1,1, 1,0,1, 1,1,1],
-    '9': [1,1,1, 1,0,1, 1,1,1, 0,0,1, 1,1,1],
-    ':': [0,0,0, 0,1,0, 0,0,0, 0,1,0, 0,0,0],
-  };
+  (function() {
+    const sessionIdInput = document.getElementById('sessionId');
+    const studentOriginInput = document.getElementById('studentOrigin');
+    const phaseSelect = document.getElementById('phase');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const sessionQrEl = document.getElementById('sessionQr');
+    const verificationQrEl = document.getElementById('verificationQr');
+    const sessionStatusEl = document.getElementById('sessionStatus');
+    const countdownEl = document.getElementById('challengeCountdown');
 
-  function toBase64Url(obj) {
-    const json = JSON.stringify(obj);
-    return btoa(unescape(encodeURIComponent(json)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=+$/, '');
-  }
+    let sessionQr = null;
+    let verificationQr = null;
+    let activeSession = null;
+    let challengeTimerId = null;
+    let countdownIntervalId = null;
+    let countdownSeconds = 0;
 
-  let running = false;
-  let offset = 0;
-  let resyncIntervalId;
-  let saltIntervalId;
+    function clearQr(container) {
+      container.innerHTML = '<div class="qr-placeholder">Start the session to display the verification QR.</div>';
+    }
 
-  let salt = { value: 0, expiresAt: 0, rotationMs: 600, acceptWindowMs: 1000 };
+    function renderSessionQr(url) {
+      sessionQrEl.innerHTML = '';
+      sessionQr = new QRCode(sessionQrEl, {
+        text: url,
+        width: 180,
+        height: 180,
+        correctLevel: QRCode.CorrectLevel.M,
+        colorDark: '#000000',
+        colorLight: '#ffffff'
+      });
+    }
 
-  const canvas = document.getElementById('bearCanvas');
-  const ctx = canvas.getContext('2d');
-  const qrContainer = document.getElementById('qrContainer');
-  const displayDiv = document.getElementById('display');
+    function renderVerificationQr(text) {
+      verificationQrEl.innerHTML = '';
+      verificationQr = new QRCode(verificationQrEl, {
+        text,
+        width: 320,
+        height: 320,
+        correctLevel: QRCode.CorrectLevel.M,
+        colorDark: '#000000',
+        colorLight: '#ffffff'
+      });
+    }
 
-  function drawChar(char, x, y, cell) {
-    const pattern = CHAR_PATTERNS[char];
-    if (!pattern) return;
-    const cols = DIGIT_WIDTH_UNITS;
-    const rows = DIGIT_HEIGHT_UNITS;
-    for (let r = 0; r < rows; r++) {
-      for (let c = 0; c < cols; c++) {
-        if (pattern[r * cols + c]) {
-          const px = Math.round(x + c * cell);
-          const py = Math.round(y + r * cell);
-          ctx.fillRect(px, py, cell, cell);
-        }
+    function encodePayload(obj) {
+      const json = JSON.stringify(obj);
+      return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+    }
+
+    function updateCountdownDisplay() {
+      if (!activeSession) {
+        countdownEl.textContent = 'Waiting to start session…';
+        return;
+      }
+      if (countdownSeconds <= 0) {
+        countdownEl.textContent = 'Refreshing verification code…';
+      } else {
+        countdownEl.textContent = `New verification code in ${countdownSeconds}s`;
       }
     }
-  }
 
-  function drawDisplay(text) {
-    ctx.imageSmoothingEnabled = false;
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const textLength = text.length;
-    const totalUnits = textLength * DIGIT_WIDTH_UNITS + (textLength + 1) * DIGIT_GAP_UNITS;
-    const cell = Math.max(1, Math.floor(canvas.width / totalUnits));
-    const charWidth = cell * DIGIT_WIDTH_UNITS;
-    const charHeight = cell * DIGIT_HEIGHT_UNITS;
-    const gapPx = cell * DIGIT_GAP_UNITS;
-
-    const contentWidth = textLength * charWidth + (textLength - 1) * gapPx;
-    const startX = Math.max(0, Math.floor((canvas.width - contentWidth) / 2));
-    const startY = Math.max(0, Math.floor((canvas.height - charHeight) / 2));
-
-    ctx.fillStyle = '#000000';
-    for (let i = 0; i < text.length; i++) {
-      const ch = text[i];
-      const x = startX + i * (charWidth + gapPx);
-      drawChar(ch, x, startY, cell);
+    function clearTimers() {
+      if (challengeTimerId) {
+        clearTimeout(challengeTimerId);
+        challengeTimerId = null;
+      }
+      if (countdownIntervalId) {
+        clearInterval(countdownIntervalId);
+        countdownIntervalId = null;
+      }
     }
-  }
 
-  async function resync() {
-    try {
-      const resp = await fetch('/api/time');
-      const data = await resp.json();
-      offset = data.now_ms - Date.now();
-      salt = {
-        value: data.salt,
-        expiresAt: data.salt_expires_ms,
-        rotationMs: data.rotation_ms,
-        acceptWindowMs: data.accept_window_ms,
-      };
-    } catch (err) {
-      console.error('Time sync failed', err);
-    }
-  }
-
-  async function fetchSalt() {
-    try {
-      const resp = await fetch('/api/salt');
-      const data = await resp.json();
-      if (data && data.current) {
-        salt = {
-          value: data.current.value,
-          expiresAt: data.current.expiresAt,
-          rotationMs: data.rotation_ms,
-          acceptWindowMs: data.accept_window_ms,
+    async function fetchChallenge() {
+      if (!activeSession) return;
+      const { sid, phase } = activeSession;
+      try {
+        const url = `/api/challenge?sid=${encodeURIComponent(sid)}&phase=${encodeURIComponent(phase)}`;
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error('Challenge fetch failed');
+        const data = await resp.json();
+        const payload = {
+          v: 1,
+          type: 'challenge',
+          sid,
+          phase,
+          challenge: data.challenge
         };
+        renderVerificationQr(JSON.stringify(payload));
+        const ttlMs = data.ttl_ms || 5000;
+        countdownSeconds = Math.max(1, Math.round(ttlMs / 1000));
+        updateCountdownDisplay();
+        if (countdownIntervalId) clearInterval(countdownIntervalId);
+        countdownIntervalId = setInterval(() => {
+          countdownSeconds = Math.max(0, countdownSeconds - 1);
+          updateCountdownDisplay();
+        }, 1000);
+        const nextDelay = Math.max(1000, ttlMs - 200);
+        challengeTimerId = setTimeout(fetchChallenge, nextDelay);
+      } catch (err) {
+        console.error(err);
+        countdownEl.textContent = 'Unable to load verification code. Retrying…';
+        challengeTimerId = setTimeout(fetchChallenge, 2000);
       }
-    } catch (err) {
-      console.error('Salt fetch failed', err);
     }
-  }
 
-  function currentCode() {
-    const now = Date.now() + offset;
-    const date = new Date(now);
-    const mm = String(date.getUTCMinutes()).padStart(2, '0');
-    const ss = String(date.getUTCSeconds()).padStart(2, '0');
-    const saltDigits = String(Math.abs(salt.value || 0) % 100).padStart(2, '0');
-    return `${mm}:${ss}:${saltDigits}`;
-  }
-
-  function animate() {
-    if (!running) return;
-    drawDisplay(currentCode());
-    requestAnimationFrame(animate);
-  }
-
-  document.getElementById('startBtn').addEventListener('click', async () => {
-    const sid = document.getElementById('sessionId').value.trim();
-    const phase = document.getElementById('phase').value;
-    const studentOriginInput = document.getElementById('studentOrigin').value.trim();
-    const studentOrigin = studentOriginInput || window.location.origin;
-    if (!sid) {
-      alert('Please enter a session ID.');
-      return;
+    function stopSession() {
+      clearTimers();
+      activeSession = null;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      sessionStatusEl.textContent = '';
+      clearQr(verificationQrEl);
+      countdownEl.textContent = 'Session stopped. Start again to display a new code.';
     }
-    await Promise.all([resync(), fetchSalt()]);
-    const payload = { v: 1, sid: sid, p: phase };
-    const frag = toBase64Url(payload);
-    const url = `${studentOrigin.replace(/\/$/, '')}/student#${frag}`;
-    qrContainer.innerHTML = '';
-    new QRCode(qrContainer, { text: url, width: 200, height: 200 });
-    displayDiv.style.display = 'flex';
-    running = true;
-    document.getElementById('startBtn').disabled = true;
-    document.getElementById('stopBtn').disabled = false;
-    animate();
-    if (resyncIntervalId) clearInterval(resyncIntervalId);
-    resyncIntervalId = setInterval(resync, 20000);
-    if (saltIntervalId) clearInterval(saltIntervalId);
-    saltIntervalId = setInterval(fetchSalt, Math.max(200, (salt.rotationMs || 600) / 2));
-  });
 
-  document.getElementById('stopBtn').addEventListener('click', () => {
-    running = false;
-    document.getElementById('startBtn').disabled = false;
-    document.getElementById('stopBtn').disabled = true;
-    displayDiv.style.display = 'none';
-    qrContainer.innerHTML = '';
-    if (resyncIntervalId) clearInterval(resyncIntervalId);
-    if (saltIntervalId) clearInterval(saltIntervalId);
-  });
+    startBtn.addEventListener('click', () => {
+      const sid = sessionIdInput.value.trim();
+      const phase = phaseSelect.value;
+      const origin = (studentOriginInput.value.trim() || window.location.origin).replace(/\/$/, '');
+      if (!sid) {
+        alert('Please enter a session ID.');
+        return;
+      }
+      const sessionPayload = { v: 1, sid, p: phase };
+      const frag = encodePayload(sessionPayload);
+      const url = `${origin}/student#${frag}`;
+      renderSessionQr(url);
+      sessionStatusEl.innerHTML = `<strong>Running:</strong> ${sid} • Share Step 1 QR with students.`;
+      activeSession = { sid, phase };
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+      clearTimers();
+      fetchChallenge();
+    });
+
+    stopBtn.addEventListener('click', () => {
+      stopSession();
+    });
+
+    window.addEventListener('beforeunload', () => {
+      clearTimers();
+    });
+  })();
   </script>
 </body>
 </html>

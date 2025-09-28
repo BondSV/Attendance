@@ -3,36 +3,68 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Student Check-in</title>
+  <title>In-Class Attendance</title>
   <link rel="stylesheet" href="/student/styles.css">
 </head>
 <body>
-  <h1>Attendance Check-in</h1>
-  <div id="camera-wrapper">
-    <div id="camera-container">
-      <video id="video" autoplay playsinline></video>
-      <canvas id="overlay"></canvas>
-    </div>
+  <div class="page">
+    <header class="page__header">
+      <div>
+        <p class="session-label" id="sessionLabel">Live session</p>
+        <h1 id="sessionTitle">Attendance Check-in</h1>
+      </div>
+      <div class="session-pill" id="phasePill"></div>
+    </header>
+
+    <main class="page__grid">
+      <section class="card intro">
+        <h2>Complete both steps to confirm you are in class</h2>
+        <ol class="steps">
+          <li><strong>Step 1:</strong> You already scanned the entry QR to open this page.</li>
+          <li><strong>Step 2:</strong> Use the in-app scanner below to read the verification code on the front screen.</li>
+        </ol>
+        <div class="status-banner" id="statusBanner">Tap “Start scanning” when you can see the teacher’s Step 2 QR code.</div>
+        <button class="primary" id="scanBtn">Start scanning</button>
+      </section>
+
+      <section class="card scanner" id="scannerCard">
+        <h2>Step 2 – Verify attendance</h2>
+        <p class="muted">Point your phone at the Step 2 QR code shown by the instructor. The code refreshes automatically when you stay in class.</p>
+        <div class="camera-frame" id="cameraFrame" hidden>
+          <video id="video" autoplay playsinline></video>
+          <div class="camera-overlay">
+            <div class="bracket top-left"></div>
+            <div class="bracket top-right"></div>
+            <div class="bracket bottom-left"></div>
+            <div class="bracket bottom-right"></div>
+            <p class="camera-hint" id="cameraHint">Align the QR inside the frame</p>
+          </div>
+        </div>
+        <div class="scanner-placeholder" id="scannerPlaceholder">
+          <p>Tap “Start scanning” to open the camera.</p>
+          <p class="muted small">If the QR is not detected quickly, wait for the next refresh in front of the screen.</p>
+        </div>
+        <div class="card success" id="successCard" hidden>
+          <span class="success-icon">✔</span>
+          <div>
+            <h3>Presence verified</h3>
+            <p class="muted">Great! Now enter your student ID to finish the check-in.</p>
+          </div>
+        </div>
+      </section>
+
+      <section class="card form" id="idCard" hidden>
+        <h2>Finalize your check-in</h2>
+        <label for="student-id">Student ID</label>
+        <div class="id-input-row">
+          <input type="text" id="student-id" maxlength="12" placeholder="Enter your student ID">
+          <button class="primary" id="submit-btn">Submit</button>
+        </div>
+        <p class="muted small" id="submitStatus"></p>
+      </section>
+    </main>
   </div>
-  <div id="status">Point your camera at the display…</div>
-  <div id="debug" class="debug"></div>
-  <div id="controls">
-    <label><input type="checkbox" id="fullframe-toggle" checked> Use full frame</label>
-    <button id="refocus-btn" type="button">Try refocus</button>
-    <div style="margin-top:6px;">
-      <button id="download-log" type="button">Download debug log (CSV)</button>
-      <button id="clear-log" type="button">Clear log</button>
-    </div>
-  </div>
-  <div id="progress-container" aria-hidden="true">
-    <canvas id="progress-ring" width="64" height="64"></canvas>
-    <div id="progress-text">0/16</div>
-  </div>
-  <div id="id-form" class="hidden">
-    <label for="student-id">Student ID:</label>
-    <input type="text" id="student-id" placeholder="Enter your ID" maxlength="12">
-    <button id="submit-btn">Submit</button>
-  </div>
+
   <script src="/student/student.js"></script>
 </body>
 </html>

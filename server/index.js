@@ -4,8 +4,8 @@ const path = require('path');
 
 const { issueVerification, consumeVerification, acquireDeviceLock } = require('./memoryState');
 const { appendCsvRow } = require('./csvWriter');
-const { getSalts, validateCode } = require('./salt');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
+const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 
 const PORT = process.env.PORT || 8080;
 const ANOMALY_LOG_PATH = process.env.ANOMALY_LOG_PATH || null;
@@ -88,43 +88,37 @@ function serveStatic(req, res) {
   return false;
 }
 
-function validateCodePayload(body) {
-  const { sid, phase, code } = body;
-  const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
-  if (!sid || !sidRe.test(sid)) return 'Invalid sid';
-  if (!['start', 'break', 'end'].includes(phase)) return 'Invalid phase';
-  if (typeof code !== 'string' || !/^\d{2}:\d{2}:\d{2}$/.test(code)) return 'Invalid code format';
-  return null;
-}
-
 const server = http.createServer(async (req, res) => {
   if (serveStatic(req, res)) return;
   const parsed = new URL(req.url, 'http://localhost');
   const pathname = parsed.pathname;
   try {
-    if (pathname === '/api/time' && req.method === 'GET') {
-      const salts = getSalts();
-      return sendJson(res, {
-        now_ms: Date.now(),
-        salt: salts.current.value,
-        salt_expires_ms: salts.current.expiresAt,
-        rotation_ms: salts.rotationMs,
-        accept_window_ms: salts.acceptWindowMs,
-      });
+    if (pathname === '/api/challenge' && req.method === 'GET') {
+      const sid = parsed.searchParams.get('sid');
+      const phase = parsed.searchParams.get('phase') || 'start';
+      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
+      if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      const { challenge, expiresAt, ttlMs } = issueChallenge(sid, phase);
+      return sendJson(res, { challenge, expires_at_ms: expiresAt, ttl_ms: ttlMs || DEFAULT_TTL_MS });
     }
 
-    if (pathname === '/api/validate-code' && req.method === 'POST') {
+    if (pathname === '/api/validate-challenge' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const error = validateCodePayload(body);
-      if (error) return sendJson(res, { error }, 400);
-      const result = validateCode(body.code);
-      if (!result.ok) {
-        const reason = result.reason === 'time' ? 'Code out of time window' : result.reason === 'salt' ? 'Salt expired' : 'Invalid code';
-        return sendJson(res, { error: reason, expected_code: result.expected }, 400);
+      const { sid, phase, challenge, page_session_id } = body;
+      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
+      if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      if (!challenge || typeof challenge !== 'string' || challenge.length > 128) {
+        return sendJson(res, { error: 'Invalid challenge' }, 400);
       }
-      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], body.sid, body.phase, body.page_session_id || ''].join('|');
+      const result = validateChallenge(sid, phase, challenge);
+      if (!result.ok) {
+        return sendJson(res, { error: 'Challenge expired' }, 400);
+      }
+      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
       const token = issueVerification(connectionKey);
-      return sendJson(res, { verified: true, verification_id: token });
+      return sendJson(res, { verified: true, verification_id: token, ttl_ms: 30000 });
     }
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
