@@ -50,8 +50,8 @@
 
   const MAX_ATTEMPTS = 12;
   const ATTEMPT_INTERVAL_MS = 700;
-  const PIXEL_THRESHOLD = 180;
-  const MIN_SCORE_THRESHOLD = 0.65;
+  const PIXEL_THRESHOLD = 215;
+  const MIN_SCORE_THRESHOLD = 0.9;
   const DIGIT_WIDTH = 3;
   const DIGIT_HEIGHT = 5;
   const DIGIT_GAP = 1;
@@ -124,7 +124,7 @@
     const h = overlay.height;
     ctx.drawImage(video, 0, 0, w, h);
 
-    const cell = Math.max(2, Math.floor(Math.min(w, h) / 12));
+    const cell = Math.max(4, Math.floor(Math.min(w, h) / 12));
     const charPixelWidth = DIGIT_WIDTH * cell;
     const charGap = DIGIT_GAP * cell;
     const totalWidth = CODE_LAYOUT.length * charPixelWidth + (CODE_LAYOUT.length - 1) * charGap;
@@ -136,34 +136,31 @@
 
     for (let index = 0; index < CODE_LAYOUT.length; index++) {
       const allowedChars = CODE_LAYOUT[index] === 'colon' ? [':'] : DIGIT_CHARS;
-      const pattern = [];
+      const patternBits = [];
       const baseX = startX + index * (charPixelWidth + charGap);
       for (let row = 0; row < DIGIT_HEIGHT; row++) {
         for (let col = 0; col < DIGIT_WIDTH; col++) {
-          const sampleX = baseX + col * cell;
-          const sampleY = startY + row * cell;
-          const data = ctx.getImageData(sampleX, sampleY, cell, cell).data;
+          const sx = baseX + col * cell + Math.floor(cell / 4);
+          const sy = startY + row * cell + Math.floor(cell / 4);
+          const size = Math.max(1, Math.floor(cell / 2));
+          const data = ctx.getImageData(sx, sy, size, size).data;
           let sum = 0;
           for (let i = 0; i < data.length; i += 4) {
-            const r = data[i];
-            const g = data[i + 1];
-            const b = data[i + 2];
-            const luminance = 0.2126 * r + 0.7152 * g + 0.0722 * b;
+            const luminance = 0.2126 * data[i] + 0.7152 * data[i + 1] + 0.0722 * data[i + 2];
             sum += luminance;
           }
           const avg = sum / (data.length / 4);
-          pattern.push(avg > PIXEL_THRESHOLD ? 1 : 0);
+          patternBits.push(avg > PIXEL_THRESHOLD ? 1 : 0);
         }
       }
 
       let bestChar = '?';
       let bestScore = -Infinity;
-      const templateLength = DIGIT_PATTERNS['0'].length;
       allowedChars.forEach((char) => {
         const template = DIGIT_PATTERNS[char];
         let score = 0;
-        for (let i = 0; i < templateLength; i++) {
-          if (template[i] === pattern[i]) score++;
+        for (let i = 0; i < template.length; i++) {
+          if (template[i] === patternBits[i]) score++;
         }
         if (score > bestScore) {
           bestScore = score;
@@ -177,7 +174,6 @@
 
     const avgScore = scores.reduce((acc, val) => acc + val, 0) / scores.length;
     const minScore = Math.min(...scores);
-
     return { code, scores, avgScore, minScore };
   }
 
