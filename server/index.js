@@ -179,10 +179,10 @@ const server = http.createServer(async (req, res) => {
       }
       const saltValue = age <= ACCEPT_WINDOW_MS ? salts.current.value : salts.previous.value;
       const effectiveSeed = (seed ^ saltValue) | 0;
-      const vres = validateBits(bits, effectiveSeed, delta || 300, { lenWindow: 2, threshold: 11 });
+      const vres = validateBits(bits, effectiveSeed, delta || 300, { lenWindow: 2, threshold: 14 });
       if (!vres || !vres.ok) {
         // return progress info so client can show matched/needed/offset
-        return sendJson(res, { verified: false, matched: vres ? vres.matched : 0, needed: vres ? vres.needed : bits.length, offset: vres ? vres.offset : 0 });
+        return sendJson(res, { verified: false, matched: vres ? vres.matched : 0, needed: 16, offset: vres ? vres.offset : 0 });
       }
       // Issue verification token
       const token = issueVerification(connectionKey);
@@ -289,9 +289,9 @@ wss.on('connection', (ws, req) => {
       }
       const saltValue = age <= ACCEPT_WINDOW_MS ? salts.current.value : salts.previous.value;
       const effectiveSeed = (ws._seed ^ saltValue) | 0;
-      const vres = validateBits(data.bits, effectiveSeed, ws._delta, { lenWindow: 2, threshold: 11 });
+      const vres = validateBits(data.bits, effectiveSeed, ws._delta, { lenWindow: 2, threshold: 14 });
       if (!vres || !vres.ok) {
-        return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: vres ? vres.needed : 12, offset: vres ? vres.offset : 0 }));
+        return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: 16, offset: vres ? vres.offset : 0 }));
       }
       // Issue verification token bound to the connectionKey
       const token = issueVerification(ws._connectionKey);

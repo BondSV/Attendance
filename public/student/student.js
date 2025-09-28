@@ -188,7 +188,7 @@
   async function captureAndValidate() {
     statusEl.textContent = 'Capturing…';
     const bits = [];
-    const count = 12;
+    const count = 16;
     // Align to server time bit boundary to reduce phase error
     const nowAdj = Date.now() + serverOffsetMs;
     const waitMs = delta - (nowAdj % delta);
@@ -246,7 +246,7 @@
         const matched = typeof data.matched === 'number' ? data.matched : 0;
         const needed = typeof data.needed === 'number' ? data.needed : 12;
         const offset = typeof data.offset === 'number' ? data.offset : 0;
-        statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+        statusEl.textContent = `Progress ${matched}/${needed || 16} (offset ${offset})`;
         debugRows.push({ ts: Date.now(), type: 'post_progress', matched, needed, offset });
       }
     } catch (err) {
@@ -256,23 +256,34 @@
   }
 
   function drawProgress(current, total) {
-    const pct = current / total;
-    const ctx = progressCtx;
+    const ctxProg = progressCtx;
     const w = progressCanvas.width;
     const h = progressCanvas.height;
-    ctx.clearRect(0, 0, w, h);
-    // background circle
-    ctx.beginPath();
-    ctx.arc(w/2, h/2, w/2 - 4, 0, Math.PI * 2);
-    ctx.fillStyle = '#eee';
-    ctx.fill();
-    // progress arc
-    ctx.beginPath();
-    ctx.moveTo(w/2, h/2);
-    ctx.fillStyle = '#4caf50';
-    ctx.arc(w/2, h/2, w/2 - 4, -Math.PI/2, -Math.PI/2 + pct * Math.PI * 2);
-    ctx.lineTo(w/2, h/2);
-    ctx.fill();
+    ctxProg.clearRect(0, 0, w, h);
+
+    ctxProg.beginPath();
+    ctxProg.arc(w/2, h/2, w/2 - 4, 0, Math.PI * 2);
+    ctxProg.fillStyle = '#202020';
+    ctxProg.fill();
+
+    const segments = total;
+    const anglePer = (Math.PI * 2) / segments;
+    for (let i = 0; i < segments; i++) {
+      const start = -Math.PI / 2 + i * anglePer;
+      const end = start + anglePer;
+      ctxProg.beginPath();
+      ctxProg.moveTo(w/2, h/2);
+      ctxProg.arc(w/2, h/2, w/2 - 4, start, end);
+      ctxProg.closePath();
+      ctxProg.fillStyle = i < current ? '#2ECC71' : '#E74C3C';
+      ctxProg.fill();
+    }
+
+    ctxProg.beginPath();
+    ctxProg.arc(w/2, h/2, (w/2 - 4) * 0.6, 0, Math.PI * 2);
+    ctxProg.fillStyle = '#111';
+    ctxProg.fill();
+
     progressText.textContent = `${current}/${total}`;
   }
 
@@ -320,7 +331,7 @@
           const matched = typeof msg.matched === 'number' ? msg.matched : 0;
           const needed = typeof msg.needed === 'number' ? msg.needed : 12;
           const offset = typeof msg.offset === 'number' ? msg.offset : 0;
-          statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+          statusEl.textContent = `Progress ${matched}/${needed || 16} (offset ${offset})`;
           debugRows.push({ ts: Date.now(), type: 'ws_progress', matched, needed, offset });
           if (debugEl) debugEl.textContent += `  off:${offset}`;
         }

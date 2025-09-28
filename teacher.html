@@ -33,13 +33,13 @@
     }
     #display {
       display: flex;
-      align-items: flex-start;
+      align-items: center;
       margin-top: 1.5rem;
       gap: 2rem;
     }
     #bearCanvas {
       border: 1px solid #ccc;
-      background: #111;
+      background: #000;
     }
     #qrContainer {
       border: 1px solid #ccc;
@@ -125,53 +125,39 @@
   const qrContainer = document.getElementById('qrContainer');
   const displayDiv = document.getElementById('display');
 
-  // Draw the pixel bear; bit=0 means sign left, bit=1 means sign right
-  function drawBear(bit) {
+  function drawSign(bit) {
     ctx.clearRect(0, 0, bearCanvas.width, bearCanvas.height);
-    // Background glow
-    const gradient = ctx.createRadialGradient(120, 80, 20, 120, 80, 120);
-    gradient.addColorStop(0, '#222');
-    gradient.addColorStop(1, '#000');
-    ctx.fillStyle = gradient;
-    ctx.fillRect(0, 0, bearCanvas.width, bearCanvas.height);
+    const w = bearCanvas.width;
+    const h = bearCanvas.height;
 
-    // Body and head (simplified for contrast)
-    ctx.fillStyle = '#6b4a2a';
-    ctx.fillRect(105, 70, 30, 45);
-    ctx.beginPath();
-    ctx.arc(120, 55, 18, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(108, 42, 6, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(132, 42, 6, 0, Math.PI * 2);
-    ctx.fill();
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, w, h);
 
-    // Glowing sign background
-    const signWidth = 70;
-    const signHeight = 40;
-    const signX = bit === 1 ? 150 : 40;
-    const signY = 70;
-    const glowColor = bit === 1 ? '#ff1438' : '#00f6ff';
-    ctx.shadowColor = glowColor;
-    ctx.shadowBlur = 20;
-    ctx.fillStyle = glowColor;
-    ctx.fillRect(signX - 6, signY - 6, signWidth + 12, signHeight + 12);
+    const signW = Math.floor(w * 0.8);
+    const signH = Math.floor(h * 0.6);
+    const signX = Math.floor((w - signW) / 2);
+    const signY = Math.floor((h - signH) / 2);
 
-    // Foreground sign contrasting halves
+    ctx.shadowBlur = 30;
+    ctx.shadowColor = '#00eaff';
+    ctx.fillStyle = '#00eaff';
+    ctx.fillRect(signX - 10, signY - 10, signW + 20, signH + 20);
+
     ctx.shadowBlur = 0;
-    ctx.fillStyle = '#000000';
-    ctx.fillRect(signX, signY, signWidth / 2, signHeight);
-    ctx.fillStyle = '#ffffff';
-    ctx.fillRect(signX + signWidth / 2, signY, signWidth / 2, signHeight);
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 3;
-    ctx.strokeRect(signX, signY, signWidth, signHeight);
+    const leftColor = bit === 1 ? '#111' : '#f8f8f8';
+    const rightColor = bit === 1 ? '#f8f8f8' : '#111';
 
-    // Divider accent
-    ctx.fillStyle = glowColor;
-    ctx.fillRect(signX + signWidth / 2 - 2, signY, 4, signHeight);
+    ctx.fillStyle = leftColor;
+    ctx.fillRect(signX, signY, signW / 2, signH);
+    ctx.fillStyle = rightColor;
+    ctx.fillRect(signX + signW / 2, signY, signW / 2, signH);
+
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 6;
+    ctx.strokeRect(signX, signY, signW, signH);
+
+    ctx.fillStyle = '#ff0055';
+    ctx.fillRect(signX + signW / 2 - 3, signY, 6, signH);
   }
 
   // Resync to server time every 30 seconds
@@ -192,7 +178,7 @@
     const i = Math.floor(now / delta);
     const effectiveSeed = (seed ^ (salt.value || 0)) | 0;
     const bit = getBit(effectiveSeed, i);
-    drawBear(bit);
+    drawSign(bit);
     requestAnimationFrame(animate);
   }
 
