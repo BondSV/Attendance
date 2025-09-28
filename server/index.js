@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const url = require('url');
+// Use WHATWG URL API instead of deprecated url.parse
 const WebSocket = require('ws');
 
 const { hash32, validateBits } = require('./validator');
@@ -92,7 +92,7 @@ function uaShort(ua) {
 function serveStatic(req, res) {
   // Only handle GET requests
   if (req.method !== 'GET') return false;
-  const parsed = url.parse(req.url);
+  const parsed = new URL(req.url, 'http://localhost');
   let pathname = parsed.pathname;
   // Normalize and prevent directory traversal
   pathname = path.normalize(pathname).replace(/^\/+/, '');
@@ -119,7 +119,7 @@ function serveStatic(req, res) {
       else if (filePath.endsWith('.js')) contentType = 'application/javascript';
       else if (filePath.endsWith('.css')) contentType = 'text/css';
       else if (filePath.endsWith('.png')) contentType = 'image/png';
-      res.writeHead(200, { 'Content-Type': contentType });
+      res.writeHead(200, { 'Content-Type': contentType, 'Cache-Control': 'no-store' });
       res.end(data);
     });
     return true;
@@ -130,7 +130,7 @@ function serveStatic(req, res) {
     const filePath = path.join(__dirname, '..', 'teacher.html');
     try {
       const data = fs.readFileSync(filePath);
-      res.writeHead(200, { 'Content-Type': 'text/html' });
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
       res.end(data);
       return true;
     } catch (err) {
@@ -146,7 +146,7 @@ const server = http.createServer(async (req, res) => {
   if (serveStatic(req, res)) {
     return;
   }
-  const parsed = url.parse(req.url, true);
+  const parsed = new URL(req.url, 'http://localhost');
   const { pathname } = parsed;
   try {
     if (pathname === '/api/time' && req.method === 'GET') {
@@ -297,7 +297,7 @@ setInterval(() => {
 
 // Upgrade HTTP server to handle WebSocket at /ws/validate
 server.on('upgrade', (req, socket, head) => {
-  const parsed = url.parse(req.url);
+  const parsed = new URL(req.url, 'http://localhost');
   if (parsed.pathname === '/ws/validate') {
     // Enforce per-IP concurrent WS limit
     const ip = req.socket.remoteAddress || 'unknown';
