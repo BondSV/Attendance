@@ -61,6 +61,7 @@
   let serverSalt = { value: 0, expiresAt: 0, rotationMs: 600, acceptWindowMs: 1000 };
   const roiSizeInput = document.getElementById('roi-size');
   const focusBoost = document.getElementById('focus-boost');
+  let lastBitDiffs = [];
 
   // Start camera with mobile-friendly constraints and request continuous focus
   navigator.mediaDevices.getUserMedia({
@@ -176,8 +177,9 @@
     };
     const leftAvg = mean(leftData);
     const rightAvg = mean(rightData);
-    if (debugEl) debugEl.textContent = `L:${leftAvg.toFixed(1)} R:${rightAvg.toFixed(1)}`;
-    return rightAvg > leftAvg ? 1 : 0;
+    const diff = rightAvg - leftAvg;
+    if (debugEl) debugEl.textContent = `L:${leftAvg.toFixed(1)} R:${rightAvg.toFixed(1)} Δ:${diff.toFixed(1)}`;
+    return { bit: diff > 0 ? 1 : 0, diff };
   }
 
   /**
@@ -193,20 +195,26 @@
     const nowAdj = Date.now() + serverOffsetMs;
     const waitMs = delta - (nowAdj % delta);
     await new Promise((r) => setTimeout(r, waitMs));
+    const bitDiffs = [];
     for (let i = 0; i < count; i++) {
       const bitStart = Date.now() + serverOffsetMs;
       // Take five sub-samples inside the bit window and majority vote
       const subDelay = Math.max(35, Math.floor(delta / 10));
       let ones = 0;
+      let diffSum = 0;
       for (let k = 0; k < 5; k++) {
         const nowAdj2 = Date.now() + serverOffsetMs;
         const target = bitStart + Math.floor(delta * (0.25 + 0.15 * k));
         const wait = target - nowAdj2;
         if (wait > 0) await new Promise((r) => setTimeout(r, wait));
-        ones += sampleBit();
+        const { bit, diff } = sampleBit();
+        ones += bit;
+        diffSum += diff;
         if (k < 4) await new Promise((r) => setTimeout(r, subDelay));
       }
-      bits.push(ones >= 3 ? 1 : 0);
+      const finalBit = ones >= 3 ? 1 : 0;
+      bits.push(finalBit);
+      bitDiffs.push(diffSum / 5);
       drawProgress(i + 1, count);
       // Wait until next bit boundary
       const nowAdj3 = Date.now() + serverOffsetMs;
@@ -214,6 +222,7 @@
       const toNext = nextBoundary - nowAdj3;
       if (toNext > 0) await new Promise((r) => setTimeout(r, toNext));
     }
+    lastBitDiffs = bitDiffs;
     statusEl.textContent = 'Validating…';
     // Prefer WebSocket validation when available
     if (useWebSocket && ws && ws.readyState === WebSocket.OPEN) {
@@ -244,10 +253,12 @@
       } else {
         // Show server progress details if provided
         const matched = typeof data.matched === 'number' ? data.matched : 0;
-        const needed = typeof data.needed === 'number' ? data.needed : 12;
+        const needed = typeof data.needed === 'number' ? data.needed : 16;
         const offset = typeof data.offset === 'number' ? data.offset : 0;
-        statusEl.textContent = `Progress ${matched}/${needed || 16} (offset ${offset})`;
-        debugRows.push({ ts: Date.now(), type: 'post_progress', matched, needed, offset });
+        const lastDiff = lastBitDiffs[lastBitDiffs.length - 1] || 0;
+        const roiSize = fullframeToggle && fullframeToggle.checked ? 100 : Math.min(90, Math.max(40, parseInt(roiSizeInput && roiSizeInput.value || '60', 10)));
+        statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+        debugRows.push({ ts: Date.now(), type: 'post_progress', matched, needed, offset, diff: lastDiff, roi: roiSize, fullframe: !!(fullframeToggle && fullframeToggle.checked) });
       }
     } catch (err) {
       console.error(err);
@@ -328,11 +339,13 @@
         const msg = JSON.parse(ev.data);
         if (msg.type === 'init_ack') return;
         if (msg.type === 'progress') {
-          const matched = typeof msg.matched === 'number' ? msg.matched : 0;
-          const needed = typeof msg.needed === 'number' ? msg.needed : 12;
-          const offset = typeof msg.offset === 'number' ? msg.offset : 0;
-          statusEl.textContent = `Progress ${matched}/${needed || 16} (offset ${offset})`;
-          debugRows.push({ ts: Date.now(), type: 'ws_progress', matched, needed, offset });
+      const matched = typeof msg.matched === 'number' ? msg.matched : 0;
+      const needed = typeof msg.needed === 'number' ? msg.needed : 16;
+      const offset = typeof msg.offset === 'number' ? msg.offset : 0;
+      const lastDiff = lastBitDiffs[lastBitDiffs.length - 1] || 0;
+      const roiSize = fullframeToggle && fullframeToggle.checked ? 100 : Math.min(90, Math.max(40, parseInt(roiSizeInput && roiSizeInput.value || '60', 10)));
+      statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
+      debugRows.push({ ts: Date.now(), type: 'ws_progress', matched, needed, offset, diff: lastDiff, roi: roiSize, fullframe: !!(fullframeToggle && fullframeToggle.checked) });
           if (debugEl) debugEl.textContent += `  off:${offset}`;
         }
         if (msg.type === 'verified') {
