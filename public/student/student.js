@@ -151,10 +151,12 @@
     ctx.strokeStyle = 'rgba(255, 0, 0, 0.4)';
     ctx.lineWidth = 2;
     ctx.strokeRect(roiX, roiY, roiW, roiH);
-    // Extract left and right halves
+    // Extract central stripe to reduce background noise
     const halfW = roiW / 2;
-    const leftData = ctx.getImageData(roiX, roiY, halfW, roiH).data;
-    const rightData = ctx.getImageData(roiX + halfW, roiY, halfW, roiH).data;
+    const stripeY = roiY + Math.floor(roiH * 0.35);
+    const stripeH = Math.max(2, Math.floor(roiH * 0.3));
+    const leftData = ctx.getImageData(roiX, stripeY, halfW, stripeH).data;
+    const rightData = ctx.getImageData(roiX + halfW, stripeY, halfW, stripeH).data;
     const mean = (data) => {
       let sum = 0;
       for (let i = 0; i < data.length; i += 4) {
@@ -184,9 +186,25 @@
     const waitMs = delta - (nowAdj % delta);
     await new Promise((r) => setTimeout(r, waitMs));
     for (let i = 0; i < count; i++) {
-      bits.push(sampleBit());
+      const bitStart = Date.now() + serverOffsetMs;
+      // Take three sub-samples inside the bit window and majority vote
+      const subDelay = Math.max(50, Math.floor(delta / 6));
+      let ones = 0;
+      for (let k = 0; k < 3; k++) {
+        const nowAdj2 = Date.now() + serverOffsetMs;
+        const target = bitStart + Math.floor(delta * (0.35 + 0.2 * k));
+        const wait = target - nowAdj2;
+        if (wait > 0) await new Promise((r) => setTimeout(r, wait));
+        ones += sampleBit();
+        if (k < 2) await new Promise((r) => setTimeout(r, subDelay));
+      }
+      bits.push(ones >= 2 ? 1 : 0);
       drawProgress(i + 1, count);
-      await new Promise((r) => setTimeout(r, delta));
+      // Wait until next bit boundary
+      const nowAdj3 = Date.now() + serverOffsetMs;
+      const nextBoundary = bitStart + delta;
+      const toNext = nextBoundary - nowAdj3;
+      if (toNext > 0) await new Promise((r) => setTimeout(r, toNext));
     }
     statusEl.textContent = 'Validating…';
     // Prefer WebSocket validation when available
