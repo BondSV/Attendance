@@ -44,6 +44,7 @@
   const idForm = document.getElementById('id-form');
   const idInput = document.getElementById('student-id');
   const submitBtn = document.getElementById('submit-btn');
+  const cameraWrapper = document.getElementById('camera-wrapper');
   let verificationId = null;
   let ws = null;
   let useWebSocket = false;
@@ -61,7 +62,8 @@
   let serverSalt = { value: 0, expiresAt: 0, rotationMs: 600, acceptWindowMs: 1000 };
   const roiSizeInput = document.getElementById('roi-size');
   const focusBoost = document.getElementById('focus-boost');
-  let lastBitDiffs = [];
+  const cameraWrapper = document.getElementById('camera-wrapper');
+  let lastBitDiffStats = { avg: 0, min: 0, max: 0 };
 
   // Start camera with mobile-friendly constraints and request continuous focus
   navigator.mediaDevices.getUserMedia({
@@ -127,8 +129,10 @@
    */
   function sampleBit() {
     // Ensure overlay size matches video element size
-    const vw = video.clientWidth || overlay.width || 320;
-    const vh = video.clientHeight || overlay.height || 240;
+    const wrapperW = cameraWrapper ? cameraWrapper.clientWidth : 0;
+    const wrapperH = cameraWrapper ? cameraWrapper.clientHeight : 0;
+    const vw = video.clientWidth || wrapperW || overlay.width || 320;
+    const vh = video.clientHeight || wrapperH || overlay.height || 240;
     if (overlay.width !== vw || overlay.height !== vh) {
       overlay.width = vw;
       overlay.height = vh;
@@ -222,7 +226,10 @@
       const toNext = nextBoundary - nowAdj3;
       if (toNext > 0) await new Promise((r) => setTimeout(r, toNext));
     }
-    lastBitDiffs = bitDiffs;
+    const diffAvg = bitDiffs.reduce((acc, v) => acc + v, 0) / bitDiffs.length;
+    const diffMin = Math.min(...bitDiffs);
+    const diffMax = Math.max(...bitDiffs);
+    lastBitDiffStats = { avg: diffAvg, min: diffMin, max: diffMax };
     statusEl.textContent = 'Validating…';
     // Prefer WebSocket validation when available
     if (useWebSocket && ws && ws.readyState === WebSocket.OPEN) {
@@ -255,10 +262,20 @@
         const matched = typeof data.matched === 'number' ? data.matched : 0;
         const needed = typeof data.needed === 'number' ? data.needed : 16;
         const offset = typeof data.offset === 'number' ? data.offset : 0;
-        const lastDiff = lastBitDiffs[lastBitDiffs.length - 1] || 0;
         const roiSize = fullframeToggle && fullframeToggle.checked ? 100 : Math.min(90, Math.max(40, parseInt(roiSizeInput && roiSizeInput.value || '60', 10)));
         statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
-        debugRows.push({ ts: Date.now(), type: 'post_progress', matched, needed, offset, diff: lastDiff, roi: roiSize, fullframe: !!(fullframeToggle && fullframeToggle.checked) });
+        debugRows.push({
+          ts: Date.now(),
+          type: 'post_progress',
+          matched,
+          needed,
+          offset,
+          diffAvg: lastBitDiffStats.avg,
+          diffMin: lastBitDiffStats.min,
+          diffMax: lastBitDiffStats.max,
+          roi: roiSize,
+          fullframe: !!(fullframeToggle && fullframeToggle.checked)
+        });
       }
     } catch (err) {
       console.error(err);
@@ -342,10 +359,20 @@
       const matched = typeof msg.matched === 'number' ? msg.matched : 0;
       const needed = typeof msg.needed === 'number' ? msg.needed : 16;
       const offset = typeof msg.offset === 'number' ? msg.offset : 0;
-      const lastDiff = lastBitDiffs[lastBitDiffs.length - 1] || 0;
       const roiSize = fullframeToggle && fullframeToggle.checked ? 100 : Math.min(90, Math.max(40, parseInt(roiSizeInput && roiSizeInput.value || '60', 10)));
       statusEl.textContent = `Progress ${matched}/${needed} (offset ${offset})`;
-      debugRows.push({ ts: Date.now(), type: 'ws_progress', matched, needed, offset, diff: lastDiff, roi: roiSize, fullframe: !!(fullframeToggle && fullframeToggle.checked) });
+      debugRows.push({
+        ts: Date.now(),
+        type: 'ws_progress',
+        matched,
+        needed,
+        offset,
+        diffAvg: lastBitDiffStats.avg,
+        diffMin: lastBitDiffStats.min,
+        diffMax: lastBitDiffStats.max,
+        roi: roiSize,
+        fullframe: !!(fullframeToggle && fullframeToggle.checked)
+      });
           if (debugEl) debugEl.textContent += `  off:${offset}`;
         }
         if (msg.type === 'verified') {
@@ -396,8 +423,21 @@
 
   // Download debug log as CSV
   function downloadCsv(rows) {
-    const header = 'ts,source,matched,needed,offset\n';
-    const body = rows.map(r => `${new Date(r.ts).toISOString()},${r.type},${r.matched},${r.needed},${r.offset}`).join('\n');
+    const header = 'ts,source,matched,needed,offset,diffAvg,diffMin,diffMax,roi,fullframe\n';
+    const body = rows.map((r) => {
+      return [
+        new Date(r.ts).toISOString(),
+        r.type,
+        r.matched,
+        r.needed,
+        r.offset,
+        (r.diffAvg ?? '').toString(),
+        (r.diffMin ?? '').toString(),
+        (r.diffMax ?? '').toString(),
+        (r.roi ?? '').toString(),
+        r.fullframe ? '1' : '0'
+      ].join(',');
+    }).join('\n');
     const blob = new Blob([header + body], { type: 'text/csv' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

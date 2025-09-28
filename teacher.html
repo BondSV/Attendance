@@ -33,13 +33,15 @@
     }
     #display {
       display: flex;
+      flex-direction: column;
       align-items: center;
       margin-top: 1.5rem;
-      gap: 2rem;
+      gap: 1.5rem;
     }
     #bearCanvas {
       border: 1px solid #ccc;
       background: #000;
+      max-width: 100%;
     }
     #qrContainer {
       border: 1px solid #ccc;
@@ -69,7 +71,7 @@
   <button id="stopBtn" disabled>Stop</button>
 
   <div id="display" style="display:none;">
-    <canvas id="bearCanvas" width="240" height="160"></canvas>
+    <canvas id="bearCanvas" width="360" height="220"></canvas>
     <div id="qrContainer"></div>
   </div>
 
