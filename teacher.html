@@ -117,6 +117,8 @@
   const delta = 300; // ms per bit
   let seed = 0;
   let resyncIntervalId;
+  let salt = { value: 0, expiresAt: 0, rotationMs: 600, acceptWindowMs: 1000 };
+  let saltIntervalId;
 
   const bearCanvas = document.getElementById('bearCanvas');
   const ctx = bearCanvas.getContext('2d');
@@ -188,9 +190,26 @@
     if (!running) return;
     const now = Date.now() + offset;
     const i = Math.floor(now / delta);
-    const bit = getBit(seed, i);
+    const effectiveSeed = (seed ^ (salt.value || 0)) | 0;
+    const bit = getBit(effectiveSeed, i);
     drawBear(bit);
     requestAnimationFrame(animate);
+  }
+
+  async function fetchSalt() {
+    try {
+      const resp = await fetch('/api/salt');
+      const data = await resp.json();
+      salt = {
+        value: data.current.value,
+        expiresAt: data.current.expiresAt,
+        rotationMs: data.rotation_ms,
+        acceptWindowMs: data.accept_window_ms,
+        previous: data.previous,
+      };
+    } catch (err) {
+      console.error('Salt fetch failed', err);
+    }
   }
 
   document.getElementById('startBtn').addEventListener('click', async () => {
@@ -203,7 +222,7 @@
       return;
     }
     // Sync time
-    await resync();
+    await Promise.all([resync(), fetchSalt()]);
     // Derive seed
     seed = hash32(`${sid}|${phase}`) | 0; // ensure signed 32-bit int like server
     // Build QR payload
@@ -222,6 +241,8 @@
     // Start periodic resync
     if (resyncIntervalId) clearInterval(resyncIntervalId);
     resyncIntervalId = setInterval(resync, 30000);
+    if (saltIntervalId) clearInterval(saltIntervalId);
+    saltIntervalId = setInterval(fetchSalt, Math.max(300, (salt.rotationMs || 600) / 2));
   });
 
   document.getElementById('stopBtn').addEventListener('click', () => {
@@ -231,6 +252,7 @@
     displayDiv.style.display = 'none';
     qrContainer.innerHTML = '';
     if (resyncIntervalId) clearInterval(resyncIntervalId);
+    if (saltIntervalId) clearInterval(saltIntervalId);
   });
   </script>
 </body>

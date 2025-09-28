@@ -7,6 +7,8 @@ const WebSocket = require('ws');
 const { hash32, validateBits } = require('./validator');
 const { issueVerification, consumeVerification, acquireDeviceLock } = require('./memoryState');
 const { appendCsvRow } = require('./csvWriter');
+const { getSalts, ACCEPT_WINDOW_MS } = require('./salt');
+const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 
 // Configuration
 const PORT = process.env.PORT || 8080;
@@ -150,7 +152,12 @@ const server = http.createServer(async (req, res) => {
   const { pathname } = parsed;
   try {
     if (pathname === '/api/time' && req.method === 'GET') {
-      return sendJson(res, { now_ms: Date.now() });
+      const salts = getSalts();
+      return sendJson(res, { now_ms: Date.now(), salt: salts.current.value, salt_expires_ms: salts.current.expiresAt, rotation_ms: salts.rotationMs, accept_window_ms: salts.acceptWindowMs });
+    }
+    if (pathname === '/api/salt' && req.method === 'GET') {
+      const salts = getSalts();
+      return sendJson(res, { current: salts.current, previous: salts.previous, rotation_ms: salts.rotationMs, accept_window_ms: salts.acceptWindowMs });
     }
     if (pathname === '/api/validate' && req.method === 'POST') {
       const body = await parseRequestBody(req);
@@ -164,7 +171,15 @@ const server = http.createServer(async (req, res) => {
       }
       const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
       // Validate bits using server time with tolerance per spec (>=10/12, small jitter)
-      const vres = validateBits(bits, seed, delta || 300, { lenWindow: 4, threshold: 10 });
+      const salts = getSalts();
+      const now = Date.now();
+      const age = now - salts.current.createdAt;
+      if (age > ACCEPT_WINDOW_MS && (now - salts.previous.createdAt) > ACCEPT_WINDOW_MS) {
+        return sendJson(res, { verified: false, error: 'Salt expired' }, 400);
+      }
+      const saltValue = age <= ACCEPT_WINDOW_MS ? salts.current.value : salts.previous.value;
+      const effectiveSeed = (seed ^ saltValue) | 0;
+      const vres = validateBits(bits, effectiveSeed, delta || 300, { lenWindow: 2, threshold: 11 });
       if (!vres || !vres.ok) {
         // return progress info so client can show matched/needed/offset
         return sendJson(res, { verified: false, matched: vres ? vres.matched : 0, needed: vres ? vres.needed : bits.length, offset: vres ? vres.offset : 0 });
@@ -189,6 +204,9 @@ const server = http.createServer(async (req, res) => {
       const ok = consumeVerification(verification_id, connectionKey);
       if (!ok) {
         return sendJson(res, { error: 'Verification required' }, 400);
+      }
+      if (!canCheckin(connectionKey)) {
+        return sendJson(res, { error: `Duplicate submission too soon (wait ${CHECKIN_WINDOW_MS}ms)` }, 429);
       }
       // Acquire device lock
       const deviceKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase].join('|');
@@ -263,7 +281,15 @@ wss.on('connection', (ws, req) => {
     }
     if (data.type === 'bits') {
       if (!ws._seed || !ws._delta) return ws.send(JSON.stringify({ type: 'error', error: 'Not initialised' }));
-      const vres = validateBits(data.bits, ws._seed, ws._delta, { lenWindow: 4, threshold: 10 });
+      const salts = getSalts();
+      const now = Date.now();
+      const age = now - salts.current.createdAt;
+      if (age > ACCEPT_WINDOW_MS && (now - salts.previous.createdAt) > ACCEPT_WINDOW_MS) {
+        return ws.send(JSON.stringify({ type: 'progress', error: 'Salt expired', matched: 0, needed: 12, offset: 0 }));
+      }
+      const saltValue = age <= ACCEPT_WINDOW_MS ? salts.current.value : salts.previous.value;
+      const effectiveSeed = (ws._seed ^ saltValue) | 0;
+      const vres = validateBits(data.bits, effectiveSeed, ws._delta, { lenWindow: 2, threshold: 11 });
       if (!vres || !vres.ok) {
         return ws.send(JSON.stringify({ type: 'progress', matched: vres ? vres.matched : 0, needed: vres ? vres.needed : 12, offset: vres ? vres.offset : 0 }));
       }

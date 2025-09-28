@@ -55,8 +55,10 @@
   const fullframeToggle = document.getElementById('fullframe-toggle');
   const downloadBtn = document.getElementById('download-log');
   const clearLogBtn = document.getElementById('clear-log');
+  const refocusBtn = document.getElementById('refocus-btn');
   const debugRows = [];
   let serverOffsetMs = 0;
+  let serverSalt = { value: 0, expiresAt: 0, rotationMs: 600, acceptWindowMs: 1000 };
   const roiSizeInput = document.getElementById('roi-size');
   const focusBoost = document.getElementById('focus-boost');
 
@@ -104,6 +106,12 @@
       const r = await fetch('/api/time');
       const j = await r.json();
       serverOffsetMs = j.now_ms - Date.now();
+      if (typeof j.salt === 'number') {
+        serverSalt.value = j.salt;
+        serverSalt.expiresAt = j.salt_expires_ms;
+        serverSalt.rotationMs = j.rotation_ms;
+        serverSalt.acceptWindowMs = j.accept_window_ms;
+      }
     } catch (e) {
       serverOffsetMs = 0;
     }
@@ -187,18 +195,18 @@
     await new Promise((r) => setTimeout(r, waitMs));
     for (let i = 0; i < count; i++) {
       const bitStart = Date.now() + serverOffsetMs;
-      // Take three sub-samples inside the bit window and majority vote
-      const subDelay = Math.max(50, Math.floor(delta / 6));
+      // Take five sub-samples inside the bit window and majority vote
+      const subDelay = Math.max(35, Math.floor(delta / 10));
       let ones = 0;
-      for (let k = 0; k < 3; k++) {
+      for (let k = 0; k < 5; k++) {
         const nowAdj2 = Date.now() + serverOffsetMs;
-        const target = bitStart + Math.floor(delta * (0.35 + 0.2 * k));
+        const target = bitStart + Math.floor(delta * (0.25 + 0.15 * k));
         const wait = target - nowAdj2;
         if (wait > 0) await new Promise((r) => setTimeout(r, wait));
         ones += sampleBit();
-        if (k < 2) await new Promise((r) => setTimeout(r, subDelay));
+        if (k < 4) await new Promise((r) => setTimeout(r, subDelay));
       }
-      bits.push(ones >= 2 ? 1 : 0);
+      bits.push(ones >= 3 ? 1 : 0);
       drawProgress(i + 1, count);
       // Wait until next bit boundary
       const nowAdj3 = Date.now() + serverOffsetMs;
@@ -298,7 +306,7 @@
 
   // Try to open WebSocket connection for live validation
   try {
-    ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/validate');
+  ws = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws/validate');
     ws.addEventListener('open', () => {
       useWebSocket = true;
       // Send init
@@ -385,12 +393,7 @@
   }
 
   // Refocus button (if supported)
-  const refocusBtn = document.createElement('button');
-  refocusBtn.textContent = 'Try refocus';
-  refocusBtn.type = 'button';
-  refocusBtn.style.marginLeft = '12px';
-  if (clearLogBtn && clearLogBtn.parentElement) {
-    clearLogBtn.parentElement.appendChild(refocusBtn);
+  if (refocusBtn) {
     refocusBtn.addEventListener('click', async () => {
       const stream = video.srcObject;
       if (!stream) return;
