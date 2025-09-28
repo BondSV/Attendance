@@ -38,7 +38,7 @@
     .shell {
       display: grid;
       grid-template-columns: minmax(280px, 360px) minmax(520px, 720px);
-      gap: clamp(20px, 4vw, 40px);
+      gap: clamp(28px, 6vw, 56px);
       width: min(1180px, 100%);
     }
     .card {
@@ -205,6 +205,10 @@
     .status-line strong {
       color: var(--accent);
     }
+    .verify-card {
+      align-items: center;
+      text-align: center;
+    }
     .verify-card h2 {
       margin: 0;
       font-size: clamp(24px, 2.6vw, 30px);
@@ -239,7 +243,7 @@
         <h1>Attendance Session</h1>
         <p class="lead">Configure the session parameters, show the two QR steps on the projector, and track in-class attendance securely.</p>
       </div>
-      <div class="form-stack">
+    <div class="form-stack">
         <label for="sessionId">Session ID
           <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
         </label>
@@ -255,8 +259,8 @@
         </label>
       </div>
       <div class="actions">
-        <button class="primary" id="startBtn">Start session</button>
-        <button class="ghost" id="stopBtn" disabled>Stop session</button>
+        <button class="primary" id="startBtn">Start</button>
+        <button class="ghost" id="stopBtn" disabled>Stop</button>
       </div>
       <div class="step-card" id="step1Card">
         <span class="step-pill">Step 1</span>
@@ -264,15 +268,14 @@
         <div class="qr-box small" id="sessionQr">
           <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
         </div>
-        <p>Display this so students can launch the check-in app on their phones.</p>
       </div>
       <div id="sessionStatus" class="status-line"></div>
     </section>
 
     <section class="card verify-card">
       <span class="step-pill">Step 2</span>
-      <h2>Verify attendance in the room</h2>
-      <p>Students open the in-app scanner and point it at this live code while staying in class.</p>
+      <h2>Verify attendance</h2>
+      <p>Ask everyone to scan this code from inside the classroom.</p>
       <div class="qr-box" id="verificationQr">
         <div class="qr-placeholder">Start the session to display the verification QR.</div>
       </div>
@@ -316,7 +319,7 @@
       });
     }
 
-    function renderVerificationQr(text) {
+  function renderVerificationQr(text) {
       verificationQrEl.innerHTML = '';
       verificationQr = new QRCode(verificationQrEl, {
         text,
@@ -364,14 +367,8 @@
         const resp = await fetch(url);
         if (!resp.ok) throw new Error('Challenge fetch failed');
         const data = await resp.json();
-        const payload = {
-          v: 1,
-          type: 'challenge',
-          sid,
-          phase,
-          challenge: data.challenge
-        };
-        renderVerificationQr(JSON.stringify(payload));
+        const payload = data.challenge;
+        renderVerificationQr(payload);
         const ttlMs = data.ttl_ms || 5000;
         countdownSeconds = Math.max(1, Math.round(ttlMs / 1000));
         updateCountdownDisplay();

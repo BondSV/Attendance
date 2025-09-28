@@ -14,6 +14,10 @@ body {
   box-sizing: border-box;
 }
 
+:where([hidden]) {
+  display: none !important;
+}
+
 .page {
   width: min(960px, 100%);
   display: flex;

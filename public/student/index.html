@@ -21,15 +21,17 @@
         <h2>Complete both steps to confirm you are in class</h2>
         <ol class="steps">
           <li><strong>Step 1:</strong> You already scanned the entry QR to open this page.</li>
-          <li><strong>Step 2:</strong> Use the in-app scanner below to read the verification code on the front screen.</li>
+          <li><strong>Step 2:</strong> Use the scanner below to read the verification code on the front screen.</li>
         </ol>
-        <div class="status-banner" id="statusBanner">Tap “Start scanning” when you can see the teacher’s Step 2 QR code.</div>
-        <button class="primary" id="scanBtn">Start scanning</button>
+        <div class="status-banner" id="statusBanner">Tap the button below when you can see the teacher’s Step 2 QR code.</div>
       </section>
 
       <section class="card scanner" id="scannerCard">
         <h2>Step 2 – Verify attendance</h2>
-        <p class="muted">Point your phone at the Step 2 QR code shown by the instructor. The code refreshes automatically when you stay in class.</p>
+        <div class="scanner-placeholder" id="scannerPlaceholder">
+          <p>Tap “Start scanning” to open the camera.</p>
+          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while facing the screen.</p>
+        </div>
         <div class="camera-frame" id="cameraFrame" hidden>
           <video id="video" autoplay playsinline></video>
           <div class="camera-overlay">
@@ -40,10 +42,7 @@
             <p class="camera-hint" id="cameraHint">Align the QR inside the frame</p>
           </div>
         </div>
-        <div class="scanner-placeholder" id="scannerPlaceholder">
-          <p>Tap “Start scanning” to open the camera.</p>
-          <p class="muted small">If the QR is not detected quickly, wait for the next refresh in front of the screen.</p>
-        </div>
+        <button class="primary" id="scanBtn">Start scanning</button>
         <div class="card success" id="successCard" hidden>
           <span class="success-icon">✔</span>
           <div>

@@ -46,19 +46,15 @@
   let barcodeDetector = null;
   let scanning = false;
   let verificationId = null;
-  let challengeCache = new Set();
+  const challengeCache = new Set();
 
   const supportsBarcodeDetector = 'BarcodeDetector' in window;
 
   async function ensureCamera() {
     if (mediaStream) return mediaStream;
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-      return mediaStream;
-    } catch (err) {
-      console.error('Camera access denied', err);
-      throw new Error('Camera access denied. Please allow camera permissions and try again.');
-    }
+    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
+    mediaStream = stream;
+    return mediaStream;
   }
 
   async function ensureDetector() {
@@ -76,16 +72,15 @@
 
   function stopScanning(reason) {
     scanning = false;
-    cameraFrame.hidden = true;
-    scannerPlaceholder.hidden = false;
+    cameraFrame.setAttribute('hidden', '');
+    scannerPlaceholder.setAttribute('hidden', '');
+    scanBtn.disabled = false;
     cameraHint.textContent = reason || 'Tap “Start scanning” to open the camera again.';
-    if (video) {
-      const stream = video.srcObject;
-      if (stream && typeof stream.getTracks === 'function') {
-        stream.getTracks().forEach(track => track.stop());
-      }
-      video.srcObject = null;
+    const stream = video.srcObject;
+    if (stream && typeof stream.getTracks === 'function') {
+      stream.getTracks().forEach(track => track.stop());
     }
+    video.srcObject = null;
   }
 
   async function submitChallenge(challenge) {
@@ -103,32 +98,26 @@
   }
 
   function parseChallengePayload(text) {
-    try {
-      const obj = JSON.parse(text);
-      if (!obj || obj.v !== 1 || obj.type !== 'challenge') return null;
-      if (obj.sid !== sid) return null;
-      if (obj.phase !== phase) return null;
-      if (typeof obj.challenge !== 'string' || obj.challenge.length === 0) return null;
-      return obj.challenge;
-    } catch (err) {
-      return null;
-    }
+    if (typeof text !== 'string') return null;
+    if (text.length === 0 || text.length > 256) return null;
+    return text;
   }
 
   async function startScanning() {
     if (scanning) return;
     scanning = true;
-    successCard.hidden = true;
+    successCard.setAttribute('hidden', '');
+    idCard.setAttribute('hidden', '');
     submitStatus.textContent = '';
     statusBanner.textContent = 'Scanning… align the Step 2 QR inside the frame.';
-    scannerPlaceholder.hidden = true;
-    cameraFrame.hidden = false;
+    scannerPlaceholder.setAttribute('hidden', '');
+    cameraFrame.removeAttribute('hidden');
+    scanBtn.disabled = true;
 
     try {
       const stream = await ensureCamera();
       video.srcObject = stream;
       await video.play().catch(() => {});
-
       const detector = await ensureDetector();
       if (detector) {
         await scanWithDetector(detector);
@@ -147,7 +136,7 @@
       try {
         const barcodes = await detector.detect(video);
         if (barcodes && barcodes.length) {
-          const value = barcodes[0].rawValue || barcodes[0].rawValue;
+          const value = barcodes[0].rawValue || '';
           const challenge = parseChallengePayload(value);
           if (challenge && !challengeCache.has(challenge)) {
             challengeCache.add(challenge);
@@ -167,6 +156,11 @@
   async function scanWithFallback() {
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
+    if (!window.jsQR) {
+      statusBanner.textContent = 'QR scanning not supported on this device. Please try a different browser.';
+      stopScanning();
+      return;
+    }
 
     while (scanning) {
       try {
@@ -178,20 +172,16 @@
         canvas.height = video.videoHeight;
         context.drawImage(video, 0, 0, canvas.width, canvas.height);
         const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        if (window.jsQR) {
-          const result = window.jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'dontInvert' });
-          if (result && result.data) {
-            const challenge = parseChallengePayload(result.data);
-            if (challenge && !challengeCache.has(challenge)) {
-              challengeCache.add(challenge);
-              statusBanner.textContent = 'Validating…';
-              await submitChallenge(challenge);
-              handleVerified();
-              return;
-            }
+        const result = window.jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'dontInvert' });
+        if (result && result.data) {
+          const challenge = parseChallengePayload(result.data);
+          if (challenge && !challengeCache.has(challenge)) {
+            challengeCache.add(challenge);
+            statusBanner.textContent = 'Validating…';
+            await submitChallenge(challenge);
+            handleVerified();
+            return;
           }
-        } else {
-          throw new Error('QR decoding not supported in this browser.');
         }
       } catch (err) {
         if (!scanning) return;
@@ -203,11 +193,11 @@
 
   function handleVerified() {
     scanning = false;
-    cameraFrame.hidden = true;
-    scannerPlaceholder.hidden = true;
-    successCard.hidden = false;
-    idCard.hidden = false;
-    statusBanner.textContent = 'Attendance verified. Enter your student ID below to finish.';
+    cameraFrame.setAttribute('hidden', '');
+    scannerPlaceholder.setAttribute('hidden', '');
+    successCard.removeAttribute('hidden');
+    idCard.removeAttribute('hidden');
+    statusBanner.textContent = 'Presence verified. Enter your student ID to finish.';
     stopScanning();
   }
 
