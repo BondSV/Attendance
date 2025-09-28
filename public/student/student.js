@@ -57,6 +57,8 @@
   const clearLogBtn = document.getElementById('clear-log');
   const debugRows = [];
   let serverOffsetMs = 0;
+  const roiSizeInput = document.getElementById('roi-size');
+  const focusBoost = document.getElementById('focus-boost');
 
   // Start camera with mobile-friendly constraints and request continuous focus
   navigator.mediaDevices.getUserMedia({
@@ -80,9 +82,11 @@
         constraints.advanced = [{ focusMode: 'continuous' }];
       }
       if (caps.zoom && typeof caps.zoom.max === 'number') {
-        // Slight zoom helps some phones focus on the sign region
-        const midZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min || 1, (caps.zoom.max || 2) * 0.3));
-        (constraints.advanced || (constraints.advanced = [])).push({ zoom: midZoom });
+        // Slight zoom helps some phones focus on the sign region; optional via toggle
+        if (focusBoost && focusBoost.checked) {
+          const midZoom = Math.min(caps.zoom.max, Math.max(caps.zoom.min || 1, (caps.zoom.max || 2) * 0.3));
+          (constraints.advanced || (constraints.advanced = [])).push({ zoom: midZoom });
+        }
       }
       if (Object.keys(constraints).length) {
         try { track.applyConstraints(constraints); } catch (e) {}
@@ -127,8 +131,9 @@
     if (fullframeToggle && fullframeToggle.checked) {
       roiX = 0; roiY = 0; roiW = w; roiH = h;
     } else {
-      roiW = Math.floor(w * 0.5);
-      roiH = Math.floor(h * 0.4);
+      const sizePct = Math.min(90, Math.max(40, parseInt(roiSizeInput && roiSizeInput.value || '60', 10)));
+      roiW = Math.floor(w * (sizePct / 100));
+      roiH = Math.floor(h * (sizePct / 100) * 0.8);
       roiX = Math.floor((w - roiW) / 2);
       roiY = Math.floor((h - roiH) / 2);
     }
