@@ -13,7 +13,7 @@ const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
 function sendJson(res, payload, status = 200) {
   const data = JSON.stringify(payload);
-  const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data) };
+  const headers = { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(data), 'Cache-Control': 'no-store' };
   if (process.env.ALLOW_CORS_ALL === '1') headers['Access-Control-Allow-Origin'] = '*';
   res.writeHead(status, headers);
   res.end(data);
@@ -127,7 +127,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/challenge' && req.method === 'GET') {
       const sid = parsed.searchParams.get('sid');
       const phase = parsed.searchParams.get('phase') || 'start';
-      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      const sidRe = /^[A-Za-z0-9_\-:.]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       const { challenge, expiresAt, ttlMs } = issueChallenge(sid, phase);
@@ -137,7 +137,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/validate-challenge' && req.method === 'POST') {
       const body = await parseRequestBody(req);
       const { sid, phase, challenge, page_session_id, device_id } = body;
-      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      const sidRe = /^[A-Za-z0-9_\-:.]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!challenge || typeof challenge !== 'string' || challenge.length > 128) {
@@ -155,7 +155,7 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
       const { sid, phase, student_id, verification_id, page_session_id, device_id } = body;
-      const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
+      const sidRe = /^[A-Za-z0-9_\-:.]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!student_id || !/^[0-9]{6,12}$/.test(student_id)) return sendJson(res, { error: 'Invalid student_id' }, 400);

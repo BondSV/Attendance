@@ -341,8 +341,11 @@
       if (!activeSession) return;
       const { sid, phase } = activeSession;
       try {
+        if (!/^[-A-Za-z0-9_.:]{3,80}$/.test(sid)) {
+          throw new Error('Invalid Session ID. Use letters, numbers, dash, underscore, colon, or dot.');
+        }
         const url = `/api/challenge?sid=${encodeURIComponent(sid)}&phase=${encodeURIComponent(phase)}`;
-        const resp = await fetch(url);
+        const resp = await fetch(url, { cache: 'no-store' });
         if (!resp.ok) throw new Error('Challenge fetch failed');
         const data = await resp.json();
         renderVerificationQr(data.challenge);
@@ -358,7 +361,7 @@
         challengeTimerId = setTimeout(fetchChallenge, nextDelay);
       } catch (err) {
         console.error(err);
-        countdownEl.textContent = 'Unable to load verification code. Retrying…';
+        countdownEl.textContent = `Unable to load verification code: ${err.message}. Retrying…`;
         challengeTimerId = setTimeout(fetchChallenge, 2000);
       }
     }
