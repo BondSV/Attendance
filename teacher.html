@@ -38,7 +38,7 @@
       display: grid;
       grid-template-columns: minmax(340px, 380px) minmax(460px, 1fr);
       gap: clamp(22px, 3vw, 30px);
-      align-items: start;
+      align-items: stretch;
     }
     .teacher-stack {
       display: grid;
@@ -149,6 +149,7 @@
       width: 100%;
       max-width: 720px;
       justify-self: center;
+      height: 100%;
     }
     .step-pill {
       display: inline-flex;
@@ -254,7 +255,7 @@
     <section class="step-card step2">
       <span class="step-pill">Step 2</span>
       <h2>Scan to verify attendance</h2>
-      <p>Students scan this live code from inside the classroom to confirm presence.</p>
+      <p>Students scan this live code to confirm presence.</p>
       <div class="qr-box" id="verificationQr">
         <div class="qr-placeholder">Start the session to display the verification QR.</div>
       </div>

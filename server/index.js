@@ -46,7 +46,7 @@ function logAnomaly(obj) {
 function serveStatic(req, res) {
   if (req.method !== 'GET') return false;
   const parsed = new URL(req.url, 'http://localhost');
-  let pathname = path.normalize(parsed.pathname).replace(/^\/+/,'');
+  let pathname = path.normalize(parsed.pathname).replace(/^\/+/, '');
   if (pathname === 'student' || pathname === 'student/') {
     const filePath = path.join(PUBLIC_DIR, 'student', 'index.html');
     try {
@@ -138,9 +138,10 @@ const server = http.createServer(async (req, res) => {
       if (!result.ok) {
         return sendJson(res, { error: 'Challenge expired' }, 400);
       }
-      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
+      // Bind verification strictly to the page session (no IP/UA/sid/phase to avoid brittle mismatches)
+      const connectionKey = page_session_id || '';
       const token = issueVerification(connectionKey);
-      return sendJson(res, { verified: true, verification_id: token, ttl_ms: 30000 });
+      return sendJson(res, { verified: true, verification_id: token, sid, phase, ttl_ms: 30000 });
     }
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
@@ -151,7 +152,8 @@ const server = http.createServer(async (req, res) => {
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!student_id || !/^[0-9]{6,12}$/.test(student_id)) return sendJson(res, { error: 'Invalid student_id' }, 400);
       if (!verification_id) return sendJson(res, { error: 'Verification required' }, 400);
-      const connectionKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase, page_session_id || ''].join('|');
+      // Consume token bound only to the page session established during scan
+      const connectionKey = page_session_id || '';
       if (!consumeVerification(verification_id, connectionKey)) {
         return sendJson(res, { error: 'Verification required' }, 400);
       }
