@@ -11,6 +11,21 @@
     }
   };
 
+  function getOrCreateDeviceId() {
+    try {
+      const existing = localStorage.getItem('attendance_device_id');
+      if (existing) return existing;
+      const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `dev-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+      localStorage.setItem('attendance_device_id', id);
+      return id;
+    } catch (err) {
+      console.warn('Unable to access localStorage, falling back to session device id.', err);
+      return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `dev-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+    }
+  }
+
+  const deviceId = getOrCreateDeviceId();
+
   const fragment = window.location.hash.slice(1);
   const payload = decodePayload(fragment);
   if (!payload || !payload.sid) {
@@ -80,7 +95,7 @@
   }
 
   async function submitChallenge(challenge) {
-    const body = { sid, phase, challenge, page_session_id: pageSessionId };
+    const body = { sid, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
     const resp = await fetch('/api/validate-challenge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -218,7 +233,7 @@
       const resp = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId })
+        body: JSON.stringify({ sid, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
       });
       const data = await resp.json();
       if (data.ok) {

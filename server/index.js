@@ -43,6 +43,15 @@ function logAnomaly(obj) {
   }
 }
 
+function getClientIp(req) {
+  const header = req.headers['x-forwarded-for'];
+  if (header && typeof header === 'string') {
+    const parts = header.split(',');
+    if (parts.length) return parts[0].trim();
+  }
+  return req.socket.remoteAddress || '';
+}
+
 function serveStatic(req, res) {
   if (req.method !== 'GET') return false;
   const parsed = new URL(req.url, 'http://localhost');
@@ -127,7 +136,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/validate-challenge' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, challenge, page_session_id } = body;
+      const { sid, phase, challenge, page_session_id, device_id } = body;
       const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
@@ -138,21 +147,19 @@ const server = http.createServer(async (req, res) => {
       if (!result.ok) {
         return sendJson(res, { error: 'Challenge expired' }, 400);
       }
-      // Bind verification strictly to the page session (no IP/UA/sid/phase to avoid brittle mismatches)
       const connectionKey = page_session_id || '';
       const token = issueVerification(connectionKey);
-      return sendJson(res, { verified: true, verification_id: token, sid, phase, ttl_ms: 30000 });
+      return sendJson(res, { verified: true, verification_id: token, sid, phase, device_id: device_id || '', ttl_ms: 300000 });
     }
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, student_id, verification_id, page_session_id } = body;
+      const { sid, phase, student_id, verification_id, page_session_id, device_id } = body;
       const sidRe = /^[A-Za-z0-9\-_:]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!student_id || !/^[0-9]{6,12}$/.test(student_id)) return sendJson(res, { error: 'Invalid student_id' }, 400);
       if (!verification_id) return sendJson(res, { error: 'Verification required' }, 400);
-      // Consume token bound only to the page session established during scan
       const connectionKey = page_session_id || '';
       if (!consumeVerification(verification_id, connectionKey)) {
         return sendJson(res, { error: 'Verification required' }, 400);
@@ -160,15 +167,16 @@ const server = http.createServer(async (req, res) => {
       if (!canCheckin(connectionKey)) {
         return sendJson(res, { error: `Duplicate submission too soon (wait ${CHECKIN_WINDOW_MS}ms)` }, 429);
       }
-      const deviceKey = [req.socket.remoteAddress, req.headers['user-agent'], sid, phase].join('|');
+      const stableDeviceId = device_id || (req.headers['user-agent'] || '');
+      const deviceKey = [stableDeviceId].join('|');
       const lock = acquireDeviceLock(deviceKey, student_id);
       if (!lock.ok) {
-        logAnomaly({ type: 'device_lock_conflict', deviceKey, student_id, existingStudentId: lock.existingStudentId, sid, phase, ip: req.socket.remoteAddress });
+        logAnomaly({ type: 'device_lock_conflict', deviceKey, student_id, existingStudentId: lock.existingStudentId, sid, phase });
         return sendJson(res, { error: 'This device has already been used for submitting a student ID in this verification session.' }, 409);
       }
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
-      await appendCsvRow([tsUtc, sid, phase, student_id, req.socket.remoteAddress, ua]);
+      await appendCsvRow([tsUtc, sid, phase, student_id, '', ua]);
       return sendJson(res, { ok: true });
     }
 
