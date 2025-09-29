@@ -5,112 +5,407 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Attendance Analysis</title>
   <style>
+    :root {
+      color-scheme: light dark;
+      --bg: radial-gradient(circle at top left, rgba(37, 99, 235, 0.1), transparent 55%),
+             radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.1), transparent 60%),
+             #f4f6fb;
+      --surface: rgba(255, 255, 255, 0.95);
+      --surface-soft: rgba(248, 250, 255, 0.82);
+      --border: rgba(15, 23, 42, 0.08);
+      --border-strong: rgba(15, 23, 42, 0.16);
+      --text: #0f172a;
+      --muted: #475467;
+      --primary: #2563eb;
+      --primary-soft: rgba(37, 99, 235, 0.12);
+      --accent: #22c55e;
+      --danger: #dc2626;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
     body {
-      font-family: Arial, sans-serif;
-      margin: 2rem;
-      background-color: #f7f7f7;
-      color: #333;
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      padding: clamp(24px, 5vw, 48px);
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+    }
+    .shell {
+      width: min(1080px, 100%);
+      display: grid;
+      gap: clamp(20px, 3vw, 32px);
+    }
+    .header {
+      background: var(--surface);
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.14);
+      padding: clamp(28px, 4vw, 42px);
+      display: grid;
+      gap: 16px;
+    }
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-weight: 700;
+      letter-spacing: 0.45px;
+      text-transform: uppercase;
+      font-size: 14px;
+    }
+    .brand::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0ea5e9, #2563eb);
+      box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
     }
     h1 {
-      font-size: 1.8rem;
-      margin-bottom: 1rem;
+      margin: 0;
+      font-size: clamp(32px, 5vw, 40px);
+      letter-spacing: -0.6px;
     }
-    .container {
-      background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-      padding: 1.5rem;
-      margin-bottom: 2rem;
+    .subhead {
+      margin: 0;
+      color: var(--muted);
+      font-size: 17px;
+      max-width: 60ch;
+    }
+    .controls {
+      background: var(--surface);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
+      padding: clamp(26px, 3vw, 34px);
+      display: grid;
+      gap: clamp(18px, 2.5vw, 26px);
+    }
+    .section-title {
+      margin: 0;
+      font-weight: 600;
+      font-size: 18px;
+    }
+    .date-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .date-chip {
+      padding: 8px 14px;
+      border-radius: 999px;
+      border: 1px solid var(--border-strong);
+      background: rgba(255,255,255,0.9);
+      color: var(--text);
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .date-chip.active {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
+      border-color: transparent;
+    }
+    .date-chip:disabled {
+      opacity: 0.35;
+      cursor: default;
+      box-shadow: none;
+    }
+    .field-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 14px;
+      align-items: flex-end;
     }
     label {
-      display: block;
-      margin-top: 1rem;
-      font-weight: bold;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
     }
-    input[type="file"] {
-      margin-top: 0.5rem;
+    select {
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      padding: 12px 14px;
+      font-size: 15px;
+      background: var(--surface-soft);
+      color: var(--text);
+      min-width: 220px;
     }
-    button {
-      margin-top: 1.5rem;
-      padding: 0.6rem 1.2rem;
-      background: #007acc;
-      color: white;
+    .export-btn {
       border: none;
-      border-radius: 4px;
-      font-size: 1rem;
+      border-radius: 14px;
+      padding: 12px 18px;
+      font-size: 15px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #15803d, #22c55e);
+      color: #fff;
+      box-shadow: 0 14px 28px rgba(21, 128, 61, 0.28);
       cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     }
-    button:disabled {
-      background: #999;
-      cursor: default;
+    .export-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .upload-box {
+      border: 1px dashed rgba(37, 99, 235, 0.26);
+      border-radius: 18px;
+      background: rgba(37, 99, 235, 0.06);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .upload-box input {
+      font-size: 13px;
+    }
+    .results {
+      display: grid;
+      gap: clamp(18px, 2.5vw, 26px);
+    }
+    .result-card {
+      background: var(--surface);
+      border-radius: 22px;
+      border: 1px solid var(--border);
+      box-shadow: 0 22px 44px rgba(15, 23, 42, 0.12);
+      padding: clamp(24px, 3vw, 32px);
+      display: grid;
+      gap: 18px;
     }
     table {
       width: 100%;
       border-collapse: collapse;
-      margin-top: 1rem;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    thead {
+      background: var(--surface-soft);
     }
     th, td {
-      padding: 0.5rem 0.75rem;
-      border-bottom: 1px solid #ccc;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
       text-align: left;
+      font-size: 14px;
     }
     th {
-      background: #e8e8e8;
+      font-weight: 600;
+      color: var(--muted);
     }
-    .status-present {
-      color: green;
+    tr:last-child td {
+      border-bottom: none;
     }
-    .status-late, .status-left-early, .status-break-missing, .status-partial {
-      color: orange;
-    }
-    .status-absent {
-      color: red;
-    }
-    .section-title {
-      font-size: 1.4rem;
-      margin-top: 2rem;
-    }
-    .email-links {
-      margin-top: 1rem;
-    }
+    .status-present { color: #16a34a; }
+    .status-late { color: #ca8a04; }
+    .status-left-early { color: #f97316; }
+    .status-break-missing { color: #f97316; }
+    .status-partial { color: #eab308; }
+    .status-absent { color: var(--danger); }
     .email-links a {
-      display: block;
-      margin-bottom: 0.5rem;
+      display: inline-block;
+      margin: 6px 8px 0 0;
+      font-size: 13px;
+      color: var(--primary);
+      text-decoration: none;
+    }
+    .email-links a:hover {
+      text-decoration: underline;
+    }
+    .notice {
+      font-size: 14px;
+      color: var(--muted);
+    }
+    .message {
+      padding: 16px;
+      border-radius: 14px;
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      color: var(--primary);
+      font-size: 14px;
     }
   </style>
 </head>
 <body>
-  <h1>Attendance Analysis</h1>
-  <div class="container">
-    <p>Select one or more CSV log files generated by the Student/Collector app. Optionally, provide a roster (list of Student IDs) to include students with no entries.</p>
-    <label for="logFiles">Attendance Log CSV files:</label>
-    <input id="logFiles" type="file" accept=".csv" multiple>
-    <label for="rosterFile">Roster CSV file (optional, one Student ID per line):</label>
-    <input id="rosterFile" type="file" accept=".csv">
-    <button id="analyzeBtn">Analyze Attendance</button>
+  <div class="shell">
+    <header class="header">
+      <span class="brand">Attendance Analysis Suite</span>
+      <h1>Review attendance and prepare follow-up actions</h1>
+      <p class="subhead">Select a date and session to inspect attendance across phases, identify follow-ups, and export tailored reports.</p>
+    </header>
+
+    <section class="controls" id="controls">
+      <div>
+        <h2 class="section-title">1. Select date</h2>
+        <div class="date-grid" id="dateGrid"></div>
+      </div>
+      <div>
+        <h2 class="section-title">2. Select session</h2>
+        <div class="field-row">
+          <label>Session ID
+            <select id="sessionSelect">
+              <option value="" disabled selected>Choose a date first</option>
+            </select>
+          </label>
+          <button type="button" id="exportBtn" class="export-btn" disabled>Download session data</button>
+        </div>
+      </div>
+      <div class="upload-box">
+        <strong>Optional uploads</strong>
+        <label>Replace attendance CSV
+          <input id="attendanceUpload" type="file" accept=".csv">
+        </label>
+        <label>Roster CSV (one student ID per line)
+          <input id="rosterUpload" type="file" accept=".csv">
+        </label>
+        <span class="notice">Without a roster, all unique students from the selected session are used as the roster.</span>
+      </div>
+    </section>
+
+    <section class="results" id="results">
+      <div class="message">Loading attendance data…</div>
+    </section>
   </div>
-  <div id="results"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
-    // Simple CSV parser: splits by newlines and commas; assumes no commas in fields
+    const dateGrid = document.getElementById('dateGrid');
+    const sessionSelect = document.getElementById('sessionSelect');
+    const resultsDiv = document.getElementById('results');
+    const attendanceUpload = document.getElementById('attendanceUpload');
+    const rosterUpload = document.getElementById('rosterUpload');
+    const exportBtn = document.getElementById('exportBtn');
+
+    const state = {
+      records: [],
+      byDate: new Map(),
+      bySession: new Map(),
+      sessionsByDate: new Map(),
+      rosterSet: new Set(),
+      selectedDate: null,
+      selectedSession: null,
+      lastRows: []
+    };
+
+    const statusOrder = ['Present', 'Late', 'Left Early', 'Break Missing', 'Partial', 'Absent'];
+
     function parseCSV(text) {
       const lines = text.trim().split(/\r?\n/);
+      if (lines.length <= 1) return [];
       const header = lines[0].split(',').map(h => h.trim());
       const records = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
         if (!line) continue;
         const parts = line.split(',');
-        const record = {};
-        for (let j = 0; j < header.length; j++) {
-          record[header[j]] = parts[j] ? parts[j].trim() : '';
-        }
-        records.push(record);
+        const rec = {};
+        header.forEach((h, idx) => {
+          rec[h] = parts[idx] ? parts[idx].trim() : '';
+        });
+        records.push(rec);
       }
       return records;
     }
 
-    function sanitizeStudentId(id) {
-      return id.replace(/[^0-9]/g, '').trim();
+    function sanitizeId(id) {
+      return (id || '').replace(/[^0-9]/g, '').trim();
+    }
+
+    function extractDate(ts) {
+      if (!ts) return '';
+      const match = ts.match(/\d{4}-\d{2}-\d{2}/);
+      if (match) return match[0];
+      const date = new Date(ts);
+      if (!isNaN(date)) return date.toISOString().slice(0, 10);
+      return '';
+    }
+
+    function groupRecords(records) {
+      state.byDate.clear();
+      state.bySession.clear();
+      state.sessionsByDate.clear();
+      for (const rec of records) {
+        const date = extractDate(rec.ts_utc);
+        const sid = rec.sid;
+        if (!date || !sid) continue;
+        if (!state.byDate.has(date)) state.byDate.set(date, []);
+        state.byDate.get(date).push(rec);
+        if (!state.bySession.has(sid)) state.bySession.set(sid, []);
+        state.bySession.get(sid).push(rec);
+        if (!state.sessionsByDate.has(date)) state.sessionsByDate.set(date, new Set());
+        state.sessionsByDate.get(date).add(sid);
+      }
+    }
+
+    function renderDateChips() {
+      dateGrid.innerHTML = '';
+      if (!state.byDate.size) {
+        dateGrid.textContent = 'No attendance dates available.';
+        return;
+      }
+      const dates = Array.from(state.byDate.keys()).sort((a, b) => a.localeCompare(b));
+      dates.forEach(date => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'date-chip';
+        btn.textContent = new Date(date + 'T00:00:00Z').toLocaleDateString();
+        btn.dataset.date = date;
+        btn.addEventListener('click', () => {
+          state.selectedDate = date;
+          state.selectedSession = null;
+          updateDateChipActive();
+          populateSessions();
+        });
+        dateGrid.appendChild(btn);
+      });
+      if (!state.selectedDate) {
+        state.selectedDate = dates[dates.length - 1];
+      }
+      updateDateChipActive();
+    }
+
+    function updateDateChipActive() {
+      Array.from(dateGrid.querySelectorAll('.date-chip')).forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.date === state.selectedDate);
+      });
+    }
+
+    function populateSessions() {
+      sessionSelect.innerHTML = '';
+      const sessions = state.sessionsByDate.get(state.selectedDate);
+      if (!sessions || sessions.size === 0) {
+        const opt = document.createElement('option');
+        opt.textContent = 'No sessions for this date';
+        opt.disabled = true;
+        sessionSelect.appendChild(opt);
+        state.selectedSession = null;
+        state.lastRows = [];
+        exportBtn.disabled = true;
+        resultsDiv.innerHTML = '<div class="message">No attendance data for the selected date.</div>';
+        return;
+      }
+      const sortedSessions = Array.from(sessions).sort();
+      sortedSessions.forEach((sid, idx) => {
+        const opt = document.createElement('option');
+        opt.value = sid;
+        opt.textContent = sid;
+        if (idx === 0 || sid === state.selectedSession) opt.selected = true;
+        sessionSelect.appendChild(opt);
+      });
+      state.selectedSession = sessionSelect.value;
+      renderResults();
     }
 
     function determineStatus(phases) {
@@ -119,167 +414,197 @@
       const hasEnd = phases.has('end');
       if (hasStart && hasBreak && hasEnd) return 'Present';
       if (!hasStart && (hasBreak || hasEnd)) return 'Late';
-      if (hasStart && !hasEnd && (hasBreak || !hasBreak)) return 'Left Early';
-      // Both start and end present but break missing
+      if (hasStart && !hasEnd) return 'Left Early';
       if (hasStart && hasEnd && !hasBreak) return 'Break Missing';
       if (hasStart || hasBreak || hasEnd) return 'Partial';
       return 'Absent';
     }
 
     function generateEmail(sid, sessionDate, status, phases) {
-      // Compose .eml content
-      const lineBreak = '\r\n';
-      const toAddress = '{{ID}}@rave.ac.uk';
+      const lb = '\r\n';
       const subject = `[Attendance Alert] ${sid} ${sessionDate}`;
-      // Format phases for message
-      const startStatus = phases.has('start') ? 'Present' : 'Absent';
-      const breakStatus = phases.has('break') ? 'Present' : 'Absent';
-      const endStatus = phases.has('end') ? 'Present' : 'Absent';
       const body =
-        `Dear Student,${lineBreak}${lineBreak}` +
-        `Our records show that for session ${sid} on ${sessionDate}:${lineBreak}` +
-        `- Start: ${startStatus}${lineBreak}` +
-        `- Break: ${breakStatus}${lineBreak}` +
-        `- End: ${endStatus}${lineBreak}${lineBreak}` +
-        `Please be aware that attendance is monitored and may affect your academic progress and visa compliance.${lineBreak}${lineBreak}` +
-        `Regards,${lineBreak}` +
-        `Ravensbourne University London${lineBreak}`;
-      const headers =
-        `To: ${toAddress}${lineBreak}` +
-        `Subject: ${subject}${lineBreak}` +
-        `Content-Type: text/plain; charset=utf-8${lineBreak}` +
-        `${lineBreak}`;
-      return headers + body;
+        `Dear Student,${lb}${lb}` +
+        `Our records show that for session ${sid} on ${sessionDate}:${lb}` +
+        `- Start: ${phases.has('start') ? 'Present' : 'Absent'}${lb}` +
+        `- Break: ${phases.has('break') ? 'Present' : 'Absent'}${lb}` +
+        `- End: ${phases.has('end') ? 'Present' : 'Absent'}${lb}${lb}` +
+        `Please be aware that attendance is monitored and may affect your academic progress and visa compliance.${lb}${lb}` +
+        `Regards,${lb}Ravensbourne University London${lb}`;
+      return `Subject: ${subject}${lb}Content-Type: text/plain; charset=utf-8${lb}${lb}${body}`;
     }
 
-    document.getElementById('analyzeBtn').addEventListener('click', async () => {
-      const logFiles = document.getElementById('logFiles').files;
-      const rosterFile = document.getElementById('rosterFile').files[0];
-      if (!logFiles.length) {
-        alert('Please select at least one attendance log CSV file.');
-        return;
-      }
-      const logs = [];
-      // Read all log files
-      for (const file of logFiles) {
-        const text = await file.text();
-        const records = parseCSV(text);
-        logs.push(...records);
-      }
-      // Build roster set
-      let rosterSet = new Set();
-      if (rosterFile) {
-        const text = await rosterFile.text();
-        const lines = text.trim().split(/\r?\n/);
-        for (const line of lines) {
-          const id = sanitizeStudentId(line);
-          if (id) rosterSet.add(id);
-        }
-      }
-      // Aggregate attendance per session per student
-      const sessionMap = new Map(); // sid -> Map(studentId -> Set(phases))
-      for (const rec of logs) {
-        const sid = rec.sid;
-        const phase = rec.phase;
-        const studentId = sanitizeStudentId(rec.student_id);
-        if (!sid || !phase || !studentId) continue;
-        if (!sessionMap.has(sid)) {
-          sessionMap.set(sid, new Map());
-        }
-        const studentMap = sessionMap.get(sid);
-        if (!studentMap.has(studentId)) {
-          studentMap.set(studentId, new Set());
-        }
-        studentMap.get(studentId).add(phase.toLowerCase());
-      }
-      // Include roster students with no entries
-      for (const sid of sessionMap.keys()) {
-        const studentMap = sessionMap.get(sid);
-        rosterSet.forEach(id => {
-          if (!studentMap.has(id)) {
-            studentMap.set(id, new Set());
-          }
-        });
-      }
-      // Build results HTML
-      const resultsDiv = document.getElementById('results');
+    function renderResults() {
       resultsDiv.innerHTML = '';
-      if (sessionMap.size === 0) {
-        resultsDiv.textContent = 'No records found.';
+      state.lastRows = [];
+      if (!state.selectedDate || !state.selectedSession) {
+        resultsDiv.innerHTML = '<div class="message">Select a date and session to view attendance.</div>';
+        exportBtn.disabled = true;
         return;
       }
-      sessionMap.forEach((studentMap, sid) => {
-        const sessionContainer = document.createElement('div');
-        sessionContainer.className = 'container';
-        const title = document.createElement('div');
-        title.className = 'section-title';
-        title.textContent = `Session: ${sid}`;
-        sessionContainer.appendChild(title);
-        const table = document.createElement('table');
-        const thead = document.createElement('thead');
-        thead.innerHTML = '<tr><th>Student ID</th><th>Start</th><th>Break</th><th>End</th><th>Status</th></tr>';
-        table.appendChild(thead);
-        const tbody = document.createElement('tbody');
-        // Determine session date string for email subject (extract from sid after last '-' as date). Use first part after module code
-        let sessionDate = '';
-        const parts = sid.split('-');
-        if (parts.length >= 3) {
-          // For example: OPS101-2025-10-03-0900 -> date may be parts[1], parts[2], parts[3]
-          // We'll attempt to find YYYY-MM-DD in the sid by scanning for pattern \d{4}-\d{2}-\d{2}
-          const match = sid.match(/\d{4}-\d{2}-\d{2}/);
-          sessionDate = match ? match[0] : '';
-        }
-        // Generate per-student email links container
-        const emailLinks = document.createElement('div');
-        emailLinks.className = 'email-links';
-        studentMap.forEach((phases, studentId) => {
-          const status = determineStatus(phases);
-          const tr = document.createElement('tr');
-          const tdId = document.createElement('td');
-          tdId.textContent = studentId;
-          tr.appendChild(tdId);
-          const tdStart = document.createElement('td');
-          tdStart.textContent = phases.has('start') ? '✔' : '—';
-          tr.appendChild(tdStart);
-          const tdBreak = document.createElement('td');
-          tdBreak.textContent = phases.has('break') ? '✔' : '—';
-          tr.appendChild(tdBreak);
-          const tdEnd = document.createElement('td');
-          tdEnd.textContent = phases.has('end') ? '✔' : '—';
-          tr.appendChild(tdEnd);
-          const tdStatus = document.createElement('td');
-          tdStatus.textContent = status;
-          tdStatus.className = 'status-' + status.toLowerCase().replace(/\s/g, '-');
-          tr.appendChild(tdStatus);
-          tbody.appendChild(tr);
-          // Compose email if not Present
-          if (status !== 'Present') {
-            const emlContent = generateEmail(sid, sessionDate, status, phases);
-            const blob = new Blob([emlContent], { type: 'text/plain' });
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `${studentId}_${sid}_${status}.eml`;
-            link.textContent = `Email ${studentId} (${status})`;
-            link.addEventListener('click', () => {
-              // embed student ID into email on download
-              // Not customizing To line here; replaced placeholder in eml file at download time is not trivial due to browser restrictions.
-            });
-            emailLinks.appendChild(link);
-          }
-        });
-        table.appendChild(tbody);
-        sessionContainer.appendChild(table);
-        if (emailLinks.children.length > 0) {
-          const emailTitle = document.createElement('div');
-          emailTitle.style.marginTop = '1rem';
-          emailTitle.textContent = 'Email drafts:';
-          sessionContainer.appendChild(emailTitle);
-          sessionContainer.appendChild(emailLinks);
-        }
-        resultsDiv.appendChild(sessionContainer);
+      const records = state.bySession.get(state.selectedSession) || [];
+      const filtered = records.filter(rec => extractDate(rec.ts_utc) === state.selectedDate);
+      if (!filtered.length) {
+        resultsDiv.innerHTML = '<div class="message">No attendance records for the selected combination.</div>';
+        exportBtn.disabled = true;
+        return;
+      }
+
+      const phasesByStudent = new Map();
+      filtered.forEach(rec => {
+        const studentId = sanitizeId(rec.student_id);
+        if (!studentId) return;
+        if (!phasesByStudent.has(studentId)) phasesByStudent.set(studentId, new Set());
+        phasesByStudent.get(studentId).add((rec.phase || '').toLowerCase());
       });
+
+      const effectiveRoster = new Set(state.rosterSet.size ? state.rosterSet : phasesByStudent.keys());
+      effectiveRoster.forEach(id => {
+        if (!phasesByStudent.has(id)) phasesByStudent.set(id, new Set());
+      });
+
+      const rows = Array.from(phasesByStudent.entries()).map(([studentId, phases]) => {
+        const startPhase = phases.has('start') ? 'Present' : 'Absent';
+        const breakPhase = phases.has('break') ? 'Present' : 'Absent';
+        const endPhase = phases.has('end') ? 'Present' : 'Absent';
+        return {
+          studentId,
+          phases,
+          startPhase,
+          breakPhase,
+          endPhase,
+          status: determineStatus(phases)
+        };
+      });
+
+      rows.sort((a, b) => {
+        const statusDiff = statusOrder.indexOf(a.status) - statusOrder.indexOf(b.status);
+        if (statusDiff !== 0) return statusDiff;
+        return a.studentId.localeCompare(b.studentId);
+      });
+
+      state.lastRows = rows;
+      exportBtn.disabled = rows.length === 0;
+
+      const sessionCard = document.createElement('div');
+      sessionCard.className = 'result-card';
+
+      const title = document.createElement('h2');
+      title.textContent = `${state.selectedSession} — ${new Date(state.selectedDate + 'T00:00:00Z').toLocaleDateString()}`;
+      sessionCard.appendChild(title);
+
+      const table = document.createElement('table');
+      table.innerHTML = '<thead><tr><th>Student ID</th><th>Start</th><th>Break</th><th>End</th><th>Status</th></tr></thead>';
+      const tbody = document.createElement('tbody');
+
+      const emailLinks = document.createElement('div');
+      emailLinks.className = 'email-links';
+      const sessionDate = state.selectedDate;
+
+      rows.forEach(({ studentId, phases, startPhase, breakPhase, endPhase, status }) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${studentId}</td>
+          <td>${startPhase === 'Present' ? '✔' : '—'}</td>
+          <td>${breakPhase === 'Present' ? '✔' : '—'}</td>
+          <td>${endPhase === 'Present' ? '✔' : '—'}</td>
+          <td class="status-${status.toLowerCase().replace(/\s/g, '-')}">${status}</td>
+        `;
+        tbody.appendChild(tr);
+        if (status !== 'Present') {
+          const eml = generateEmail(state.selectedSession, sessionDate, status, phases);
+          const blob = new Blob([eml], { type: 'text/plain' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = `${studentId}_${state.selectedSession}_${status}.eml`;
+          link.textContent = `Draft email for ${studentId} (${status})`;
+          emailLinks.appendChild(link);
+        }
+      });
+
+      table.appendChild(tbody);
+      sessionCard.appendChild(table);
+
+      if (emailLinks.children.length) {
+        const secondaryTitle = document.createElement('div');
+        secondaryTitle.textContent = 'Follow-up emails';
+        secondaryTitle.style.fontWeight = '600';
+        secondaryTitle.style.marginTop = '4px';
+        sessionCard.appendChild(secondaryTitle);
+        sessionCard.appendChild(emailLinks);
+      }
+
+      resultsDiv.appendChild(sessionCard);
+    }
+
+    function exportSessionToExcel() {
+      if (!state.selectedSession || !state.lastRows.length || typeof XLSX === 'undefined') return;
+      const rows = state.lastRows.map(row => ({
+        'Student ID': row.studentId,
+        'Start': row.startPhase,
+        'Break': row.breakPhase,
+        'End': row.endPhase,
+        'Status': row.status
+      }));
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Attendance');
+      const filename = `${state.selectedSession}_${state.selectedDate}.xlsx`;
+      XLSX.writeFile(workbook, filename);
+    }
+
+    async function loadAttendanceFromServer() {
+      try {
+        const resp = await fetch('/api/csv/current');
+        if (!resp.ok) throw new Error('Attendance CSV not found on server.');
+        const text = await resp.text();
+        applyAttendanceData(text);
+      } catch (err) {
+        resultsDiv.innerHTML = `<div class="message">${err.message}</div>`;
+      }
+    }
+
+    function applyAttendanceData(text) {
+      const records = parseCSV(text);
+      state.records = records;
+      groupRecords(records);
+      renderDateChips();
+      populateSessions();
+    }
+
+    attendanceUpload.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      applyAttendanceData(text);
     });
+
+    rosterUpload.addEventListener('change', async (event) => {
+      const file = event.target.files[0];
+      if (!file) {
+        state.rosterSet.clear();
+        renderResults();
+        return;
+      }
+      const text = await file.text();
+      const lines = text.trim().split(/\r?\n/);
+      state.rosterSet.clear();
+      lines.forEach(line => {
+        const id = sanitizeId(line);
+        if (id) state.rosterSet.add(id);
+      });
+      renderResults();
+    });
+
+    sessionSelect.addEventListener('change', () => {
+      state.selectedSession = sessionSelect.value;
+      renderResults();
+    });
+
+    exportBtn.addEventListener('click', exportSessionToExcel);
+
+    loadAttendanceFromServer();
   </script>
 </body>
 </html>

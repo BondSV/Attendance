@@ -13,7 +13,6 @@
         <p class="session-label" id="sessionLabel">Live session</p>
         <h1 id="sessionTitle">Attendance Check-in</h1>
       </div>
-      <div class="session-pill" id="phasePill"></div>
     </header>
 
     <main class="page__grid">
@@ -23,14 +22,13 @@
           <li><strong>Step 1:</strong> You already scanned the entry QR to open this page.</li>
           <li><strong>Step 2:</strong> Use the scanner below to read the verification code on the front screen.</li>
         </ol>
-        <div class="status-banner" id="statusBanner">Tap the button below when you can see the teacher’s Step 2 QR code.</div>
       </section>
 
       <section class="card scanner" id="scannerCard">
         <h2>Step 2 – Verify attendance</h2>
         <div class="scanner-placeholder" id="scannerPlaceholder">
           <p>Tap “Start scanning” to open the camera.</p>
-          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while facing the screen.</p>
+          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while keeping the QR-code in the frame.</p>
         </div>
         <div class="camera-frame" id="cameraFrame" hidden>
           <video id="video" autoplay playsinline></video>

@@ -1,6 +1,6 @@
 const crypto = require('crypto');
 
-const DEFAULT_TTL_MS = parseInt(process.env.CHALLENGE_TTL_MS || '7000', 10);
+const DEFAULT_TTL_MS = parseInt(process.env.CHALLENGE_TTL_MS || '3000', 10);
 
 const challenges = new Map();
 

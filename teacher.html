@@ -7,182 +7,173 @@
   <style>
     :root {
       color-scheme: light dark;
-      --bg: #f4f6fb;
-      --surface: #ffffff;
-      --surface-soft: rgba(255, 255, 255, 0.92);
-      --border: rgba(15, 23, 42, 0.08);
-      --shadow: rgba(15, 23, 42, 0.15);
+      --bg: #eef2ff;
+      --teacher-surface: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.86));
+      --teacher-border: rgba(148, 163, 184, 0.25);
+      --student-surface: rgba(255, 255, 255, 0.94);
+      --student-border: rgba(15, 23, 42, 0.08);
+      --shadow-strong: 0 32px 64px rgba(15, 23, 42, 0.25);
+      --shadow-soft: 0 26px 52px rgba(15, 23, 42, 0.14);
       --accent: #2563eb;
       --accent-soft: rgba(37, 99, 235, 0.12);
-      --text: #101828;
+      --text-light: #e2e8f0;
+      --text-dark: #0f172a;
       --muted: #475467;
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     }
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
     body {
       margin: 0;
       min-height: 100vh;
       background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, 0.12), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.1), transparent 60%),
+        radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 55%),
+        radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.12), transparent 60%),
         var(--bg);
+      color: var(--text-dark);
       display: flex;
       justify-content: center;
-      align-items: center;
-      padding: clamp(20px, 4vw, 40px);
-      color: var(--text);
+      align-items: flex-start;
+      padding: clamp(18px, 3vw, 32px);
     }
-    .shell {
-      display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(540px, 760px);
-      gap: clamp(32px, 7vw, 64px);
+    .layout {
       width: min(1180px, 100%);
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: clamp(18px, 3vw, 28px);
     }
-    .card {
-      background: var(--surface);
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      box-shadow: 0 20px 45px rgba(15, 23, 42, 0.12);
-      padding: clamp(22px, 3vw, 36px);
+    .teacher-card,
+    .step-card {
+      border-radius: 24px;
+      padding: clamp(24px, 3vw, 32px);
       display: flex;
       flex-direction: column;
-      gap: clamp(18px, 2.4vw, 28px);
+      gap: clamp(14px, 2vw, 22px);
     }
-    h1 {
+    .teacher-card {
+      background: var(--teacher-surface);
+      border: 1px solid var(--teacher-border);
+      box-shadow: var(--shadow-strong);
+      color: var(--text-light);
+    }
+    .teacher-card h1 {
       margin: 0;
-      font-size: clamp(26px, 3vw, 34px);
-      font-weight: 600;
-      letter-spacing: -0.3px;
+      font-size: clamp(28px, 4.2vw, 36px);
+      letter-spacing: -0.4px;
+      color: #f8fafc;
     }
-    p.lead {
-      margin: 4px 0 0;
-      color: var(--muted);
+    .teacher-card p {
+      margin: 0;
+      color: rgba(226, 232, 240, 0.78);
       font-size: 15px;
       line-height: 1.6;
     }
     .form-stack {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
+      display: grid;
+      gap: 12px;
     }
     label {
       font-size: 13px;
       font-weight: 600;
-      color: var(--muted);
+      color: rgba(226, 232, 240, 0.76);
       display: flex;
       flex-direction: column;
       gap: 6px;
     }
     input[type="text"], select {
       border-radius: 14px;
-      border: 1px solid rgba(15, 23, 42, 0.16);
+      border: 1px solid rgba(148, 163, 184, 0.4);
       padding: 12px 14px;
       font-size: 15px;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(15, 23, 42, 0.55);
+      color: #f8fafc;
       transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    input[type="text"]::placeholder {
+      color: rgba(226, 232, 240, 0.55);
     }
     input[type="text"]:focus, select:focus {
       outline: none;
-      border-color: var(--accent);
-      box-shadow: 0 0 0 4px var(--accent-soft);
+      border-color: rgba(148, 163, 184, 0.7);
+      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.35);
     }
-    button {
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .actions button {
       border: none;
       border-radius: 14px;
       padding: 12px 18px;
       font-size: 15px;
       font-weight: 600;
       cursor: pointer;
+      flex: 1;
       transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     }
-    button.primary {
-      background: linear-gradient(135deg, #2563eb, #3b82f6);
+    .actions button.primary {
+      background: linear-gradient(135deg, #15803d, #22c55e);
       color: #fff;
-      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.25);
+      box-shadow: 0 16px 28px rgba(21, 128, 61, 0.32);
     }
-    button.primary:not(:disabled):hover {
-      transform: translateY(-1px);
-      box-shadow: 0 16px 34px rgba(37, 99, 235, 0.28);
-    }
-    button.primary:disabled {
-      opacity: 0.65;
+    .actions button.primary:disabled {
+      opacity: 0.6;
       cursor: not-allowed;
       box-shadow: none;
     }
-    button.ghost {
+    .actions button.ghost {
       background: transparent;
-      border: 1px solid var(--border);
-      color: var(--muted);
+      border: 1px solid rgba(148, 163, 184, 0.45);
+      color: rgba(226, 232, 240, 0.85);
     }
-    button.ghost:not(:disabled):hover {
-      transform: translateY(-1px);
-      box-shadow: 0 12px 24px rgba(15, 23, 42, 0.08);
-      border-color: rgba(15, 23, 42, 0.18);
-    }
-    button.ghost:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    .actions {
-      display: flex;
-      gap: 16px;
-      flex-wrap: wrap;
-    }
-    .actions--aligned {
-      width: 100%;
-      justify-content: space-between;
-    }
-    .actions__start,
-    .actions__stop {
-      flex: 1;
+    .step-cluster {
+      display: grid;
+      gap: clamp(16px, 2.4vw, 24px);
     }
     .step-card {
-      background: rgba(255, 255, 255, 0.86);
-      border-radius: 18px;
-      border: 1px dashed rgba(15, 23, 42, 0.2);
-      padding: 18px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      align-items: center;
+      background: var(--student-surface);
+      border: 1px solid var(--student-border);
+      box-shadow: var(--shadow-soft);
       text-align: center;
+      align-items: center;
     }
     .step-pill {
       display: inline-flex;
       align-items: center;
       gap: 8px;
-      padding: 8px 18px;
+      padding: 7px 16px;
       border-radius: 999px;
       background: rgba(37, 99, 235, 0.14);
       color: var(--accent);
-      font-size: 14px;
+      font-size: 13px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      letter-spacing: 0.4px;
       text-transform: uppercase;
     }
-    .step-card h3 {
+    .step-card h2 {
       margin: 0;
-      font-size: 17px;
+      font-size: 20px;
       font-weight: 600;
+      color: var(--text-dark);
+    }
+    .step-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.55;
     }
     .qr-box {
-      width: clamp(240px, 36vw, 360px);
-      aspect-ratio: 1 / 1;
+      width: clamp(240px, 32vw, 320px);
+      aspect-ratio: 1/1;
       border-radius: 24px;
-      background: var(--surface-soft);
+      background: rgba(255,255,255,0.96);
       display: grid;
       place-items: center;
-      position: relative;
-      overflow: hidden;
-      box-shadow: 0 32px 64px rgba(15, 23, 42, 0.16);
-      border: 1px solid rgba(37, 99, 235, 0.12);
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.18);
+      border: 1px solid rgba(37, 99, 235, 0.15);
     }
     .qr-box.small {
-      width: clamp(180px, 26vw, 230px);
-      border-radius: 18px;
-      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
+      width: clamp(180px, 24vw, 210px);
     }
     .qr-box canvas {
       width: 84%;
@@ -191,61 +182,26 @@
     .qr-placeholder {
       font-size: 14px;
       color: var(--muted);
-      text-align: center;
       padding: 0 18px;
       line-height: 1.5;
     }
     .countdown {
       font-size: 14px;
       color: var(--muted);
-      text-align: center;
     }
-    .status-line {
-      font-size: 13px;
-      color: var(--muted);
-    }
-    .verify-card {
-      align-items: center;
-      text-align: center;
-      gap: clamp(16px, 2vw, 24px);
-    }
-    .verify-card h2 {
-      margin: 0;
-      font-size: clamp(24px, 2.6vw, 30px);
-      font-weight: 600;
-    }
-    .verify-card p {
-      display: none;
-    }
-    @media (max-width: 980px) {
-      body {
-        align-items: flex-start;
-      }
-      .shell {
+    @media (max-width: 900px) {
+      .layout {
         grid-template-columns: 1fr;
-      }
-      .qr-box {
-        width: clamp(260px, 70vw, 360px);
-      }
-      .qr-box.small {
-        width: clamp(200px, 50vw, 240px);
-      }
-      .actions--aligned {
-        flex-direction: column;
-      }
-      .actions__start,
-      .actions__stop {
-        width: 100%;
       }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <section class="card">
+  <div class="layout">
+    <section class="teacher-card">
       <div>
-        <h1>Attendance Session</h1>
-        <p class="lead">Enter the session ID and phase, then display both QR codes on the projector to securely track in-class attendance.</p>
+        <h1>Teacher controls</h1>
+        <p>Set the session ID and phase, then start the verification loop for the class.</p>
       </div>
       <div class="form-stack">
         <label for="sessionId">Session ID
@@ -259,28 +215,32 @@
           </select>
         </label>
       </div>
-      <div class="actions actions--aligned">
-        <button class="primary actions__start" id="startBtn">Start</button>
-        <button class="ghost actions__stop" id="stopBtn" disabled>Stop</button>
+      <div class="actions">
+        <button class="primary" id="startBtn">Start</button>
+        <button class="ghost" id="stopBtn" disabled>Stop</button>
       </div>
-      <div class="step-card" id="step1Card">
+      <div id="sessionStatus"></div>
+    </section>
+
+    <div class="step-cluster">
+      <section class="step-card">
         <span class="step-pill">Step 1</span>
-        <h3>Scan to open Student App</h3>
+        <h2>Scan to open Student App</h2>
+        <p>Students scan this code to launch the check-in app.</p>
         <div class="qr-box small" id="sessionQr">
           <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
         </div>
-      </div>
-      <div id="sessionStatus" class="status-line"></div>
-    </section>
-
-    <section class="card verify-card">
-      <span class="step-pill">Step 2</span>
-      <h2>Scan to verify attendance</h2>
-      <div class="qr-box" id="verificationQr">
-        <div class="qr-placeholder">Start the session to display the verification QR.</div>
-      </div>
-      <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
-    </section>
+      </section>
+      <section class="step-card">
+        <span class="step-pill">Step 2</span>
+        <h2>Scan to verify attendance</h2>
+        <p>Students scan this live code from inside the classroom to confirm presence.</p>
+        <div class="qr-box" id="verificationQr">
+          <div class="qr-placeholder">Start the session to display the verification QR.</div>
+        </div>
+        <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
+      </section>
+    </div>
   </div>
 
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
@@ -294,7 +254,6 @@
     const stopBtn = document.getElementById('stopBtn');
     const sessionQrEl = document.getElementById('sessionQr');
     const verificationQrEl = document.getElementById('verificationQr');
-    const sessionStatusEl = document.getElementById('sessionStatus');
     const countdownEl = document.getElementById('challengeCountdown');
 
     let sessionQr = null;
@@ -367,7 +326,7 @@
         if (!resp.ok) throw new Error('Challenge fetch failed');
         const data = await resp.json();
         renderVerificationQr(data.challenge);
-        const ttlMs = data.ttl_ms || 5000;
+        const ttlMs = data.ttl_ms || 3000;
         countdownSeconds = Math.max(1, Math.round(ttlMs / 1000));
         updateCountdownDisplay();
         if (countdownIntervalId) clearInterval(countdownIntervalId);
@@ -389,7 +348,6 @@
       activeSession = null;
       startBtn.disabled = false;
       stopBtn.disabled = true;
-      sessionStatusEl.textContent = '';
       clearQr(verificationQrEl);
       countdownEl.textContent = 'Session stopped. Start again to display a new code.';
     }

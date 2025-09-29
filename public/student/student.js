@@ -22,8 +22,6 @@
   const phase = payload.p || payload.phase || 'start';
   const sessionLabel = document.getElementById('sessionLabel');
   const sessionTitle = document.getElementById('sessionTitle');
-  const phasePill = document.getElementById('phasePill');
-  const statusBanner = document.getElementById('statusBanner');
   const scanBtn = document.getElementById('scanBtn');
   const cameraFrame = document.getElementById('cameraFrame');
   const scannerPlaceholder = document.getElementById('scannerPlaceholder');
@@ -39,8 +37,6 @@
 
   sessionLabel.textContent = sid;
   sessionTitle.textContent = 'Attendance Check-in';
-  const phaseNames = { start: 'Session start', break: 'Break resume', end: 'Session end' };
-  phasePill.textContent = phaseNames[phase] || phase;
 
   let mediaStream = null;
   let barcodeDetector = null;
@@ -75,7 +71,7 @@
     cameraFrame.setAttribute('hidden', '');
     scannerPlaceholder.setAttribute('hidden', '');
     scanBtn.disabled = false;
-    cameraHint.textContent = reason || 'Tap “Start scanning” to open the camera again.';
+    if (reason) submitStatus.textContent = reason;
     const stream = video.srcObject;
     if (stream && typeof stream.getTracks === 'function') {
       stream.getTracks().forEach(track => track.stop());
@@ -109,7 +105,6 @@
     successCard.setAttribute('hidden', '');
     idCard.setAttribute('hidden', '');
     submitStatus.textContent = '';
-    statusBanner.textContent = 'Scanning… align the Step 2 QR inside the frame.';
     scannerPlaceholder.setAttribute('hidden', '');
     cameraFrame.removeAttribute('hidden');
     scanBtn.disabled = true;
@@ -126,8 +121,8 @@
       }
     } catch (err) {
       console.error(err);
-      statusBanner.textContent = err.message || 'Camera error. Please try again.';
-      stopScanning('Unable to start scanner.');
+      submitStatus.textContent = err.message || 'Camera error. Please try again.';
+      stopScanning();
     }
   }
 
@@ -140,7 +135,6 @@
           const challenge = parseChallengePayload(value);
           if (challenge && !challengeCache.has(challenge)) {
             challengeCache.add(challenge);
-            statusBanner.textContent = 'Validating…';
             await submitChallenge(challenge);
             handleVerified();
             return;
@@ -157,7 +151,7 @@
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     if (!window.jsQR) {
-      statusBanner.textContent = 'QR scanning not supported on this device. Please try a different browser.';
+      submitStatus.textContent = 'QR scanning not supported on this device. Please try a different browser.';
       stopScanning();
       return;
     }
@@ -177,7 +171,6 @@
           const challenge = parseChallengePayload(result.data);
           if (challenge && !challengeCache.has(challenge)) {
             challengeCache.add(challenge);
-            statusBanner.textContent = 'Validating…';
             await submitChallenge(challenge);
             handleVerified();
             return;
@@ -197,7 +190,8 @@
     scannerPlaceholder.setAttribute('hidden', '');
     successCard.removeAttribute('hidden');
     idCard.removeAttribute('hidden');
-    statusBanner.textContent = 'Presence verified. Enter your student ID to finish.';
+    submitStatus.textContent = 'Presence verified. Enter your student ID to finish.';
+    submitStatus.style.color = '#16a34a';
     stopScanning();
   }
 
