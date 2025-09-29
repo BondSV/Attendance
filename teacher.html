@@ -341,7 +341,7 @@
       if (!activeSession) return;
       const { sid, phase } = activeSession;
       try {
-        if (!/^[-A-Za-z0-9_.:]{3,80}$/.test(sid)) {
+        if (!/^[A-Za-z0-9 _\-:.,]{3,80}$/.test(sid)) {
           throw new Error('Invalid Session ID. Use letters, numbers, dash, underscore, colon, or dot.');
         }
         const url = `/api/challenge?sid=${encodeURIComponent(sid)}&phase=${encodeURIComponent(phase)}`;
