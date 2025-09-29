@@ -8,18 +8,16 @@
     :root {
       color-scheme: light dark;
       --bg: #eef2ff;
-      --teacher-surface: linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(15, 23, 42, 0.86));
+      --teacher-surface: linear-gradient(135deg, rgba(51, 65, 85, 0.94), rgba(59, 130, 246, 0.82));
       --teacher-border: rgba(148, 163, 184, 0.25);
       --student-surface: rgba(255, 255, 255, 0.94);
       --student-border: rgba(15, 23, 42, 0.08);
-      --shadow-strong: 0 32px 64px rgba(15, 23, 42, 0.25);
+      --shadow-strong: 0 28px 58px rgba(15, 23, 42, 0.22);
       --shadow-soft: 0 26px 52px rgba(15, 23, 42, 0.14);
       --accent: #2563eb;
-      --accent-soft: rgba(37, 99, 235, 0.12);
       --text-light: #e2e8f0;
       --text-dark: #0f172a;
       --muted: #475467;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     * { box-sizing: border-box; }
     body {
@@ -33,38 +31,39 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: clamp(14px, 3vw, 24px);
+      padding: clamp(14px, 2.5vw, 22px);
     }
     .layout {
       width: min(1180px, 100%);
       display: grid;
-      gap: clamp(18px, 3vw, 24px);
+      grid-template-columns: minmax(320px, 380px) minmax(420px, 1fr);
+      gap: clamp(18px, 3vw, 26px);
+      align-items: start;
     }
     .teacher-stack {
       display: grid;
       gap: clamp(14px, 2vw, 20px);
-      max-width: 420px;
     }
     .teacher-card {
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(30, 64, 175, 0.85));
-      border: 1px solid rgba(148, 163, 184, 0.22);
+      background: var(--teacher-surface);
+      border: 1px solid var(--teacher-border);
       box-shadow: var(--shadow-strong);
       color: var(--text-light);
-      border-radius: 24px;
+      border-radius: 22px;
       padding: clamp(22px, 3vw, 30px);
       display: flex;
       flex-direction: column;
-      gap: clamp(16px, 2vw, 24px);
+      gap: clamp(16px, 2vw, 22px);
     }
     .teacher-card h1 {
       margin: 0;
-      font-size: clamp(28px, 4.2vw, 36px);
-      letter-spacing: -0.4px;
+      font-size: clamp(26px, 4vw, 32px);
+      letter-spacing: -0.3px;
       color: #f8fafc;
     }
     .teacher-card p {
       margin: 0;
-      color: rgba(226, 232, 240, 0.78);
+      color: rgba(226, 232, 240, 0.82);
       font-size: 15px;
       line-height: 1.6;
     }
@@ -85,7 +84,7 @@
       border: 1px solid rgba(148, 163, 184, 0.4);
       padding: 12px 14px;
       font-size: 15px;
-      background: rgba(15, 23, 42, 0.55);
+      background: rgba(15, 23, 42, 0.45);
       color: #f8fafc;
       transition: border 0.2s ease, box-shadow 0.2s ease;
     }
@@ -100,7 +99,6 @@
     .actions {
       display: flex;
       gap: 12px;
-      flex-wrap: wrap;
     }
     .actions button {
       border: none;
@@ -108,34 +106,30 @@
       padding: 12px 18px;
       font-size: 15px;
       font-weight: 600;
-      cursor: pointer;
       flex: 1;
+      cursor: pointer;
       transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
     }
     .actions button.primary {
       background: linear-gradient(135deg, #15803d, #22c55e);
       color: #fff;
-      box-shadow: 0 16px 28px rgba(21, 128, 61, 0.32);
+      box-shadow: 0 16px 28px rgba(21, 128, 61, 0.3);
     }
     .actions button.primary:disabled {
       opacity: 0.6;
       cursor: not-allowed;
       box-shadow: none;
     }
-    .actions button.ghost {
-      background: linear-gradient(135deg, rgba(220, 38, 38, 0.18), rgba(248, 113, 113, 0.24));
-      border: 1px solid rgba(220, 38, 38, 0.25);
-      color: rgba(220, 38, 38, 0.92);
-      box-shadow: 0 10px 20px rgba(220, 38, 38, 0.12);
+    .actions button.stop {
+      background: linear-gradient(135deg, rgba(248, 113, 113, 0.85), rgba(239, 68, 68, 0.75));
+      color: rgba(31, 41, 55, 0.9);
+      border: 1px solid rgba(248, 113, 113, 0.6);
+      box-shadow: 0 12px 24px rgba(248, 113, 113, 0.18);
     }
-    .actions button.ghost:disabled {
-      opacity: 0.45;
+    .actions button.stop:disabled {
+      opacity: 0.5;
       cursor: not-allowed;
       box-shadow: none;
-    }
-    .step-cluster {
-      display: grid;
-      gap: clamp(16px, 2.4vw, 24px);
     }
     .step-card {
       background: var(--student-surface);
@@ -147,12 +141,11 @@
       padding: clamp(26px, 3vw, 32px);
     }
     .step-card.step1 {
-      max-width: 420px;
-      justify-self: start;
+      width: 100%;
     }
     .step-card.step2 {
-      justify-self: center;
-      width: min(520px, 100%);
+      width: 100%;
+      min-height: 100%;
     }
     .step-pill {
       display: inline-flex;
@@ -180,7 +173,7 @@
       line-height: 1.55;
     }
     .qr-box {
-      width: clamp(240px, 32vw, 320px);
+      width: clamp(220px, 32vw, 320px);
       aspect-ratio: 1/1;
       border-radius: 24px;
       background: rgba(255,255,255,0.96);
@@ -190,7 +183,7 @@
       border: 1px solid rgba(37, 99, 235, 0.15);
     }
     .qr-box.small {
-      width: clamp(180px, 24vw, 210px);
+      width: clamp(200px, 26vw, 240px);
     }
     .qr-box canvas {
       width: 84%;
@@ -206,9 +199,15 @@
       font-size: 14px;
       color: var(--muted);
     }
-    @media (max-width: 900px) {
+    @media (max-width: 960px) {
       .layout {
         grid-template-columns: 1fr;
+      }
+      .teacher-stack {
+        max-width: 100%;
+      }
+      .step-card.step2 {
+        justify-self: center;
       }
     }
   </style>
@@ -235,7 +234,7 @@
         </div>
         <div class="actions">
           <button class="primary" id="startBtn">Start</button>
-          <button class="ghost" id="stopBtn" disabled>Stop</button>
+          <button class="stop" id="stopBtn" disabled>Stop</button>
         </div>
       </section>
       <section class="step-card step1">
