@@ -63,8 +63,18 @@
 
   async function ensureCamera() {
     if (mediaStream) return mediaStream;
-    const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' } }, audio: false });
-    mediaStream = stream;
+    const constraintsPrimary = { video: { facingMode: { ideal: 'environment' } }, audio: false };
+    const constraintsFallback = { video: { facingMode: 'environment' }, audio: false };
+    try {
+      mediaStream = await navigator.mediaDevices.getUserMedia(constraintsPrimary);
+    } catch (e1) {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraintsFallback);
+      } catch (e2) {
+        // As a last resort, try any camera
+        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+      }
+    }
     return mediaStream;
   }
 
@@ -127,6 +137,16 @@
     try {
       const stream = await ensureCamera();
       video.srcObject = stream;
+      // iOS often needs metadata before play; also require playsinline & muted attributes
+      if (!video.hasAttribute('playsinline')) video.setAttribute('playsinline', '');
+      if (!video.hasAttribute('webkit-playsinline')) video.setAttribute('webkit-playsinline', '');
+      video.muted = true;
+      await new Promise((resolve) => {
+        const onReady = () => { video.removeEventListener('loadedmetadata', onReady); resolve(); };
+        if (video.readyState >= 1) return resolve();
+        video.addEventListener('loadedmetadata', onReady, { once: true });
+        setTimeout(resolve, 500); // safety timeout
+      });
       await video.play().catch(() => {});
       const detector = await ensureDetector();
       if (detector) {
@@ -144,6 +164,10 @@
   async function scanWithDetector(detector) {
     while (scanning) {
       try {
+        if (!video.videoWidth || !video.videoHeight) {
+          await new Promise(r => setTimeout(r, 80));
+          continue;
+        }
         const barcodes = await detector.detect(video);
         if (barcodes && barcodes.length) {
           const value = barcodes[0].rawValue || '';
