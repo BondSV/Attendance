@@ -16,7 +16,6 @@
       --accent-soft: rgba(37, 99, 235, 0.12);
       --text: #101828;
       --muted: #475467;
-      --danger: #dc2626;
       font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
     }
     * {
@@ -37,8 +36,8 @@
     }
     .shell {
       display: grid;
-      grid-template-columns: minmax(280px, 360px) minmax(520px, 720px);
-      gap: clamp(28px, 6vw, 56px);
+      grid-template-columns: minmax(280px, 360px) minmax(540px, 760px);
+      gap: clamp(32px, 7vw, 64px);
       width: min(1180px, 100%);
     }
     .card {
@@ -89,11 +88,6 @@
       border-color: var(--accent);
       box-shadow: 0 0 0 4px var(--accent-soft);
     }
-    .actions {
-      display: flex;
-      gap: 12px;
-      flex-wrap: wrap;
-    }
     button {
       border: none;
       border-radius: 14px;
@@ -131,6 +125,19 @@
       opacity: 0.5;
       cursor: not-allowed;
     }
+    .actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+    }
+    .actions--aligned {
+      width: 100%;
+      justify-content: space-between;
+    }
+    .actions__start,
+    .actions__stop {
+      flex: 1;
+    }
     .step-card {
       background: rgba(255, 255, 255, 0.86);
       border-radius: 18px;
@@ -145,25 +152,20 @@
     .step-pill {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      padding: 6px 12px;
+      gap: 8px;
+      padding: 8px 18px;
       border-radius: 999px;
-      background: rgba(37, 99, 235, 0.12);
+      background: rgba(37, 99, 235, 0.14);
       color: var(--accent);
-      font-size: 12px;
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.4px;
+      letter-spacing: 0.5px;
       text-transform: uppercase;
     }
     .step-card h3 {
       margin: 0;
       font-size: 17px;
       font-weight: 600;
-    }
-    .step-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 13px;
     }
     .qr-box {
       width: clamp(240px, 36vw, 360px);
@@ -178,7 +180,7 @@
       border: 1px solid rgba(37, 99, 235, 0.12);
     }
     .qr-box.small {
-      width: clamp(160px, 24vw, 210px);
+      width: clamp(180px, 26vw, 230px);
       border-radius: 18px;
       box-shadow: 0 18px 36px rgba(15, 23, 42, 0.08);
     }
@@ -202,12 +204,10 @@
       font-size: 13px;
       color: var(--muted);
     }
-    .status-line strong {
-      color: var(--accent);
-    }
     .verify-card {
       align-items: center;
       text-align: center;
+      gap: clamp(16px, 2vw, 24px);
     }
     .verify-card h2 {
       margin: 0;
@@ -215,10 +215,7 @@
       font-weight: 600;
     }
     .verify-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 14px;
-      line-height: 1.6;
+      display: none;
     }
     @media (max-width: 980px) {
       body {
@@ -233,6 +230,13 @@
       .qr-box.small {
         width: clamp(200px, 50vw, 240px);
       }
+      .actions--aligned {
+        flex-direction: column;
+      }
+      .actions__start,
+      .actions__stop {
+        width: 100%;
+      }
     }
   </style>
 </head>
@@ -241,14 +245,11 @@
     <section class="card">
       <div>
         <h1>Attendance Session</h1>
-        <p class="lead">Configure the session parameters, show the two QR steps on the projector, and track in-class attendance securely.</p>
+        <p class="lead">Enter the session ID and phase, then display both QR codes on the projector to securely track in-class attendance.</p>
       </div>
-    <div class="form-stack">
+      <div class="form-stack">
         <label for="sessionId">Session ID
           <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
-        </label>
-        <label for="studentOrigin">Student App Origin
-          <input id="studentOrigin" type="text" placeholder="https://attendance.example.edu" autocomplete="off">
         </label>
         <label for="phase">Phase
           <select id="phase">
@@ -258,9 +259,9 @@
           </select>
         </label>
       </div>
-      <div class="actions">
-        <button class="primary" id="startBtn">Start</button>
-        <button class="ghost" id="stopBtn" disabled>Stop</button>
+      <div class="actions actions--aligned">
+        <button class="primary actions__start" id="startBtn">Start</button>
+        <button class="ghost actions__stop" id="stopBtn" disabled>Stop</button>
       </div>
       <div class="step-card" id="step1Card">
         <span class="step-pill">Step 1</span>
@@ -274,8 +275,7 @@
 
     <section class="card verify-card">
       <span class="step-pill">Step 2</span>
-      <h2>Verify attendance</h2>
-      <p>Ask everyone to scan this code from inside the classroom.</p>
+      <h2>Scan to verify attendance</h2>
       <div class="qr-box" id="verificationQr">
         <div class="qr-placeholder">Start the session to display the verification QR.</div>
       </div>
@@ -286,8 +286,9 @@
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
   (function() {
+    const DEFAULT_ORIGIN = 'https://attendance-i9lt.onrender.com';
+
     const sessionIdInput = document.getElementById('sessionId');
-    const studentOriginInput = document.getElementById('studentOrigin');
     const phaseSelect = document.getElementById('phase');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -311,15 +312,15 @@
       sessionQrEl.innerHTML = '';
       sessionQr = new QRCode(sessionQrEl, {
         text: url,
-        width: 180,
-        height: 180,
+        width: 200,
+        height: 200,
         correctLevel: QRCode.CorrectLevel.M,
         colorDark: '#000000',
         colorLight: '#ffffff'
       });
     }
 
-  function renderVerificationQr(text) {
+    function renderVerificationQr(text) {
       verificationQrEl.innerHTML = '';
       verificationQr = new QRCode(verificationQrEl, {
         text,
@@ -341,11 +342,9 @@
         countdownEl.textContent = 'Waiting to start session…';
         return;
       }
-      if (countdownSeconds <= 0) {
-        countdownEl.textContent = 'Refreshing verification code…';
-      } else {
-        countdownEl.textContent = `New verification code in ${countdownSeconds}s`;
-      }
+      countdownEl.textContent = countdownSeconds <= 0
+        ? 'Refreshing verification code…'
+        : `New verification code in ${countdownSeconds}s`;
     }
 
     function clearTimers() {
@@ -367,8 +366,7 @@
         const resp = await fetch(url);
         if (!resp.ok) throw new Error('Challenge fetch failed');
         const data = await resp.json();
-        const payload = data.challenge;
-        renderVerificationQr(payload);
+        renderVerificationQr(data.challenge);
         const ttlMs = data.ttl_ms || 5000;
         countdownSeconds = Math.max(1, Math.round(ttlMs / 1000));
         updateCountdownDisplay();
@@ -399,7 +397,7 @@
     startBtn.addEventListener('click', () => {
       const sid = sessionIdInput.value.trim();
       const phase = phaseSelect.value;
-      const origin = (studentOriginInput.value.trim() || window.location.origin).replace(/\/$/, '');
+      const origin = DEFAULT_ORIGIN.replace(/\/$/, '');
       if (!sid) {
         alert('Please enter a session ID.');
         return;
@@ -408,7 +406,6 @@
       const frag = encodePayload(sessionPayload);
       const url = `${origin}/student#${frag}`;
       renderSessionQr(url);
-      sessionStatusEl.innerHTML = `<strong>Running:</strong> ${sid} • Share Step 1 QR with students.`;
       activeSession = { sid, phase };
       startBtn.disabled = true;
       stopBtn.disabled = false;

@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Attendance Console</title>
+  <style>
+    :root {
+      color-scheme: light dark;
+      --bg: radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 55%),
+             radial-gradient(circle at bottom right, rgba(16, 24, 40, 0.08), transparent 60%),
+             #f4f6fb;
+      --surface: rgba(255, 255, 255, 0.92);
+      --border: rgba(15, 23, 42, 0.08);
+      --text: #101828;
+      --muted: #475467;
+      --primary: #2563eb;
+      --primary-soft: rgba(37, 99, 235, 0.12);
+      --accent: #21c55d;
+      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: clamp(24px, 5vw, 48px);
+    }
+    .hero {
+      width: min(960px, 100%);
+      background: var(--surface);
+      border-radius: 28px;
+      border: 1px solid var(--border);
+      box-shadow: 0 30px 60px rgba(15, 23, 42, 0.16);
+      padding: clamp(32px, 5vw, 48px);
+      display: grid;
+      gap: clamp(24px, 4vw, 36px);
+    }
+    .hero__header h1 {
+      margin: 0;
+      font-size: clamp(32px, 6vw, 44px);
+      letter-spacing: -0.6px;
+    }
+    .hero__header p {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: clamp(16px, 2.4vw, 18px);
+      line-height: 1.6;
+    }
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      border-radius: 999px;
+      background: var(--primary-soft);
+      color: var(--primary);
+      font-size: 14px;
+      font-weight: 600;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: clamp(18px, 3vw, 28px);
+    }
+    .card {
+      position: relative;
+      padding: clamp(24px, 3vw, 32px);
+      border-radius: 22px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(247,250,255,0.74));
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.14);
+      display: flex;
+      flex-direction: column;
+      gap: 18px;
+    }
+    .card h2 {
+      margin: 0;
+      font-size: 22px;
+      font-weight: 600;
+    }
+    .card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.5;
+    }
+    .card a {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 12px 18px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 15px;
+      transition: transform 0.15s ease, box-shadow 0.2s ease;
+    }
+    .card a.primary {
+      background: linear-gradient(135deg, #2563eb, #3b82f6);
+      color: #fff;
+      box-shadow: 0 12px 26px rgba(37, 99, 235, 0.25);
+    }
+    .card a.secondary {
+      background: rgba(37, 99, 235, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.18);
+      color: #2563eb;
+    }
+    .card a:hover {
+      transform: translateY(-1px);
+    }
+    @media (max-width: 720px) {
+      .hero {
+        padding: 28px;
+      }
+      .hero__header h1 {
+        font-size: 32px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="hero">
+    <div class="hero__header">
+      <span class="pill">Attendance Suite</span>
+      <h1>Choose how you want to manage attendance today</h1>
+      <p>Pilot the in-class experience with live verification, or review submissions and trends from your latest sessions.</p>
+    </div>
+    <div class="grid">
+      <div class="card">
+        <h2>Teacher Live Console</h2>
+        <p>Launch the classroom toolkit to display QR steps, capture in-room verification, and guide students through check-in.</p>
+        <a class="primary" href="/teacher.html">Open Teacher App →</a>
+      </div>
+      <div class="card">
+        <h2>Attendance Analysis</h2>
+        <p>Review captured attendance, spot anomalies, and export data for follow-up after each lecture or lab.</p>
+        <a class="secondary" href="/analysis.html">Go to Analysis →</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

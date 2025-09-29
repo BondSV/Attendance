@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const { issueVerification, consumeVerification, acquireDeviceLock } = require('./memoryState');
-const { appendCsvRow } = require('./csvWriter');
+const { appendCsvRow, CSV_PATH } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 
@@ -74,8 +74,30 @@ function serveStatic(req, res) {
       return false;
     }
   }
-  if (pathname === '' || pathname === 'teacher.html') {
+  if (pathname === '' || pathname === 'index.html') {
+    const filePath = path.join(__dirname, '..', 'index.html');
+    try {
+      const data = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
+      res.end(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (pathname === 'teacher' || pathname === 'teacher/' || pathname === 'teacher.html') {
     const filePath = path.join(__dirname, '..', 'teacher.html');
+    try {
+      const data = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
+      res.end(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  if (pathname === 'analysis.html') {
+    const filePath = path.join(__dirname, '..', 'analysis.html');
     try {
       const data = fs.readFileSync(filePath);
       res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
@@ -145,7 +167,21 @@ const server = http.createServer(async (req, res) => {
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
       await appendCsvRow([tsUtc, sid, phase, student_id, req.socket.remoteAddress, ua]);
-      return sendJson(res, { ok: true, warning: lock.ok ? undefined : 'Device used for multiple students' });
+      return sendJson(res, { ok: true });
+    }
+
+    if (pathname === '/api/csv/current' && req.method === 'GET') {
+      if (!fs.existsSync(CSV_PATH)) {
+        return sendJson(res, { error: 'CSV not found' }, 404);
+      }
+      const headers = {
+        'Content-Type': 'text/csv',
+        'Content-Disposition': `attachment; filename="${path.basename(CSV_PATH)}"`
+      };
+      if (process.env.ALLOW_CORS_ALL === '1') headers['Access-Control-Allow-Origin'] = '*';
+      res.writeHead(200, headers);
+      fs.createReadStream(CSV_PATH).pipe(res);
+      return;
     }
 
     if (pathname === '/health') {
