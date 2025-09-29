@@ -33,27 +33,28 @@
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      padding: clamp(18px, 3vw, 32px);
+      padding: clamp(14px, 3vw, 24px);
     }
     .layout {
       width: min(1180px, 100%);
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-      gap: clamp(18px, 3vw, 28px);
+      gap: clamp(18px, 3vw, 24px);
     }
-    .teacher-card,
-    .step-card {
-      border-radius: 24px;
-      padding: clamp(24px, 3vw, 32px);
-      display: flex;
-      flex-direction: column;
-      gap: clamp(14px, 2vw, 22px);
+    .teacher-stack {
+      display: grid;
+      gap: clamp(14px, 2vw, 20px);
+      max-width: 420px;
     }
     .teacher-card {
-      background: var(--teacher-surface);
-      border: 1px solid var(--teacher-border);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.92), rgba(30, 64, 175, 0.85));
+      border: 1px solid rgba(148, 163, 184, 0.22);
       box-shadow: var(--shadow-strong);
       color: var(--text-light);
+      border-radius: 24px;
+      padding: clamp(22px, 3vw, 30px);
+      display: flex;
+      flex-direction: column;
+      gap: clamp(16px, 2vw, 24px);
     }
     .teacher-card h1 {
       margin: 0;
@@ -122,9 +123,15 @@
       box-shadow: none;
     }
     .actions button.ghost {
-      background: transparent;
-      border: 1px solid rgba(148, 163, 184, 0.45);
-      color: rgba(226, 232, 240, 0.85);
+      background: linear-gradient(135deg, rgba(220, 38, 38, 0.18), rgba(248, 113, 113, 0.24));
+      border: 1px solid rgba(220, 38, 38, 0.25);
+      color: rgba(220, 38, 38, 0.92);
+      box-shadow: 0 10px 20px rgba(220, 38, 38, 0.12);
+    }
+    .actions button.ghost:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+      box-shadow: none;
     }
     .step-cluster {
       display: grid;
@@ -136,6 +143,16 @@
       box-shadow: var(--shadow-soft);
       text-align: center;
       align-items: center;
+      border-radius: 22px;
+      padding: clamp(26px, 3vw, 32px);
+    }
+    .step-card.step1 {
+      max-width: 420px;
+      justify-self: start;
+    }
+    .step-card.step2 {
+      justify-self: center;
+      width: min(520px, 100%);
     }
     .step-pill {
       display: inline-flex;
@@ -198,32 +215,30 @@
 </head>
 <body>
   <div class="layout">
-    <section class="teacher-card">
-      <div>
-        <h1>Teacher controls</h1>
-        <p>Set the session ID and phase, then start the verification loop for the class.</p>
-      </div>
-      <div class="form-stack">
-        <label for="sessionId">Session ID
-          <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
-        </label>
-        <label for="phase">Phase
-          <select id="phase">
-            <option value="start">Start</option>
-            <option value="break">Break</option>
-            <option value="end">End</option>
-          </select>
-        </label>
-      </div>
-      <div class="actions">
-        <button class="primary" id="startBtn">Start</button>
-        <button class="ghost" id="stopBtn" disabled>Stop</button>
-      </div>
-      <div id="sessionStatus"></div>
-    </section>
-
-    <div class="step-cluster">
-      <section class="step-card">
+    <div class="teacher-stack">
+      <section class="teacher-card">
+        <div>
+          <h1>Teacher controls</h1>
+          <p>Set the session ID and phase, then start the verification loop for the class.</p>
+        </div>
+        <div class="form-stack">
+          <label for="sessionId">Session ID
+            <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
+          </label>
+          <label for="phase">Phase
+            <select id="phase">
+              <option value="start">Start</option>
+              <option value="break">Break</option>
+              <option value="end">End</option>
+            </select>
+          </label>
+        </div>
+        <div class="actions">
+          <button class="primary" id="startBtn">Start</button>
+          <button class="ghost" id="stopBtn" disabled>Stop</button>
+        </div>
+      </section>
+      <section class="step-card step1">
         <span class="step-pill">Step 1</span>
         <h2>Scan to open Student App</h2>
         <p>Students scan this code to launch the check-in app.</p>
@@ -231,16 +246,17 @@
           <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
         </div>
       </section>
-      <section class="step-card">
-        <span class="step-pill">Step 2</span>
-        <h2>Scan to verify attendance</h2>
-        <p>Students scan this live code from inside the classroom to confirm presence.</p>
-        <div class="qr-box" id="verificationQr">
-          <div class="qr-placeholder">Start the session to display the verification QR.</div>
-        </div>
-        <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
-      </section>
     </div>
+
+    <section class="step-card step2">
+      <span class="step-pill">Step 2</span>
+      <h2>Scan to verify attendance</h2>
+      <p>Students scan this live code from inside the classroom to confirm presence.</p>
+      <div class="qr-box" id="verificationQr">
+        <div class="qr-placeholder">Start the session to display the verification QR.</div>
+      </div>
+      <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
+    </section>
   </div>
 
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
