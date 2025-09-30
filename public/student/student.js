@@ -47,6 +47,7 @@
   const idInput = document.getElementById('student-id');
   const submitStatus = document.getElementById('submitStatus');
   const cameraHint = document.getElementById('cameraHint');
+  const scannerStatus = document.getElementById('scannerStatus');
 
   const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 
@@ -61,21 +62,37 @@
 
   const supportsBarcodeDetector = 'BarcodeDetector' in window;
 
+  function setScannerStatus(message = '', tone = 'info') {
+    if (!scannerStatus) return;
+    const colors = { error: '#dc2626', success: '#16a34a', info: '#475467' };
+    const normalizedTone = colors[tone] ? tone : 'info';
+    scannerStatus.textContent = message || '';
+    scannerStatus.style.color = message ? colors[normalizedTone] : colors.info;
+  }
+
+  function hasLiveVideoTrack(stream) {
+    if (!stream || typeof stream.getVideoTracks !== 'function') return false;
+    return stream.getVideoTracks().some(track => track.readyState === 'live');
+  }
+
   async function ensureCamera() {
-    if (mediaStream) return mediaStream;
-    const constraintsPrimary = { video: { facingMode: { ideal: 'environment' } }, audio: false };
-    const constraintsFallback = { video: { facingMode: 'environment' }, audio: false };
-    try {
-      mediaStream = await navigator.mediaDevices.getUserMedia(constraintsPrimary);
-    } catch (e1) {
+    if (hasLiveVideoTrack(mediaStream)) return mediaStream;
+    const constraintsList = [
+      { video: { facingMode: { ideal: 'environment' } }, audio: false },
+      { video: { facingMode: 'environment' }, audio: false },
+      { video: true, audio: false }
+    ];
+    let lastError = null;
+    for (const constraints of constraintsList) {
       try {
-        mediaStream = await navigator.mediaDevices.getUserMedia(constraintsFallback);
-      } catch (e2) {
-        // As a last resort, try any camera
-        mediaStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
+        return mediaStream;
+      } catch (err) {
+        lastError = err;
       }
     }
-    return mediaStream;
+    mediaStream = null;
+    throw lastError || new Error('Unable to access the camera.');
   }
 
   async function ensureDetector() {
@@ -91,17 +108,21 @@
     return barcodeDetector;
   }
 
-  function stopScanning(reason) {
+  function stopScanning(reason = '', tone = 'info') {
     scanning = false;
     cameraFrame.setAttribute('hidden', '');
-    scannerPlaceholder.setAttribute('hidden', '');
+    scannerPlaceholder.removeAttribute('hidden');
     scanBtn.disabled = false;
-    if (reason) submitStatus.textContent = reason;
-    const stream = video.srcObject;
-    if (stream && typeof stream.getTracks === 'function') {
-      stream.getTracks().forEach(track => track.stop());
-    }
+    setScannerStatus(reason, tone);
+    const cleanup = (stream) => {
+      if (stream && typeof stream.getTracks === 'function') {
+        stream.getTracks().forEach(track => track.stop());
+      }
+    };
+    cleanup(video.srcObject);
     video.srcObject = null;
+    cleanup(mediaStream);
+    mediaStream = null;
   }
 
   async function submitChallenge(challenge) {
@@ -130,6 +151,7 @@
     successCard.setAttribute('hidden', '');
     idCard.setAttribute('hidden', '');
     submitStatus.textContent = '';
+    setScannerStatus('');
     scannerPlaceholder.setAttribute('hidden', '');
     cameraFrame.removeAttribute('hidden');
     scanBtn.disabled = true;
@@ -156,8 +178,8 @@
       }
     } catch (err) {
       console.error(err);
-      submitStatus.textContent = err.message || 'Camera error. Please try again.';
-      stopScanning();
+      const message = err && err.message ? err.message : 'Camera error. Please try again.';
+      stopScanning(message, 'error');
     }
   }
 
@@ -190,8 +212,7 @@
     const canvas = document.createElement('canvas');
     const context = canvas.getContext('2d');
     if (!window.jsQR) {
-      submitStatus.textContent = 'QR scanning not supported on this device. Please try a different browser.';
-      stopScanning();
+      stopScanning('QR scanning is not supported on this browser. Update iOS or try a different browser.', 'error');
       return;
     }
 
