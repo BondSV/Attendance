@@ -52,6 +52,41 @@ function getClientIp(req) {
   return req.socket.remoteAddress || '';
 }
 
+function readModuleListFromCsv() {
+  if (!fs.existsSync(CSV_PATH)) return [];
+  try {
+    const text = fs.readFileSync(CSV_PATH, 'utf8');
+    if (!text) return [];
+    const lines = text.split(/\r?\n/);
+    if (!lines.length) return [];
+    const header = (lines[0] || '').split(',').map(h => h.trim().toLowerCase());
+    const moduleIdx = header.indexOf('module');
+    const sidIdx = header.indexOf('sid');
+    const modules = new Set();
+    const modulePattern = /^[A-Z]{3}\d{5}$/;
+    for (let i = 1; i < lines.length; i++) {
+      const raw = lines[i];
+      if (!raw) continue;
+      const parts = raw.split(',');
+      let candidate = '';
+      if (moduleIdx !== -1 && parts[moduleIdx]) {
+        candidate = parts[moduleIdx].trim();
+      } else if (sidIdx !== -1 && parts[sidIdx]) {
+        const sid = parts[sidIdx].trim();
+        const match = sid.match(/^([A-Z]{3}\d{5})/);
+        if (match) candidate = match[1];
+      }
+      if (modulePattern.test(candidate)) {
+        modules.add(candidate);
+      }
+    }
+    return Array.from(modules).sort();
+  } catch (err) {
+    console.warn('Failed to read module list', err);
+    return [];
+  }
+}
+
 function serveStatic(req, res) {
   if (req.method !== 'GET') return false;
   const parsed = new URL(req.url, 'http://localhost');
@@ -124,6 +159,11 @@ const server = http.createServer(async (req, res) => {
   const parsed = new URL(req.url, 'http://localhost');
   const pathname = parsed.pathname;
   try {
+    if (pathname === '/api/modules' && req.method === 'GET') {
+      const modules = readModuleListFromCsv();
+      return sendJson(res, { modules });
+    }
+
     if (pathname === '/api/challenge' && req.method === 'GET') {
       const sid = parsed.searchParams.get('sid');
       const phase = parsed.searchParams.get('phase') || 'start';
@@ -154,12 +194,18 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, student_id, verification_id, page_session_id, device_id } = body;
+      const { sid, phase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw } = body;
       const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
       if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!student_id || !/^[0-9]{6,12}$/.test(student_id)) return sendJson(res, { error: 'Invalid student_id' }, 400);
       if (!verification_id) return sendJson(res, { error: 'Verification required' }, 400);
+      const moduleCode = (moduleCodeRaw || '').toString().trim().toUpperCase();
+      const groupCode = (groupRaw || '').toString().trim();
+      const moduleRe = /^[A-Z]{3}\d{5}$/;
+      const groupRe = /^[0-9]$/;
+      if (!moduleRe.test(moduleCode)) return sendJson(res, { error: 'Invalid module code' }, 400);
+      if (!groupRe.test(groupCode)) return sendJson(res, { error: 'Invalid group number' }, 400);
       const connectionKey = page_session_id || '';
       if (!consumeVerification(verification_id, connectionKey)) {
         return sendJson(res, { error: 'Verification required' }, 400);
@@ -176,7 +222,7 @@ const server = http.createServer(async (req, res) => {
       }
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
-      await appendCsvRow([tsUtc, sid, phase, student_id, '', ua]);
+      await appendCsvRow([tsUtc, moduleCode, `Group ${groupCode}`, sid, phase, student_id, '', ua]);
       return sendJson(res, { ok: true });
     }
 

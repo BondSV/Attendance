@@ -305,6 +305,8 @@
       const lines = text.trim().split(/\r?\n/);
       if (lines.length <= 1) return [];
       const header = lines[0].split(',').map(h => h.trim());
+      const moduleIdx = header.findIndex(h => h.toLowerCase() === 'module');
+      const groupIdx = header.findIndex(h => h.toLowerCase() === 'group');
       const records = [];
       for (let i = 1; i < lines.length; i++) {
         const line = lines[i].trim();
@@ -314,6 +316,8 @@
         header.forEach((h, idx) => {
           rec[h] = parts[idx] ? parts[idx].trim() : '';
         });
+        if (moduleIdx !== -1) rec.module = parts[moduleIdx] ? parts[moduleIdx].trim() : '';
+        if (groupIdx !== -1) rec.group = parts[groupIdx] ? parts[groupIdx].trim() : '';
         records.push(rec);
       }
       return records;
@@ -400,7 +404,12 @@
       sortedSessions.forEach((sid, idx) => {
         const opt = document.createElement('option');
         opt.value = sid;
-        opt.textContent = sid;
+        const rec = state.bySession.get(sid)?.[0];
+        if (rec && rec.module && rec.group) {
+          opt.textContent = `${rec.module} — ${rec.group} (${sid})`;
+        } else {
+          opt.textContent = sid;
+        }
         if (idx === 0 || sid === state.selectedSession) opt.selected = true;
         sessionSelect.appendChild(opt);
       });

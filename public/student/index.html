@@ -55,7 +55,7 @@
         <h2>Finalize your check-in</h2>
         <label for="student-id">Student ID</label>
         <div class="id-input-row">
-          <input type="text" id="student-id" maxlength="12" placeholder="Enter your student ID">
+          <input type="text" id="student-id" maxlength="8" placeholder="Enter your student ID" inputmode="numeric" pattern="9\d{7}">
           <button class="primary" id="submit-btn">Submit</button>
         </div>
         <p class="muted small" id="submitStatus"></p>

@@ -34,7 +34,15 @@
   }
 
   const sid = payload.sid;
+  const moduleCode = payload.m || payload.module || '';
+  const groupNumber = payload.g || payload.group || '';
   const phase = payload.p || payload.phase || 'start';
+  const moduleRe = /^[A-Z]{3}\d{5}$/;
+  const groupRe = /^[0-9]$/;
+  if (!moduleRe.test(moduleCode) || !groupRe.test(groupNumber)) {
+    document.body.innerHTML = '<div style="padding:32px;font-family:Inter,system-ui,sans-serif;color:#dc2626;">Session data is incomplete. Please return to the QR and try again.</div>';
+    return;
+  }
   const sessionLabel = document.getElementById('sessionLabel');
   const sessionTitle = document.getElementById('sessionTitle');
   const scanBtn = document.getElementById('scanBtn');
@@ -51,8 +59,8 @@
 
   const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 
-  sessionLabel.textContent = sid;
-  sessionTitle.textContent = 'Attendance Check-in';
+  sessionLabel.textContent = `${moduleCode} — Group ${groupNumber}`;
+  sessionTitle.textContent = sid;
 
   let mediaStream = null;
   let barcodeDetector = null;
@@ -126,7 +134,7 @@
   }
 
   async function submitChallenge(challenge) {
-    const body = { sid, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
+    const body = { sid, module: moduleCode, group: groupNumber, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
     const resp = await fetch('/api/validate-challenge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -266,6 +274,11 @@
       submitStatus.style.color = '#dc2626';
       return;
     }
+    if (!/^9\d{7}$/.test(studentId)) {
+      submitStatus.textContent = 'Student ID must be 8 digits starting with 9. Check for typos.';
+      submitStatus.style.color = '#dc2626';
+      return;
+    }
     if (!verificationId) {
       submitStatus.textContent = 'You must scan the verification QR first.';
       submitStatus.style.color = '#dc2626';
@@ -278,7 +291,7 @@
       const resp = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
+        body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
       });
       const data = await resp.json();
       if (data.ok) {

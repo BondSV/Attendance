@@ -149,6 +149,10 @@ body {
   object-fit: cover;
 }
 
+#scannerStatus {
+  min-height: 1.2em;
+}
+
 .camera-overlay {
   position: absolute;
   inset: 0;

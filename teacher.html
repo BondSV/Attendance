@@ -226,8 +226,12 @@
           <p>Set the session ID and phase, then start the verification loop for the class.</p>
         </div>
         <div class="form-stack">
-          <label for="sessionId">Session ID
-            <input id="sessionId" type="text" placeholder="OPS101-2025-10-03-0900" autocomplete="off">
+          <label for="moduleInput">Module
+            <input id="moduleInput" type="text" placeholder="BSM24105" list="moduleList" autocomplete="off">
+            <datalist id="moduleList"></datalist>
+          </label>
+          <label for="groupInput">Group
+            <input id="groupInput" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
           </label>
           <label for="phase">Phase
             <select id="phase">
@@ -268,7 +272,9 @@
   (function() {
     const DEFAULT_ORIGIN = 'https://attendance-i9lt.onrender.com';
 
-    const sessionIdInput = document.getElementById('sessionId');
+    const moduleInput = document.getElementById('moduleInput');
+    const groupInput = document.getElementById('groupInput');
+    const moduleList = document.getElementById('moduleList');
     const phaseSelect = document.getElementById('phase');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -337,6 +343,23 @@
       }
     }
 
+    async function fetchModuleSuggestions() {
+      try {
+        const resp = await fetch('/api/modules', { cache: 'no-store' });
+        if (!resp.ok) return;
+        const data = await resp.json();
+        if (!data || !Array.isArray(data.modules)) return;
+        moduleList.innerHTML = '';
+        data.modules.forEach(mod => {
+          const option = document.createElement('option');
+          option.value = mod;
+          moduleList.appendChild(option);
+        });
+      } catch (err) {
+        console.warn('Failed to load module suggestions', err);
+      }
+    }
+
     async function fetchChallenge() {
       if (!activeSession) return;
       const { sid, phase } = activeSession;
@@ -375,19 +398,39 @@
       countdownEl.textContent = 'Session stopped. Start again to display a new code.';
     }
 
+    function buildSessionId(moduleCode, groupNumber) {
+      return `${moduleCode} Group ${groupNumber}`;
+    }
+
+    function validateModule(moduleCode) {
+      return /^[A-Z]{3}\d{5}$/.test(moduleCode);
+    }
+
+    function validateGroup(groupNumber) {
+      return /^[0-9]$/.test(groupNumber);
+    }
+
     startBtn.addEventListener('click', () => {
-      const sid = sessionIdInput.value.trim();
+      const moduleCode = moduleInput.value.trim().toUpperCase();
+      const groupNumber = groupInput.value.trim();
       const phase = phaseSelect.value;
       const origin = DEFAULT_ORIGIN.replace(/\/$/, '');
-      if (!sid) {
-        alert('Please enter a session ID.');
+      if (!validateModule(moduleCode)) {
+        alert('Please enter a valid module code (e.g. BSM24105).');
+        moduleInput.focus();
         return;
       }
-      const sessionPayload = { v: 1, sid, p: phase };
+      if (!validateGroup(groupNumber)) {
+        alert('Group must be a single digit (0-9).');
+        groupInput.focus();
+        return;
+      }
+      const sid = buildSessionId(moduleCode, groupNumber);
+      const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber };
       const frag = encodePayload(sessionPayload);
       const url = `${origin}/student#${frag}`;
       renderSessionQr(url);
-      activeSession = { sid, phase };
+      activeSession = { sid, phase, module: moduleCode, group: groupNumber };
       startBtn.disabled = true;
       stopBtn.disabled = false;
       clearTimers();
@@ -401,6 +444,8 @@
     window.addEventListener('beforeunload', () => {
       clearTimers();
     });
+
+    fetchModuleSuggestions();
   })();
   </script>
 </body>
