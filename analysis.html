@@ -281,6 +281,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <script>
+    const normalizePhase = (value) => {
+      const raw = (value || '').toString().trim().toLowerCase();
+      if (raw === 'break 1' || raw === 'break1' || raw === 'break') return 'break1';
+      if (raw === 'break 2' || raw === 'break2') return 'break2';
+      if (raw === 'start' || raw === 'end') return raw;
+      return raw;
+    };
+
     const dateGrid = document.getElementById('dateGrid');
     const sessionSelect = document.getElementById('sessionSelect');
     const resultsDiv = document.getElementById('results');
@@ -299,7 +307,7 @@
       lastRows: []
     };
 
-    const statusOrder = ['Present', 'Late', 'Left Early', 'Break Missing', 'Partial', 'Absent'];
+    const statusOrder = ['Present', 'Late', 'Late from break', 'Left Early', 'Partial', 'Absent'];
 
     function parseCSV(text) {
       const lines = text.trim().split(/\r?\n/);
@@ -316,6 +324,7 @@
         header.forEach((h, idx) => {
           rec[h] = parts[idx] ? parts[idx].trim() : '';
         });
+        rec.phase = normalizePhase(rec.phase);
         if (moduleIdx !== -1) rec.module = parts[moduleIdx] ? parts[moduleIdx].trim() : '';
         if (groupIdx !== -1) rec.group = parts[groupIdx] ? parts[groupIdx].trim() : '';
         records.push(rec);
@@ -417,26 +426,33 @@
       renderResults();
     }
 
-    function determineStatus(phases) {
+    function determineStatus(phases, expectsBreak1, expectsBreak2) {
       const hasStart = phases.has('start');
-      const hasBreak = phases.has('break');
+      const hasBreak1 = phases.has('break1');
+      const hasBreak2 = phases.has('break2');
       const hasEnd = phases.has('end');
-      if (hasStart && hasBreak && hasEnd) return 'Present';
-      if (!hasStart && (hasBreak || hasEnd)) return 'Late';
+
+      if (!hasStart && (hasBreak1 || hasBreak2 || hasEnd)) return 'Late';
+      if (hasStart && hasEnd) {
+        const missingBreak1 = expectsBreak1 && !hasBreak1;
+        const missingBreak2 = expectsBreak2 && !hasBreak2;
+        if (!missingBreak1 && !missingBreak2) return 'Present';
+        return 'Late from break';
+      }
       if (hasStart && !hasEnd) return 'Left Early';
-      if (hasStart && hasEnd && !hasBreak) return 'Break Missing';
-      if (hasStart || hasBreak || hasEnd) return 'Partial';
+      if (hasStart || hasBreak1 || hasBreak2 || hasEnd) return 'Partial';
       return 'Absent';
     }
 
-    function generateEmail(sid, sessionDate, status, phases) {
+    function generateEmail(sid, sessionDate, status, phases, expectsBreak1, expectsBreak2) {
       const lb = '\r\n';
       const subject = `[Attendance Alert] ${sid} ${sessionDate}`;
       const body =
         `Dear Student,${lb}${lb}` +
         `Our records show that for session ${sid} on ${sessionDate}:${lb}` +
         `- Start: ${phases.has('start') ? 'Present' : 'Absent'}${lb}` +
-        `- Break: ${phases.has('break') ? 'Present' : 'Absent'}${lb}` +
+        (expectsBreak1 ? `- Break 1: ${phases.has('break1') ? 'Present' : 'Absent'}${lb}` : '') +
+        (expectsBreak2 ? `- Break 2: ${phases.has('break2') ? 'Present' : 'Absent'}${lb}` : '') +
         `- End: ${phases.has('end') ? 'Present' : 'Absent'}${lb}${lb}` +
         `Please be aware that attendance is monitored and may affect your academic progress and visa compliance.${lb}${lb}` +
         `Regards,${lb}Ravensbourne University London${lb}`;
@@ -452,19 +468,24 @@
         return;
       }
       const records = state.bySession.get(state.selectedSession) || [];
-      const filtered = records.filter(rec => extractDate(rec.ts_utc) === state.selectedDate);
+      const filtered = records.map(rec => ({ ...rec, phase: normalizePhase(rec.phase) }))
+        .filter(rec => extractDate(rec.ts_utc) === state.selectedDate);
       if (!filtered.length) {
         resultsDiv.innerHTML = '<div class="message">No attendance records for the selected combination.</div>';
         exportBtn.disabled = true;
         return;
       }
 
+      const sessionPhaseUsage = new Set(filtered.map(rec => rec.phase || ''));
+      const sessionUsesBreak1 = sessionPhaseUsage.has('break1');
+      const sessionUsesBreak2 = sessionPhaseUsage.has('break2');
+
       const phasesByStudent = new Map();
       filtered.forEach(rec => {
         const studentId = sanitizeId(rec.student_id);
         if (!studentId) return;
         if (!phasesByStudent.has(studentId)) phasesByStudent.set(studentId, new Set());
-        phasesByStudent.get(studentId).add((rec.phase || '').toLowerCase());
+        phasesByStudent.get(studentId).add(rec.phase || '');
       });
 
       const effectiveRoster = new Set(state.rosterSet.size ? state.rosterSet : phasesByStudent.keys());
@@ -474,15 +495,17 @@
 
       const rows = Array.from(phasesByStudent.entries()).map(([studentId, phases]) => {
         const startPhase = phases.has('start') ? 'Present' : 'Absent';
-        const breakPhase = phases.has('break') ? 'Present' : 'Absent';
+        const break1Phase = sessionUsesBreak1 ? (phases.has('break1') ? 'Present' : 'Absent') : '—';
+        const break2Phase = sessionUsesBreak2 ? (phases.has('break2') ? 'Present' : 'Absent') : '—';
         const endPhase = phases.has('end') ? 'Present' : 'Absent';
         return {
           studentId,
           phases,
           startPhase,
-          breakPhase,
+          break1Phase,
+          break2Phase,
           endPhase,
-          status: determineStatus(phases)
+          status: determineStatus(phases, sessionUsesBreak1, sessionUsesBreak2)
         };
       });
 
@@ -503,25 +526,26 @@
       sessionCard.appendChild(title);
 
       const table = document.createElement('table');
-      table.innerHTML = '<thead><tr><th>Student ID</th><th>Start</th><th>Break</th><th>End</th><th>Status</th></tr></thead>';
+      table.innerHTML = '<thead><tr><th>Student ID</th><th>Start</th><th>Break 1</th><th>Break 2</th><th>End</th><th>Status</th></tr></thead>';
       const tbody = document.createElement('tbody');
 
       const emailLinks = document.createElement('div');
       emailLinks.className = 'email-links';
       const sessionDate = state.selectedDate;
 
-      rows.forEach(({ studentId, phases, startPhase, breakPhase, endPhase, status }) => {
+      rows.forEach(({ studentId, phases, startPhase, break1Phase, break2Phase, endPhase, status }) => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${studentId}</td>
           <td>${startPhase === 'Present' ? '✔' : '—'}</td>
-          <td>${breakPhase === 'Present' ? '✔' : '—'}</td>
+          <td>${break1Phase === 'Present' ? '✔' : '—'}</td>
+          <td>${break2Phase === 'Present' ? '✔' : '—'}</td>
           <td>${endPhase === 'Present' ? '✔' : '—'}</td>
           <td class="status-${status.toLowerCase().replace(/\s/g, '-')}">${status}</td>
         `;
         tbody.appendChild(tr);
         if (status !== 'Present') {
-          const eml = generateEmail(state.selectedSession, sessionDate, status, phases);
+          const eml = generateEmail(state.selectedSession, sessionDate, status, phases, sessionUsesBreak1, sessionUsesBreak2);
           const blob = new Blob([eml], { type: 'text/plain' });
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
@@ -552,7 +576,8 @@
       const rows = state.lastRows.map(row => ({
         'Student ID': row.studentId,
         'Start': row.startPhase,
-        'Break': row.breakPhase,
+        'Break 1': row.break1Phase,
+        'Break 2': row.break2Phase,
         'End': row.endPhase,
         'Status': row.status
       }));

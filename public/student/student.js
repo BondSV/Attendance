@@ -36,7 +36,14 @@
   const sid = payload.sid;
   const moduleCode = payload.m || payload.module || '';
   const groupNumber = payload.g || payload.group || '';
-  const phase = payload.p || payload.phase || 'start';
+  const normalizePhase = (value) => {
+    const raw = (value || 'start').toString().trim().toLowerCase();
+    if (raw === 'break' || raw === 'break1' || raw === 'break 1') return 'break1';
+    if (raw === 'break2' || raw === 'break 2') return 'break2';
+    if (raw === 'start' || raw === 'end') return raw;
+    return 'start';
+  };
+  const phase = normalizePhase(payload.p || payload.phase);
   const moduleRe = /^[A-Z]{3}\d{5}$/;
   const groupRe = /^[0-9]$/;
   if (!moduleRe.test(moduleCode) || !groupRe.test(groupNumber)) {
@@ -44,23 +51,23 @@
     return;
   }
   const sessionLabel = document.getElementById('sessionLabel');
-  const sessionTitle = document.getElementById('sessionTitle');
   const scanBtn = document.getElementById('scanBtn');
   const cameraFrame = document.getElementById('cameraFrame');
   const scannerPlaceholder = document.getElementById('scannerPlaceholder');
-  const successCard = document.getElementById('successCard');
+  const statusCard = document.getElementById('statusCard');
+  const statusIcon = document.getElementById('statusIcon');
+  const statusHeading = document.getElementById('statusHeading');
+  const statusMessage = document.getElementById('statusMessage');
   const video = document.getElementById('video');
   const idCard = document.getElementById('idCard');
   const submitBtn = document.getElementById('submit-btn');
   const idInput = document.getElementById('student-id');
-  const submitStatus = document.getElementById('submitStatus');
   const cameraHint = document.getElementById('cameraHint');
   const scannerStatus = document.getElementById('scannerStatus');
 
   const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 
   sessionLabel.textContent = `${moduleCode} — Group ${groupNumber}`;
-  sessionTitle.textContent = sid;
 
   let mediaStream = null;
   let barcodeDetector = null;
@@ -156,13 +163,14 @@
   async function startScanning() {
     if (scanning) return;
     scanning = true;
-    successCard.setAttribute('hidden', '');
+    statusCard.setAttribute('hidden', '');
     idCard.setAttribute('hidden', '');
-    submitStatus.textContent = '';
+    statusMessage.textContent = '';
     setScannerStatus('');
     scannerPlaceholder.setAttribute('hidden', '');
     cameraFrame.removeAttribute('hidden');
     scanBtn.disabled = true;
+    scanBtn.removeAttribute('hidden');
 
     try {
       const stream = await ensureCamera();
@@ -187,7 +195,7 @@
     } catch (err) {
       console.error(err);
       const message = err && err.message ? err.message : 'Camera error. Please try again.';
-      stopScanning(message, 'error');
+    stopScanning(message, 'error');
     }
   }
 
@@ -252,15 +260,32 @@
     }
   }
 
+  function updateStatus({ type = 'success', heading, message }) {
+    const styles = {
+      success: { icon: '✔', bg: 'rgba(22, 163, 74, 0.12)', border: 'rgba(22, 163, 74, 0.24)', iconBg: '#16a34a' },
+      error: { icon: '!', bg: 'rgba(220, 38, 38, 0.12)', border: 'rgba(220, 38, 38, 0.24)', iconBg: '#dc2626' },
+      info: { icon: 'ℹ', bg: 'rgba(37, 99, 235, 0.12)', border: 'rgba(37, 99, 235, 0.24)', iconBg: '#2563eb' }
+    };
+    const theme = styles[type] || styles.success;
+    statusCard.style.background = theme.bg;
+    statusCard.style.borderColor = theme.border;
+    statusIcon.textContent = theme.icon;
+    statusIcon.style.background = theme.iconBg;
+    statusHeading.textContent = heading;
+    statusMessage.textContent = message;
+    statusCard.removeAttribute('hidden');
+  }
+
   function handleVerified() {
     scanning = false;
+    stopScanning();
     cameraFrame.setAttribute('hidden', '');
     scannerPlaceholder.setAttribute('hidden', '');
-    successCard.removeAttribute('hidden');
+    scanBtn.setAttribute('hidden', '');
+    scanBtn.disabled = true;
+    setScannerStatus('');
+    updateStatus({ type: 'success', heading: 'Presence verified', message: 'Great! Now enter your student ID to finish the check-in.' });
     idCard.removeAttribute('hidden');
-    submitStatus.textContent = 'Presence verified. Enter your student ID to finish.';
-    submitStatus.style.color = '#16a34a';
-    stopScanning();
   }
 
   scanBtn.addEventListener('click', () => {
@@ -270,23 +295,19 @@
   submitBtn.addEventListener('click', async () => {
     const studentId = idInput.value.trim();
     if (!studentId) {
-      submitStatus.textContent = 'Please enter your student ID.';
-      submitStatus.style.color = '#dc2626';
+      updateStatus({ type: 'error', heading: 'Student ID missing', message: 'Please enter your student ID before submitting.' });
       return;
     }
     if (!/^9\d{7}$/.test(studentId)) {
-      submitStatus.textContent = 'Student ID must be 8 digits starting with 9. Check for typos.';
-      submitStatus.style.color = '#dc2626';
+      updateStatus({ type: 'error', heading: 'Check your student ID', message: 'Student ID must be eight digits starting with 9. Please double-check and try again.' });
       return;
     }
     if (!verificationId) {
-      submitStatus.textContent = 'You must scan the verification QR first.';
-      submitStatus.style.color = '#dc2626';
+      updateStatus({ type: 'error', heading: 'Verification required', message: 'Scan the live verification QR-code before submitting your student ID.' });
       return;
     }
     submitBtn.disabled = true;
-    submitStatus.textContent = 'Submitting…';
-    submitStatus.style.color = '#475467';
+    updateStatus({ type: 'info', heading: 'Submitting…', message: 'Please wait while we record your attendance.' });
     try {
       const resp = await fetch('/api/checkin', {
         method: 'POST',
@@ -295,18 +316,15 @@
       });
       const data = await resp.json();
       if (data.ok) {
-        submitStatus.textContent = 'Attendance recorded. Thank you!';
-        submitStatus.style.color = '#16a34a';
+        updateStatus({ type: 'success', heading: 'Attendance recorded', message: 'Your check-in has been submitted. You can close this page.' });
         submitBtn.disabled = true;
         idInput.disabled = true;
-        scanBtn.disabled = true;
       } else {
         throw new Error(data.error || 'Submission failed');
       }
     } catch (err) {
       console.error(err);
-      submitStatus.textContent = err.message || 'Submission failed. Try again.';
-      submitStatus.style.color = '#dc2626';
+      updateStatus({ type: 'error', heading: 'Submission failed', message: err.message || 'Something went wrong. Please try again.' });
       submitBtn.disabled = false;
     }
   });

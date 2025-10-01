@@ -67,7 +67,8 @@
       line-height: 1.6;
     }
     .form-stack {
-      display: grid;
+      display: flex;
+      flex-direction: column;
       gap: 12px;
     }
     label {
@@ -78,6 +79,23 @@
       flex-direction: column;
       gap: 6px;
     }
+    .form-row {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+    .form-row label {
+      flex: 1;
+    }
+    .module-field {
+      min-width: 220px;
+    }
+    .group-field {
+      flex: 0 0 120px;
+    }
+    .group-field input[type="text"] {
+      text-align: center;
+    }
     input[type="text"], select {
       border-radius: 14px;
       border: 1px solid rgba(148, 163, 184, 0.4);
@@ -86,6 +104,48 @@
       background: rgba(15, 23, 42, 0.45);
       color: #f8fafc;
       transition: border 0.2s ease, box-shadow 0.2s ease;
+    }
+    .combo {
+      position: relative;
+    }
+    .combo input {
+      width: 100%;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .combo-list {
+      position: absolute;
+      top: calc(100% + 6px);
+      left: 0;
+      right: 0;
+      background: rgba(15, 23, 42, 0.95);
+      border: 1px solid rgba(148, 163, 184, 0.35);
+      border-radius: 14px;
+      box-shadow: 0 16px 32px rgba(15, 23, 42, 0.32);
+      padding: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 20;
+    }
+    .combo-list[hidden] {
+      display: none;
+    }
+    .combo-option {
+      border: none;
+      border-radius: 10px;
+      background: rgba(148, 163, 184, 0.12);
+      color: #f8fafc;
+      font-size: 14px;
+      padding: 8px 10px;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+    .combo-option:hover,
+    .combo-option:focus {
+      background: rgba(148, 163, 184, 0.25);
+      outline: none;
     }
     input[type="text"]::placeholder {
       color: rgba(226, 232, 240, 0.55);
@@ -226,17 +286,22 @@
           <p>Set the session ID and phase, then start the verification loop for the class.</p>
         </div>
         <div class="form-stack">
-          <label for="moduleInput">Module
-            <input id="moduleInput" type="text" placeholder="BSM24105" list="moduleList" autocomplete="off">
-            <datalist id="moduleList"></datalist>
-          </label>
-          <label for="groupInput">Group
-            <input id="groupInput" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
-          </label>
+          <div class="form-row">
+            <label class="module-field" for="moduleInput">Module
+              <div class="combo" id="moduleCombo">
+                <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
+                <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
+              </div>
+            </label>
+            <label class="group-field" for="groupInput">Group
+              <input id="groupInput" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
+            </label>
+          </div>
           <label for="phase">Phase
             <select id="phase">
               <option value="start">Start</option>
-              <option value="break">Break</option>
+              <option value="break1">Break 1</option>
+              <option value="break2">Break 2</option>
               <option value="end">End</option>
             </select>
           </label>
@@ -273,8 +338,8 @@
     const DEFAULT_ORIGIN = 'https://attendance-i9lt.onrender.com';
 
     const moduleInput = document.getElementById('moduleInput');
+    const moduleOptions = document.getElementById('moduleOptions');
     const groupInput = document.getElementById('groupInput');
-    const moduleList = document.getElementById('moduleList');
     const phaseSelect = document.getElementById('phase');
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
@@ -343,18 +408,48 @@
       }
     }
 
+    let cachedModules = [];
+
+    function renderModuleOptions(filterValue = '') {
+      const query = filterValue.trim().toUpperCase();
+      moduleOptions.innerHTML = '';
+      const matches = cachedModules.filter(mod => mod.includes(query)).slice(0, 8);
+      if (!matches.length) {
+        moduleOptions.hidden = true;
+        moduleInput.setAttribute('aria-expanded', 'false');
+        return;
+      }
+      matches.forEach(mod => {
+        const option = document.createElement('button');
+        option.type = 'button';
+        option.className = 'combo-option';
+        option.textContent = mod;
+        option.setAttribute('role', 'option');
+        option.addEventListener('click', () => {
+          moduleInput.value = mod;
+          moduleOptions.hidden = true;
+          moduleInput.setAttribute('aria-expanded', 'false');
+          groupInput.focus();
+        });
+        moduleOptions.appendChild(option);
+      });
+      moduleOptions.hidden = false;
+      moduleInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function hideModuleOptions() {
+      moduleOptions.hidden = true;
+      moduleInput.setAttribute('aria-expanded', 'false');
+    }
+
     async function fetchModuleSuggestions() {
       try {
         const resp = await fetch('/api/modules', { cache: 'no-store' });
         if (!resp.ok) return;
         const data = await resp.json();
         if (!data || !Array.isArray(data.modules)) return;
-        moduleList.innerHTML = '';
-        data.modules.forEach(mod => {
-          const option = document.createElement('option');
-          option.value = mod;
-          moduleList.appendChild(option);
-        });
+        cachedModules = data.modules.map(mod => mod.toUpperCase());
+        renderModuleOptions(moduleInput.value || '');
       } catch (err) {
         console.warn('Failed to load module suggestions', err);
       }
@@ -443,6 +538,20 @@
 
     window.addEventListener('beforeunload', () => {
       clearTimers();
+    });
+
+    moduleInput.addEventListener('input', (event) => {
+      const value = event.target.value.toUpperCase();
+      moduleInput.value = value;
+      renderModuleOptions(value);
+    });
+
+    moduleInput.addEventListener('focus', () => {
+      renderModuleOptions(moduleInput.value);
+    });
+
+    moduleInput.addEventListener('blur', () => {
+      setTimeout(hideModuleOptions, 120);
     });
 
     fetchModuleSuggestions();

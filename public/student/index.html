@@ -11,21 +11,13 @@
     <header class="page__header">
       <div>
         <p class="session-label" id="sessionLabel">Live session</p>
-        <h1 id="sessionTitle">Attendance Check-in</h1>
       </div>
     </header>
 
     <main class="page__grid">
-      <section class="card intro">
-        <h2>Complete both steps to confirm you are in class</h2>
-        <ol class="steps">
-          <li><strong>Step 1:</strong> You already scanned the entry QR to open this page.</li>
-          <li><strong>Step 2:</strong> Use the scanner below to read the verification code on the front screen.</li>
-        </ol>
-      </section>
-
       <section class="card scanner" id="scannerCard">
         <h2>Step 2 – Verify attendance</h2>
+        <p class="muted small step-note">Press the Start scanning button and use the scanner below to read the verification QR-code in the center of the screen.</p>
         <div class="scanner-placeholder" id="scannerPlaceholder">
           <p>Tap “Start scanning” to open the camera.</p>
           <p class="muted small">If the QR is not detected quickly, wait for the next refresh while keeping the QR-code in the frame.</p>
@@ -42,23 +34,22 @@
         </div>
         <button class="primary" id="scanBtn">Start scanning</button>
         <p class="muted small" id="scannerStatus" role="status" aria-live="polite"></p>
-        <div class="card success" id="successCard" hidden>
-          <span class="success-icon">✔</span>
-          <div>
-            <h3>Presence verified</h3>
-            <p class="muted">Great! Now enter your student ID to finish the check-in.</p>
+        <div class="status-card" id="statusCard" hidden>
+          <span class="status-icon" id="statusIcon">✔</span>
+          <div class="status-copy">
+            <h3 id="statusHeading">Presence verified</h3>
+            <p class="muted" id="statusMessage">Great! Now enter your student ID to finish the check-in.</p>
           </div>
         </div>
       </section>
 
       <section class="card form" id="idCard" hidden>
-        <h2>Finalize your check-in</h2>
-        <label for="student-id">Student ID</label>
+        <h2>Finalise your check-in</h2>
+        <p class="muted small">by submitting your student ID</p>
         <div class="id-input-row">
           <input type="text" id="student-id" maxlength="8" placeholder="Enter your student ID" inputmode="numeric" pattern="9\d{7}">
           <button class="primary" id="submit-btn">Submit</button>
         </div>
-        <p class="muted small" id="submitStatus"></p>
       </section>
     </main>
   </div>

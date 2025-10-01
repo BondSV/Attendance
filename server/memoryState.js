@@ -19,7 +19,7 @@ const deviceLocks = new Map();
 
 // Default expiry durations (ms)
 const TOKEN_TTL_MS = 5 * 60 * 1000; // 5 minutes
-const DEVICE_LOCK_TTL_MS = 10 * 60 * 1000; // 10 minutes
+const DEVICE_LOCK_TTL_MS = 15 * 60 * 1000; // 15 minutes
 
 /**
  * Generate a cryptographically secure random token string.  Tokens are

@@ -52,6 +52,16 @@ function getClientIp(req) {
   return req.socket.remoteAddress || '';
 }
 
+const VALID_PHASES = new Set(['start', 'break1', 'break2', 'end']);
+
+function normalizePhaseInput(value) {
+  const raw = (value || 'start').toString().trim().toLowerCase();
+  if (raw === 'break' || raw === 'break1' || raw === 'break 1') return 'break1';
+  if (raw === 'break2' || raw === 'break 2') return 'break2';
+  if (raw === 'start' || raw === 'end') return raw;
+  return raw;
+}
+
 function readModuleListFromCsv() {
   if (!fs.existsSync(CSV_PATH)) return [];
   try {
@@ -166,20 +176,21 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/challenge' && req.method === 'GET') {
       const sid = parsed.searchParams.get('sid');
-      const phase = parsed.searchParams.get('phase') || 'start';
+      const phase = normalizePhaseInput(parsed.searchParams.get('phase'));
       const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
-      if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      if (!VALID_PHASES.has(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       const { challenge, expiresAt, ttlMs } = issueChallenge(sid, phase);
       return sendJson(res, { challenge, expires_at_ms: expiresAt, ttl_ms: ttlMs || DEFAULT_TTL_MS });
     }
 
     if (pathname === '/api/validate-challenge' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, challenge, page_session_id, device_id } = body;
+      const { sid, phase: rawPhase, challenge, page_session_id, device_id } = body;
+      const phase = normalizePhaseInput(rawPhase);
       const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
-      if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      if (!VALID_PHASES.has(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!challenge || typeof challenge !== 'string' || challenge.length > 128) {
         return sendJson(res, { error: 'Invalid challenge' }, 400);
       }
@@ -194,10 +205,11 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw } = body;
+      const { sid, phase: rawPhase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw } = body;
+      const phase = normalizePhaseInput(rawPhase);
       const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
-      if (!['start', 'break', 'end'].includes(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      if (!VALID_PHASES.has(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
       if (!student_id || !/^[0-9]{6,12}$/.test(student_id)) return sendJson(res, { error: 'Invalid student_id' }, 400);
       if (!verification_id) return sendJson(res, { error: 'Verification required' }, 400);
       const moduleCode = (moduleCodeRaw || '').toString().trim().toUpperCase();
