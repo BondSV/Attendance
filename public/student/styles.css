@@ -76,7 +76,7 @@ body {
 }
 
 .step-note {
-  margin: -6px 0 4px;
+  margin: -8px 0 0;
 }
 
 .card h2 {
@@ -157,6 +157,7 @@ body {
   width: 100%;
   justify-content: center;
   text-align: center;
+  margin-top: 6px;
 }
 
 .primary:disabled {
@@ -183,6 +184,10 @@ body {
 .scanner {
   position: relative;
   gap: 12px;
+}
+
+.scanner .primary {
+  margin-top: 6px;
 }
 
 .camera-frame {
