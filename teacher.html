@@ -355,6 +355,7 @@
     let challengeTimerId = null;
     let countdownIntervalId = null;
     let countdownSeconds = 0;
+    let comboOpen = false;
 
     function clearQr(container) {
       container.innerHTML = '<div class="qr-placeholder">Start the session to display the verification QR.</div>';
@@ -413,6 +414,7 @@
     let cachedModules = [];
 
     function renderModuleOptions(filterValue = '') {
+      if (!comboOpen) return;
       const query = filterValue.trim().toUpperCase();
       moduleOptions.innerHTML = '';
       const matches = cachedModules.filter(mod => mod.includes(query)).slice(0, 8);
@@ -429,8 +431,7 @@
         option.setAttribute('role', 'option');
         option.addEventListener('click', () => {
           moduleInput.value = mod;
-          moduleOptions.hidden = true;
-          moduleInput.setAttribute('aria-expanded', 'false');
+          closeModuleOptions();
           groupInput.focus();
         });
         moduleOptions.appendChild(option);
@@ -439,7 +440,8 @@
       moduleInput.setAttribute('aria-expanded', 'true');
     }
 
-    function hideModuleOptions() {
+    function closeModuleOptions() {
+      comboOpen = false;
       moduleOptions.hidden = true;
       moduleInput.setAttribute('aria-expanded', 'false');
     }
@@ -451,7 +453,7 @@
       const data = await resp.json();
         if (!data || !Array.isArray(data.modules)) return;
         cachedModules = data.modules.map(mod => mod.toUpperCase());
-        renderModuleOptions(moduleInput.value || '');
+        if (comboOpen) renderModuleOptions(moduleInput.value || '');
     } catch (err) {
         console.warn('Failed to load module suggestions', err);
       }
@@ -545,15 +547,19 @@
     moduleInput.addEventListener('input', (event) => {
       const value = event.target.value.toUpperCase();
       moduleInput.value = value;
+      if (!comboOpen) {
+        comboOpen = true;
+      }
       renderModuleOptions(value);
     });
 
     moduleInput.addEventListener('focus', () => {
+      comboOpen = true;
       renderModuleOptions(moduleInput.value);
     });
 
     moduleInput.addEventListener('blur', () => {
-      setTimeout(hideModuleOptions, 120);
+      setTimeout(closeModuleOptions, 120);
     });
 
     fetchModuleSuggestions();
