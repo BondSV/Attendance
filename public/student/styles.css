@@ -10,7 +10,7 @@ body {
   display: flex;
   justify-content: center;
   align-items: flex-start;
-  padding: clamp(20px, 4vw, 40px);
+  padding: clamp(16px, 3vw, 32px);
   box-sizing: border-box;
 }
 
@@ -22,7 +22,7 @@ body {
   width: min(960px, 100%);
   display: flex;
   flex-direction: column;
-  gap: clamp(18px, 3vw, 32px);
+  gap: clamp(14px, 2.5vw, 24px);
 }
 
 .page__header {
@@ -61,7 +61,7 @@ body {
 .page__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: clamp(18px, 3vw, 32px);
+  gap: clamp(16px, 2.5vw, 24px);
 }
 
 .card {
@@ -69,10 +69,10 @@ body {
   border-radius: 20px;
   border: 1px solid rgba(15, 23, 42, 0.08);
   box-shadow: 0 24px 48px rgba(15, 23, 42, 0.14);
-  padding: clamp(20px, 2.8vw, 32px);
+  padding: clamp(24px, 3vw, 32px);
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 2vw, 24px);
+  gap: clamp(14px, 2vw, 20px);
 }
 
 .step-note {
@@ -85,7 +85,7 @@ body {
 }
 
 .form h2 {
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 }
 
 .muted {
@@ -98,7 +98,7 @@ body {
 
 .form .muted.small {
   margin-top: 0;
-  margin-bottom: 8px;
+  margin-bottom: 16px;
 }
 
 
@@ -106,8 +106,8 @@ body {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
+  gap: 10px;
+  padding: 16px 20px;
   border-radius: 16px;
   border: 1px solid rgba(22, 163, 74, 0.24);
   background: rgba(22, 163, 74, 0.08);
@@ -288,7 +288,7 @@ body {
   display: flex;
   gap: 12px;
   flex-wrap: wrap;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 #student-id {
