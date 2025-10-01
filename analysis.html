@@ -415,7 +415,7 @@
         opt.value = sid;
         const rec = state.bySession.get(sid)?.[0];
         if (rec && rec.module && rec.group) {
-          opt.textContent = `${rec.module} — ${rec.group} (${sid})`;
+          opt.textContent = `${rec.module} — ${rec.group}`;
         } else {
           opt.textContent = sid;
         }
