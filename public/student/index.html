@@ -59,6 +59,13 @@
         <div class="help-body">
           <p class="muted small">If the live scanner will not verify, ask your teacher to enter the manual override password on this device.</p>
           <button class="secondary" id="manual-override-btn">Request manual override</button>
+          <form class="override-form" id="manualOverrideForm" hidden>
+            <label class="override-label" for="manualOverridePassword">Teacher password</label>
+            <div class="override-row">
+              <input type="password" id="manualOverridePassword" autocomplete="off" inputmode="text" minlength="4" maxlength="32" placeholder="Enter password">
+              <button class="primary" id="manualOverrideSubmit">Approve override</button>
+            </div>
+          </form>
           <p class="muted small" id="manualOverrideStatus" role="status" aria-live="polite"></p>
         </div>
       </details>

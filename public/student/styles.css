@@ -328,6 +328,44 @@ body {
   gap: 14px;
 }
 
+.override-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.override-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #475467;
+}
+
+.override-row {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+#manualOverridePassword {
+  flex: 1;
+  min-width: 160px;
+  border-radius: 12px;
+  border: 1px solid rgba(15, 23, 42, 0.16);
+  padding: 11px 14px;
+  font-size: 15px;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
+}
+
+#manualOverridePassword:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.override-row .primary {
+  flex-shrink: 0;
+}
+
 .secondary {
   border: 1px solid rgba(37, 99, 235, 0.36);
   border-radius: 14px;

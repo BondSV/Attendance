@@ -67,6 +67,9 @@
   const manualOverrideDetails = document.getElementById('manualOverrideDetails');
   const manualOverrideBtn = document.getElementById('manual-override-btn');
   const manualOverrideStatus = document.getElementById('manualOverrideStatus');
+  const manualOverrideForm = document.getElementById('manualOverrideForm');
+  const manualOverridePasswordInput = document.getElementById('manualOverridePassword');
+  const manualOverrideSubmit = document.getElementById('manualOverrideSubmit');
 
   const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 
@@ -306,8 +309,17 @@
     startScanning();
   });
 
+  let manualOverrideReady = false;
+
   if (manualOverrideBtn) {
     manualOverrideBtn.addEventListener('click', async () => {
+      manualOverrideReady = false;
+      if (manualOverrideForm) manualOverrideForm.setAttribute('hidden', '');
+      if (manualOverridePasswordInput) {
+        manualOverridePasswordInput.value = '';
+        manualOverridePasswordInput.disabled = false;
+      }
+      if (manualOverrideSubmit) manualOverrideSubmit.disabled = false;
       manualOverrideBtn.disabled = true;
       setManualOverrideStatus('Checking device status…', 'info');
       try {
@@ -320,32 +332,42 @@
         if (!checkResp.ok || !checkData.ok) {
           throw new Error(checkData.error || 'Manual override is unavailable right now.');
         }
+        manualOverrideReady = true;
+        if (manualOverrideForm) manualOverrideForm.removeAttribute('hidden');
+        setManualOverrideStatus('Ask your teacher to enter the password.', 'info');
+        if (manualOverridePasswordInput) {
+          manualOverridePasswordInput.focus();
+        }
       } catch (err) {
         console.error('Manual override pre-check failed', err);
         setManualOverrideStatus(err && err.message ? err.message : 'Manual override could not start. Please try again or use the scanner.', 'error');
         manualOverrideBtn.disabled = false;
-        return;
       }
+    });
+  }
 
-      const password = window.prompt('Teacher password required for manual override:');
-      if (password === null) {
-        setManualOverrideStatus('Manual override cancelled.', 'info');
-        manualOverrideBtn.disabled = false;
+  if (manualOverrideForm) {
+    manualOverrideForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      if (!manualOverrideReady) {
+        setManualOverrideStatus('Run the manual override check first.', 'error');
+        if (manualOverrideBtn && !manualOverrideBtn.disabled) manualOverrideBtn.focus();
         return;
       }
-      const trimmedPassword = password.trim();
-      if (!trimmedPassword) {
+      const passwordValue = manualOverridePasswordInput ? manualOverridePasswordInput.value.trim() : '';
+      if (!passwordValue) {
         setManualOverrideStatus('Password is required to continue.', 'error');
-        manualOverrideBtn.disabled = false;
+        if (manualOverridePasswordInput) manualOverridePasswordInput.focus();
         return;
       }
-
       setManualOverrideStatus('Awaiting teacher confirmation…', 'info');
+      if (manualOverridePasswordInput) manualOverridePasswordInput.disabled = true;
+      if (manualOverrideSubmit) manualOverrideSubmit.disabled = true;
       try {
         const completeResp = await fetch('/api/manual-override/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: trimmedPassword })
+          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: passwordValue })
         });
         const completeData = await completeResp.json();
         if (!completeResp.ok || !completeData.verified || !completeData.verification_id) {
@@ -354,11 +376,17 @@
         verificationId = completeData.verification_id;
         handleVerified();
         setManualOverrideStatus('Override approved. Enter your student ID to finish.', 'success');
-        manualOverrideBtn.disabled = true;
+        manualOverrideReady = false;
+        if (manualOverrideBtn) manualOverrideBtn.disabled = true;
       } catch (err) {
         console.error('Manual override completion failed', err);
         setManualOverrideStatus(err && err.message ? err.message : 'Manual override failed. Please try again.', 'error');
-        manualOverrideBtn.disabled = false;
+        if (manualOverridePasswordInput) {
+          manualOverridePasswordInput.disabled = false;
+          manualOverridePasswordInput.focus();
+          manualOverridePasswordInput.select();
+        }
+        if (manualOverrideSubmit) manualOverrideSubmit.disabled = false;
       }
     });
   }
