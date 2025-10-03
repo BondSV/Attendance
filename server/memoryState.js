@@ -103,6 +103,19 @@ function acquireDeviceLock(deviceKey, studentId) {
 }
 
 /**
+ * Inspect the current lock for a device without modifying it.
+ *
+ * @param {string} deviceKey
+ * @returns {{ studentId: string, expiresAt: number } | null}
+ */
+function peekDeviceLock(deviceKey) {
+  purgeExpired();
+  const entry = deviceLocks.get(deviceKey);
+  if (!entry) return null;
+  return { studentId: entry.studentId, expiresAt: entry.expiresAt };
+}
+
+/**
  * Remove expired tokens and device locks.  Called periodically to keep
  * memory usage low.
  */
@@ -124,4 +137,5 @@ module.exports = {
   issueVerification,
   consumeVerification,
   acquireDeviceLock,
+  peekDeviceLock,
 };

@@ -64,6 +64,9 @@
   const idInput = document.getElementById('student-id');
   const cameraHint = document.getElementById('cameraHint');
   const scannerStatus = document.getElementById('scannerStatus');
+  const manualOverrideDetails = document.getElementById('manualOverrideDetails');
+  const manualOverrideBtn = document.getElementById('manual-override-btn');
+  const manualOverrideStatus = document.getElementById('manualOverrideStatus');
 
   const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
 
@@ -83,6 +86,17 @@
     const normalizedTone = colors[tone] ? tone : 'info';
     scannerStatus.textContent = message || '';
     scannerStatus.style.color = message ? colors[normalizedTone] : colors.info;
+  }
+
+  function setManualOverrideStatus(message = '', tone = 'info') {
+    if (!manualOverrideStatus) return;
+    const colors = { error: '#dc2626', success: '#16a34a', info: '#475467' };
+    const normalizedTone = colors[tone] ? tone : 'info';
+    manualOverrideStatus.textContent = message || '';
+    manualOverrideStatus.style.color = message ? colors[normalizedTone] : colors.info;
+    if (message && manualOverrideDetails) {
+      manualOverrideDetails.open = true;
+    }
   }
 
   function hasLiveVideoTrack(stream) {
@@ -291,6 +305,63 @@
   scanBtn.addEventListener('click', () => {
     startScanning();
   });
+
+  if (manualOverrideBtn) {
+    manualOverrideBtn.addEventListener('click', async () => {
+      manualOverrideBtn.disabled = true;
+      setManualOverrideStatus('Checking device status…', 'info');
+      try {
+        const checkResp = await fetch('/api/manual-override/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId })
+        });
+        const checkData = await checkResp.json();
+        if (!checkResp.ok || !checkData.ok) {
+          throw new Error(checkData.error || 'Manual override is unavailable right now.');
+        }
+      } catch (err) {
+        console.error('Manual override pre-check failed', err);
+        setManualOverrideStatus(err && err.message ? err.message : 'Manual override could not start. Please try again or use the scanner.', 'error');
+        manualOverrideBtn.disabled = false;
+        return;
+      }
+
+      const password = window.prompt('Teacher password required for manual override:');
+      if (password === null) {
+        setManualOverrideStatus('Manual override cancelled.', 'info');
+        manualOverrideBtn.disabled = false;
+        return;
+      }
+      const trimmedPassword = password.trim();
+      if (!trimmedPassword) {
+        setManualOverrideStatus('Password is required to continue.', 'error');
+        manualOverrideBtn.disabled = false;
+        return;
+      }
+
+      setManualOverrideStatus('Awaiting teacher confirmation…', 'info');
+      try {
+        const completeResp = await fetch('/api/manual-override/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: trimmedPassword })
+        });
+        const completeData = await completeResp.json();
+        if (!completeResp.ok || !completeData.verified || !completeData.verification_id) {
+          throw new Error(completeData.error || 'Manual override failed.');
+        }
+        verificationId = completeData.verification_id;
+        handleVerified();
+        setManualOverrideStatus('Override approved. Enter your student ID to finish.', 'success');
+        manualOverrideBtn.disabled = true;
+      } catch (err) {
+        console.error('Manual override completion failed', err);
+        setManualOverrideStatus(err && err.message ? err.message : 'Manual override failed. Please try again.', 'error');
+        manualOverrideBtn.disabled = false;
+      }
+    });
+  }
 
   submitBtn.addEventListener('click', async () => {
     const studentId = idInput.value.trim();

@@ -1,15 +1,33 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const crypto = require('crypto');
 
-const { issueVerification, consumeVerification, acquireDeviceLock } = require('./memoryState');
+const { issueVerification, consumeVerification, acquireDeviceLock, peekDeviceLock } = require('./memoryState');
 const { appendCsvRow, CSV_PATH } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
+const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } = require('./manualOverrides');
 
 const PORT = process.env.PORT || 8080;
 const ANOMALY_LOG_PATH = process.env.ANOMALY_LOG_PATH || null;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+
+const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || '';
+const MANUAL_OVERRIDE_PASSWORD_BUFFER = MANUAL_OVERRIDE_PASSWORD ? Buffer.from(MANUAL_OVERRIDE_PASSWORD, 'utf8') : null;
+const MANUAL_OVERRIDE_PASSWORD_VERSION = MANUAL_OVERRIDE_PASSWORD ? crypto.createHash('sha256').update(MANUAL_OVERRIDE_PASSWORD_BUFFER).digest('hex').slice(0, 12) : null;
+
+function verifyManualOverridePassword(candidate) {
+  if (!MANUAL_OVERRIDE_PASSWORD_BUFFER) return false;
+  if (typeof candidate !== 'string') return false;
+  const candidateBuffer = Buffer.from(candidate, 'utf8');
+  if (candidateBuffer.length !== MANUAL_OVERRIDE_PASSWORD_BUFFER.length) return false;
+  try {
+    return crypto.timingSafeEqual(candidateBuffer, MANUAL_OVERRIDE_PASSWORD_BUFFER);
+  } catch {
+    return false;
+  }
+}
 
 function sendJson(res, payload, status = 200) {
   const data = JSON.stringify(payload);
@@ -203,6 +221,76 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, { verified: true, verification_id: token, sid, phase, device_id: device_id || '', ttl_ms: 300000 });
     }
 
+    if (pathname === '/api/manual-override/check' && req.method === 'POST') {
+      const body = await parseRequestBody(req);
+      const { sid, phase: rawPhase, module: moduleCodeRaw, group: groupRaw, device_id: deviceIdRaw } = body;
+      const phase = normalizePhaseInput(rawPhase);
+      const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
+      if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
+      if (!VALID_PHASES.has(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      const moduleCode = (moduleCodeRaw || '').toString().trim().toUpperCase();
+      const groupCode = (groupRaw || '').toString().trim();
+      const moduleRe = /^[A-Z]{3}\d{5}$/;
+      const groupRe = /^[0-9]$/;
+      if (!moduleRe.test(moduleCode)) return sendJson(res, { error: 'Invalid module code' }, 400);
+      if (!groupRe.test(groupCode)) return sendJson(res, { error: 'Invalid group number' }, 400);
+      if (!deviceIdRaw || typeof deviceIdRaw !== 'string' || !deviceIdRaw.trim()) {
+        return sendJson(res, { error: 'Invalid device information' }, 400);
+      }
+      const stableDeviceId = deviceIdRaw.trim();
+      const deviceKey = [stableDeviceId].join('|');
+      const lock = peekDeviceLock(deviceKey);
+      if (lock) {
+        return sendJson(res, { error: 'This device already completed a verification for another student recently.' }, 409);
+      }
+      return sendJson(res, { ok: true });
+    }
+
+    if (pathname === '/api/manual-override/complete' && req.method === 'POST') {
+      const body = await parseRequestBody(req);
+      const { sid, phase: rawPhase, module: moduleCodeRaw, group: groupRaw, device_id: deviceIdRaw, page_session_id, teacher_password } = body;
+      const phase = normalizePhaseInput(rawPhase);
+      const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
+      if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
+      if (!VALID_PHASES.has(phase)) return sendJson(res, { error: 'Invalid phase' }, 400);
+      const moduleCode = (moduleCodeRaw || '').toString().trim().toUpperCase();
+      const groupCode = (groupRaw || '').toString().trim();
+      const moduleRe = /^[A-Z]{3}\d{5}$/;
+      const groupRe = /^[0-9]$/;
+      if (!moduleRe.test(moduleCode)) return sendJson(res, { error: 'Invalid module code' }, 400);
+      if (!groupRe.test(groupCode)) return sendJson(res, { error: 'Invalid group number' }, 400);
+      if (!deviceIdRaw || typeof deviceIdRaw !== 'string' || !deviceIdRaw.trim()) {
+        return sendJson(res, { error: 'Invalid device information' }, 400);
+      }
+      if (!MANUAL_OVERRIDE_PASSWORD_BUFFER) {
+        return sendJson(res, { error: 'Manual override is not configured.' }, 503);
+      }
+      const passwordCandidate = (teacher_password || '').toString();
+      if (!passwordCandidate) {
+        return sendJson(res, { error: 'Manual override password required.' }, 400);
+      }
+      if (!verifyManualOverridePassword(passwordCandidate)) {
+        return sendJson(res, { error: 'Manual override password is incorrect.' }, 403);
+      }
+      const stableDeviceId = deviceIdRaw.trim();
+      const deviceKey = [stableDeviceId].join('|');
+      const lock = peekDeviceLock(deviceKey);
+      if (lock) {
+        return sendJson(res, { error: 'This device already completed a verification for another student recently.' }, 409);
+      }
+      const connectionKey = page_session_id || '';
+      const token = issueVerification(connectionKey);
+      registerManualOverride(token, {
+        sid,
+        phase,
+        module: moduleCode,
+        group: groupCode,
+        deviceId: stableDeviceId,
+        passwordVersion: MANUAL_OVERRIDE_PASSWORD_VERSION || 'unversioned',
+      });
+      return sendJson(res, { verified: true, verification_id: token, ttl_ms: 300000 });
+    }
+
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
       const { sid, phase: rawPhase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw } = body;
@@ -222,6 +310,7 @@ const server = http.createServer(async (req, res) => {
       if (!consumeVerification(verification_id, connectionKey)) {
         return sendJson(res, { error: 'Verification required' }, 400);
       }
+      const manualOverrideMeta = consumeManualOverride(verification_id);
       if (!canCheckin(connectionKey)) {
         return sendJson(res, { error: `Duplicate submission too soon (wait ${CHECKIN_WINDOW_MS}ms)` }, 429);
       }
@@ -235,6 +324,13 @@ const server = http.createServer(async (req, res) => {
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
       await appendCsvRow([tsUtc, moduleCode, `Group ${groupCode}`, sid, phase, student_id, '', ua]);
+      if (manualOverrideMeta) {
+        logManualOverrideUsage({
+          ...manualOverrideMeta,
+          studentId: student_id,
+          verificationId: verification_id,
+        });
+      }
       return sendJson(res, { ok: true });
     }
 
