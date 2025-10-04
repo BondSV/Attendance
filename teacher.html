@@ -254,13 +254,14 @@
       font-weight: 700;
       line-height: 1.5;
       margin: 0;
-      max-width: 90%;
+      max-width: 100%;
+      padding: 0 8px;
     }
     
     .step2-section .step-desc {
       font-size: 24px;
       color: #1e293b;
-      max-width: 88%;
+      max-width: 100%;
     }
     
     .qr-container {
@@ -384,7 +385,7 @@
     <!-- STEP 1 - Student app QR -->
     <section class="step1-section">
       <span class="step-badge">Step 1</span>
-      <p class="step-desc">Use your phone camera to scan this code and launch the attendance check-in app</p>
+      <p class="step-desc">Use your phone camera to scan this code to launch the attendance check-in app</p>
       <div class="qr-container" id="sessionQr">
         <div class="qr-placeholder">Press Start to generate the QR code</div>
       </div>
@@ -397,7 +398,6 @@
       <div class="qr-container" id="verificationQr">
         <div class="qr-placeholder">Press Start to display the verification code</div>
       </div>
-      <p class="status-text" id="challengeCountdown">Waiting to start session…</p>
     </section>
   </div>
 
