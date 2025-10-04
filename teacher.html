@@ -35,7 +35,6 @@
       border-radius: 14px;
       padding: 18px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
-      max-width: 320px;
     }
     
     .teacher-section h1 {
@@ -47,10 +46,11 @@
     }
     
     .teacher-form {
-      display: flex;
-      flex-direction: column;
+      display: grid;
+      grid-template-columns: 1fr 64px 1fr;
       gap: 10px;
       margin-bottom: 14px;
+      align-items: end;
     }
     
     .form-group {
@@ -65,12 +65,6 @@
       color: #cbd5e1;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-    }
-    
-    .form-row {
-      display: grid;
-      grid-template-columns: 1fr 56px;
-      gap: 8px;
     }
     
     input[type="text"], select {
@@ -197,14 +191,15 @@
       grid-area: step1;
       background: #ffffff;
       border-radius: 18px;
-      padding: 32px 28px;
+      padding: 40px 32px;
       box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
       border: 1px solid rgba(15, 23, 42, 0.06);
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: center;
       text-align: center;
-      gap: 20px;
+      gap: 24px;
     }
     
     .step2-section {
@@ -238,6 +233,8 @@
       background: linear-gradient(135deg, #dbeafe, #bfdbfe);
       color: #1e40af;
       box-shadow: 0 5px 14px rgba(59, 130, 246, 0.24);
+      font-size: 24px;
+      padding: 11px 26px;
     }
     
     .step2-section .step-badge {
@@ -249,7 +246,7 @@
     }
     
     .step-desc {
-      font-size: 19px;
+      font-size: 20px;
       color: #475569;
       line-height: 1.5;
       margin: 0;
@@ -275,8 +272,8 @@
     }
     
     .step1-section .qr-container {
-      width: 340px;
-      height: 340px;
+      width: 380px;
+      height: 380px;
     }
     
     .step2-section .qr-container {
@@ -352,18 +349,16 @@
     <section class="teacher-section">
       <h1>Teacher Controls</h1>
       <form class="teacher-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="moduleInput">Module</label>
-            <div class="combo">
-              <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
-              <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
-            </div>
+        <div class="form-group">
+          <label for="moduleInput">Module</label>
+          <div class="combo">
+            <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
+            <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
           </div>
-          <div class="form-group">
-            <label for="groupInput">Grp</label>
-            <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
-          </div>
+        </div>
+        <div class="form-group">
+          <label for="groupInput">Grp</label>
+          <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
         </div>
         <div class="form-group">
           <label for="phase">Phase</label>
