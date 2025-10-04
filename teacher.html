@@ -31,7 +31,7 @@
     /* TEACHER CONTROLS - Compact top-left */
     .teacher-section {
       grid-area: teacher;
-      background: linear-gradient(145deg, #334155 0%, #475569 100%);
+      background: linear-gradient(145deg, #64748b 0%, #94a3b8 100%);
       border-radius: 14px;
       padding: 18px;
       box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
@@ -48,7 +48,7 @@
     
     .teacher-form {
       display: grid;
-      grid-template-columns: 0.65fr 64px 0.65fr;
+      grid-template-columns: 1fr 1fr 1fr;
       gap: 10px;
       margin-bottom: 14px;
       align-items: end;
@@ -214,7 +214,7 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
+      justify-content: space-between;
       text-align: center;
       gap: 24px;
       grid-row: 1 / 3;
@@ -224,7 +224,7 @@
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      padding: 10px 24px;
+      padding: 5px 12px;
       border-radius: 999px;
       font-size: 22px;
       font-weight: 800;
@@ -237,7 +237,7 @@
       color: #1e40af;
       box-shadow: 0 5px 14px rgba(59, 130, 246, 0.24);
       font-size: 24px;
-      padding: 11px 26px;
+      padding: 5.5px 13px;
     }
     
     .step2-section .step-badge {
@@ -245,7 +245,7 @@
       color: #b45309;
       box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
       font-size: 26px;
-      padding: 12px 30px;
+      padding: 6px 15px;
     }
     
     .step-desc {
@@ -363,7 +363,7 @@
           </div>
         </div>
         <div class="form-group">
-          <label for="groupInput">Grp</label>
+          <label for="groupInput">Group</label>
           <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
         </div>
         <div class="form-group">
