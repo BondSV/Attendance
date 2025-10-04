@@ -34,17 +34,17 @@
       padding: clamp(12px, 2vw, 20px);
     }
     .layout {
-      width: min(1340px, 100%);
+      width: min(1300px, 100%);
       display: grid;
-      grid-template-columns: minmax(520px, 560px) minmax(540px, 1fr);
-      gap: clamp(28px, 3.8vw, 48px);
+      grid-template-columns: minmax(520px, 580px) minmax(520px, 1fr);
+      gap: clamp(28px, 4vw, 48px);
       align-items: start;
     }
     .teacher-stack {
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      align-items: flex-start;
+      gap: clamp(18px, 3vw, 26px);
+      align-items: stretch;
     }
     .teacher-card {
       width: 340px;
@@ -56,6 +56,7 @@
       padding: clamp(22px, 3vw, 30px);
       display: grid;
       gap: 16px;
+      align-self: flex-start;
     }
     .teacher-card h1 {
       margin: 0;
@@ -195,17 +196,16 @@
       box-shadow: var(--shadow-soft);
       text-align: center;
       border-radius: 24px;
-      padding: clamp(20px, 2.6vw, 32px);
+      padding: clamp(24px, 3vw, 36px);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(12px, 2vw, 20px);
+      gap: clamp(14px, 2.4vw, 24px);
       width: 100%;
     }
     .step-card.step1 {
       align-self: stretch;
-      padding-left: clamp(32px, 4.2vw, 48px);
-      padding-right: clamp(32px, 4.2vw, 48px);
+      width: 100%;
       max-width: 560px;
     }
     .step-card.step2 {
@@ -228,24 +228,24 @@
     }
     .step-card h2 {
       margin: 0;
-      font-size: clamp(28px, 3.8vw, 42px);
+      font-size: clamp(28px, 3.2vw, 40px);
       font-weight: 600;
       color: var(--text-dark);
     }
     .step-card h2 + p {
-      margin-top: clamp(6px, 1vw, 12px);
+      margin-top: clamp(6px, 1.1vw, 14px);
     }
     .step-card p {
       margin: 0;
       color: var(--muted);
-      font-size: clamp(18px, 3vw, 28px);
+      font-size: clamp(18px, 2.8vw, 26px);
       line-height: 1.45;
     }
     .step-card p + .qr-box {
-      margin-top: clamp(12px, 1.8vw, 18px);
+      margin-top: clamp(12px, 1.6vw, 18px);
     }
     .qr-box {
-      width: clamp(280px, 40vw, 520px);
+      width: clamp(300px, 44vw, 520px);
       aspect-ratio: 1/1;
       border-radius: 24px;
       background: rgba(255,255,255,0.96);
@@ -256,7 +256,7 @@
       margin: 8px 0 12px 0;
     }
     .qr-box.small {
-      width: clamp(260px, 36vw, 360px);
+      width: clamp(240px, 34vw, 360px);
     }
     .qr-box canvas {
       width: 88%;
@@ -286,7 +286,7 @@
     .student-stack {
       display: flex;
       flex-direction: column;
-      gap: clamp(22px, 3.6vw, 32px);
+      gap: clamp(24px, 3.8vw, 36px);
       align-items: stretch;
     }
   </style>
@@ -324,9 +324,6 @@
           <button class="stop" id="stopBtn" disabled>Stop</button>
         </div>
       </section>
-    </div>
-
-    <div class="student-stack">
       <section class="step-card step1">
         <span class="step-pill">Step 1</span>
         <h2>Scan to open Student App</h2>
@@ -335,6 +332,9 @@
           <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
         </div>
       </section>
+    </div>
+
+    <div class="student-stack">
       <section class="step-card step2">
         <span class="step-pill">Step 2</span>
         <h2>Scan to verify attendance</h2>
@@ -378,8 +378,8 @@
       sessionQrEl.innerHTML = '';
       sessionQr = new QRCode(sessionQrEl, {
         text: url,
-        width: 400,
-        height: 400,
+        width: 320,
+        height: 320,
         correctLevel: QRCode.CorrectLevel.M,
         colorDark: '#000000',
         colorLight: '#ffffff'
@@ -390,8 +390,8 @@
       verificationQrEl.innerHTML = '';
       verificationQr = new QRCode(verificationQrEl, {
         text,
-        width: 640,
-        height: 640,
+        width: 540,
+        height: 540,
         correctLevel: QRCode.CorrectLevel.M,
         colorDark: '#000000',
         colorLight: '#ffffff'
