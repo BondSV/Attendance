@@ -5,346 +5,409 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Attendance Console</title>
   <style>
-    :root {
-      color-scheme: light dark;
-      --bg: #eef2ff;
-      --teacher-surface: linear-gradient(135deg, rgba(51, 65, 85, 0.94), rgba(59, 130, 246, 0.82));
-      --teacher-border: rgba(148, 163, 184, 0.25);
-      --student-surface: rgba(255, 255, 255, 0.94);
-      --student-border: rgba(15, 23, 42, 0.08);
-      --shadow-strong: 0 28px 58px rgba(15, 23, 42, 0.22);
-      --shadow-soft: 0 26px 52px rgba(15, 23, 42, 0.14);
-      --accent: #2563eb;
-      --text-light: #e2e8f0;
-      --text-dark: #0f172a;
-      --muted: #475467;
-    }
-    * { box-sizing: border-box; }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
       min-height: 100vh;
-      background:
-        radial-gradient(circle at top left, rgba(37, 99, 235, 0.14), transparent 55%),
-        radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.12), transparent 60%),
-        var(--bg);
-      color: var(--text-dark);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
-      padding: clamp(12px, 2vw, 20px);
+      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #dbeafe 100%);
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: #0f172a;
+      padding: 16px;
+      overflow-x: hidden;
     }
-    .layout {
-      width: min(1300px, 100%);
+    
+    .container {
+      max-width: 1440px;
+      margin: 0 auto;
       display: grid;
-      grid-template-columns: minmax(520px, 580px) minmax(520px, 1fr);
-      gap: clamp(28px, 4vw, 48px);
+      grid-template-areas: 
+        "teacher step1 step2"
+        "teacher step1 step2";
+      grid-template-columns: 280px 1fr 1.4fr;
+      gap: 24px;
       align-items: start;
+      min-height: calc(100vh - 32px);
     }
-    .teacher-stack {
-      display: flex;
-      flex-direction: column;
-      gap: clamp(18px, 3vw, 26px);
-      align-items: stretch;
+    
+    /* TEACHER CONTROLS - Compact top-left */
+    .teacher-section {
+      grid-area: teacher;
+      background: linear-gradient(145deg, #334155 0%, #475569 100%);
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+      position: sticky;
+      top: 16px;
     }
-    .teacher-card {
-      width: 340px;
-      background: var(--teacher-surface);
-      border: 1px solid var(--teacher-border);
-      box-shadow: var(--shadow-strong);
-      color: var(--text-light);
-      border-radius: 22px;
-      padding: clamp(22px, 3vw, 30px);
-      display: grid;
-      gap: 16px;
-      align-self: flex-start;
+    
+    .teacher-section h1 {
+      font-size: 16px;
+      font-weight: 700;
+      color: #f1f5f9;
+      margin-bottom: 16px;
+      letter-spacing: -0.2px;
     }
-    .teacher-card h1 {
-      margin: 0;
-      font-size: clamp(26px, 4vw, 32px);
-      letter-spacing: -0.3px;
-      color: #f8fafc;
-    }
-    .form-stack {
+    
+    .teacher-form {
       display: flex;
       flex-direction: column;
       gap: 12px;
+      margin-bottom: 16px;
     }
-    label {
-      font-size: 13px;
-      font-weight: 600;
-      color: rgba(226, 232, 240, 0.76);
+    
+    .form-group {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 4px;
     }
+    
+    .form-group label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #cbd5e1;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    
     .form-row {
       display: grid;
-      grid-template-columns: minmax(220px, 1fr) minmax(110px, 140px);
-      gap: 12px;
-      align-items: end;
+      grid-template-columns: 1fr 56px;
+      gap: 8px;
     }
-    .form-row label {
-      flex: initial;
-    }
-    .module-field {
-      min-width: 0;
-    }
-    .group-field {
-      min-width: 0;
-    }
-    .group-field input[type="text"] {
-      text-align: center;
-    }
+    
     input[type="text"], select {
-      border-radius: 14px;
-      border: 1px solid rgba(148, 163, 184, 0.4);
-      padding: 12px 14px;
-      font-size: 15px;
-      background: rgba(15, 23, 42, 0.45);
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid rgba(148, 163, 184, 0.3);
+      border-radius: 8px;
+      padding: 8px 10px;
       color: #f8fafc;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
+      font-size: 13px;
+      transition: all 0.2s;
     }
+    
+    input[type="text"]:focus, select:focus {
+      outline: none;
+      border-color: #60a5fa;
+      background: rgba(15, 23, 42, 0.75);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+    }
+    
+    input[type="text"]::placeholder {
+      color: rgba(203, 213, 225, 0.4);
+    }
+    
     .combo {
       position: relative;
     }
+    
     .combo input {
       width: 100%;
       text-transform: uppercase;
-      letter-spacing: 0.4px;
     }
+    
+    .group-input {
+      text-align: center;
+      font-weight: 600;
+    }
+    
     .combo-list {
       position: absolute;
-      top: calc(100% + 6px);
+      top: calc(100% + 4px);
       left: 0;
       right: 0;
-      background: rgba(255, 255, 255, 0.96);
-      border: 1px solid rgba(148, 163, 184, 0.25);
-      border-radius: 14px;
-      box-shadow: 0 18px 36px rgba(15, 23, 42, 0.22);
-      padding: 8px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      z-index: 20;
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+      padding: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 100;
     }
+    
     .combo-list[hidden] {
       display: none;
     }
+    
     .combo-option {
+      background: transparent;
       border: none;
-      border-radius: 10px;
-      background: rgba(148, 163, 184, 0.12);
-      color: #1f2937;
-      font-size: 14px;
-      padding: 9px 12px;
+      border-radius: 6px;
+      padding: 8px 10px;
+      width: 100%;
       text-align: left;
+      font-size: 12px;
+      color: #1e293b;
       cursor: pointer;
-      transition: background 0.15s ease;
+      transition: background 0.15s;
     }
-    .combo-option:hover,
-    .combo-option:focus {
-      background: rgba(37, 99, 235, 0.16);
-      color: #0f172a;
-      outline: none;
+    
+    .combo-option:hover {
+      background: #f1f5f9;
     }
-    input[type="text"]::placeholder {
-      color: rgba(226, 232, 240, 0.55);
-    }
-    input[type="text"]:focus, select:focus {
-      outline: none;
-      border-color: rgba(148, 163, 184, 0.7);
-      box-shadow: 0 0 0 3px rgba(148, 163, 184, 0.35);
-    }
-    .actions {
+    
+    .teacher-actions {
       display: flex;
-      gap: 12px;
+      gap: 8px;
     }
-    .actions button {
+    
+    .btn {
       border: none;
-      border-radius: 14px;
-      padding: 12px 18px;
-      font-size: 15px;
+      border-radius: 8px;
+      padding: 9px 14px;
+      font-size: 13px;
       font-weight: 600;
-      flex: 1;
       cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+      transition: all 0.2s;
+      flex: 1;
     }
-    .actions button.primary {
-      background: linear-gradient(135deg, #15803d, #22c55e);
+    
+    .btn-start {
+      background: linear-gradient(135deg, #16a34a, #22c55e);
       color: #fff;
-      box-shadow: 0 16px 28px rgba(21, 128, 61, 0.3);
+      box-shadow: 0 4px 12px rgba(22, 163, 74, 0.3);
     }
-    .actions button.primary:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      box-shadow: none;
+    
+    .btn-start:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(22, 163, 74, 0.4);
     }
-    .actions button.stop {
-      background: linear-gradient(135deg, rgba(248, 113, 113, 0.85), rgba(239, 68, 68, 0.75));
-      color: rgba(31, 41, 55, 0.9);
-      border: 1px solid rgba(248, 113, 113, 0.6);
-      box-shadow: 0 12px 24px rgba(248, 113, 113, 0.18);
-    }
-    .actions button.stop:disabled {
+    
+    .btn-start:disabled {
       opacity: 0.5;
       cursor: not-allowed;
-      box-shadow: none;
     }
-    .step-card {
-      background: var(--student-surface);
-      border: 1px solid var(--student-border);
-      box-shadow: var(--shadow-soft);
-      text-align: center;
-      border-radius: 24px;
-      padding: clamp(24px, 3vw, 36px);
+    
+    .btn-stop {
+      background: linear-gradient(135deg, #dc2626, #ef4444);
+      color: #fff;
+      box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);
+    }
+    
+    .btn-stop:not(:disabled):hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(220, 38, 38, 0.35);
+    }
+    
+    .btn-stop:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    
+    /* STUDENT-FACING STEPS */
+    .step1-section {
+      grid-area: step1;
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 32px 28px;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+      border: 1px solid rgba(15, 23, 42, 0.06);
       display: flex;
       flex-direction: column;
       align-items: center;
-      gap: clamp(14px, 2.4vw, 24px);
-      width: 100%;
+      text-align: center;
+      gap: 20px;
     }
-    .step-card.step1 {
-      align-self: stretch;
-      width: 100%;
-      max-width: 560px;
+    
+    .step2-section {
+      grid-area: step2;
+      background: #ffffff;
+      border-radius: 24px;
+      padding: 40px 32px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.1);
+      border: 2px solid rgba(37, 99, 235, 0.15);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 24px;
     }
-    .step-card.step2 {
-      max-width: 820px;
-      margin: 0 auto;
-      height: 100%;
-    }
-    .step-pill {
+    
+    .step-badge {
       display: inline-flex;
       align-items: center;
-      gap: clamp(10px, 2vw, 16px);
-      padding: clamp(10px, 2vw, 18px) clamp(20px, 3.6vw, 32px);
+      justify-content: center;
+      padding: 10px 24px;
       border-radius: 999px;
-      background: rgba(37, 99, 235, 0.18);
-      color: var(--accent);
-      font-size: clamp(18px, 2.8vw, 30px);
-      font-weight: 700;
-      letter-spacing: 0.8px;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
       text-transform: uppercase;
     }
-    .step-card h2 {
+    
+    .step1-section .step-badge {
+      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+      color: #1e40af;
+      box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+    }
+    
+    .step2-section .step-badge {
+      background: linear-gradient(135deg, #fef3c7, #fde68a);
+      color: #b45309;
+      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.25);
+      font-size: 24px;
+      padding: 12px 32px;
+    }
+    
+    .step-title {
+      font-size: 32px;
+      font-weight: 700;
+      color: #0f172a;
+      line-height: 1.2;
       margin: 0;
-      font-size: clamp(28px, 3.2vw, 40px);
-      font-weight: 600;
-      color: var(--text-dark);
     }
-    .step-card h2 + p {
-      margin-top: clamp(6px, 1.1vw, 14px);
+    
+    .step2-section .step-title {
+      font-size: 42px;
     }
-    .step-card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: clamp(18px, 2.8vw, 26px);
-      line-height: 1.45;
+    
+    .step-desc {
+      font-size: 18px;
+      color: #64748b;
+      line-height: 1.5;
+      margin: -8px 0 0;
     }
-    .step-card p + .qr-box {
-      margin-top: clamp(12px, 1.6vw, 18px);
+    
+    .step2-section .step-desc {
+      font-size: 22px;
+      color: #475569;
     }
-    .qr-box {
-      width: clamp(300px, 44vw, 520px);
-      aspect-ratio: 1/1;
-      border-radius: 24px;
-      background: rgba(255,255,255,0.96);
-      display: grid;
-      place-items: center;
-      box-shadow: 0 26px 48px rgba(15, 23, 42, 0.16);
-      border: 1px solid rgba(37, 99, 235, 0.15);
-      margin: 8px 0 12px 0;
+    
+    .qr-container {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 20px;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+      border: 2px solid #f1f5f9;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
-    .qr-box.small {
-      width: clamp(240px, 34vw, 360px);
+    
+    .step1-section .qr-container {
+      width: 240px;
+      height: 240px;
     }
-    .qr-box canvas {
-      width: 88%;
-      height: 88%;
+    
+    .step2-section .qr-container {
+      width: 360px;
+      height: 360px;
+      border: 3px solid #dbeafe;
+      box-shadow: 0 12px 36px rgba(37, 99, 235, 0.15);
     }
+    
+    .qr-container canvas {
+      max-width: 100%;
+      max-height: 100%;
+    }
+    
     .qr-placeholder {
-      font-size: clamp(17px, 2.6vw, 24px);
-      color: var(--muted);
-      padding: 0 clamp(14px, 2.6vw, 22px);
-      line-height: 1.45;
+      font-size: 14px;
+      color: #94a3b8;
+      padding: 0 20px;
+      line-height: 1.6;
+      text-align: center;
     }
-    .countdown {
-      font-size: clamp(17px, 2.6vw, 24px);
-      color: var(--muted);
+    
+    .step2-section .qr-placeholder {
+      font-size: 16px;
+      color: #64748b;
     }
-    @media (max-width: 960px) {
-      .layout {
+    
+    .status-text {
+      font-size: 15px;
+      color: #64748b;
+      font-weight: 500;
+    }
+    
+    .step2-section .status-text {
+      font-size: 18px;
+      font-weight: 600;
+      color: #2563eb;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 1200px) {
+      .container {
+        grid-template-areas: 
+          "teacher teacher"
+          "step1 step2";
+        grid-template-columns: 1fr 1.4fr;
+      }
+      .teacher-section {
+        position: relative;
+        top: 0;
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .container {
+        grid-template-areas: 
+          "teacher"
+          "step1"
+          "step2";
         grid-template-columns: 1fr;
       }
-      .teacher-stack {
-        max-width: 100%;
+      body {
+        padding: 12px;
       }
-      .step-card.step2 {
-        justify-self: center;
-      }
-    }
-    .student-stack {
-      display: flex;
-      flex-direction: column;
-      gap: clamp(24px, 3.8vw, 36px);
-      align-items: stretch;
     }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <div class="teacher-stack">
-      <section class="teacher-card">
-        <div>
-          <h1>Teacher controls</h1>
-        </div>
-        <div class="form-stack">
-          <div class="form-row">
-            <label class="module-field" for="moduleInput">Module
-              <div class="combo" id="moduleCombo">
-                <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
-                <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
-              </div>
-            </label>
-            <label class="group-field" for="groupInput">Group
-              <input id="groupInput" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
-            </label>
+  <div class="container">
+    <!-- TEACHER CONTROLS - Compact, top-left -->
+    <section class="teacher-section">
+      <h1>Teacher Controls</h1>
+      <form class="teacher-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="moduleInput">Module</label>
+            <div class="combo">
+              <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
+              <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
+            </div>
           </div>
-          <label for="phase">Phase
-  <select id="phase">
-    <option value="start">Start</option>
-              <option value="break1">Break 1</option>
-              <option value="break2">Break 2</option>
-    <option value="end">End</option>
-  </select>
-          </label>
+          <div class="form-group">
+            <label for="groupInput">Grp</label>
+            <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
+          </div>
         </div>
-        <div class="actions">
-          <button class="primary" id="startBtn">Start</button>
-          <button class="stop" id="stopBtn" disabled>Stop</button>
+        <div class="form-group">
+          <label for="phase">Phase</label>
+          <select id="phase">
+            <option value="start">Start</option>
+            <option value="break1">Break 1</option>
+            <option value="break2">Break 2</option>
+            <option value="end">End</option>
+          </select>
         </div>
-      </section>
-      <section class="step-card step1">
-        <span class="step-pill">Step 1</span>
-        <h2>Scan to open Student App</h2>
-        <p>Students scan this code to launch the check-in app.</p>
-        <div class="qr-box small" id="sessionQr">
-          <div class="qr-placeholder">Start the session to generate the QR link for students.</div>
-        </div>
-      </section>
-    </div>
+      </form>
+      <div class="teacher-actions">
+        <button class="btn btn-start" id="startBtn">Start</button>
+        <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
+      </div>
+    </section>
 
-    <div class="student-stack">
-      <section class="step-card step2">
-        <span class="step-pill">Step 2</span>
-        <h2>Scan to verify attendance</h2>
-        <p>Students scan this live code to confirm presence.</p>
-        <div class="qr-box" id="verificationQr">
-          <div class="qr-placeholder">Start the session to display the verification QR.</div>
-        </div>
-        <div class="countdown" id="challengeCountdown">Waiting to start session…</div>
-      </section>
-    </div>
+    <!-- STEP 1 - Student app QR -->
+    <section class="step1-section">
+      <span class="step-badge">Step 1</span>
+      <h2 class="step-title">Scan to Open App</h2>
+      <p class="step-desc">Use your phone camera to scan this code and launch the attendance app</p>
+      <div class="qr-container" id="sessionQr">
+        <div class="qr-placeholder">Press Start to generate the QR code</div>
+      </div>
+    </section>
+
+    <!-- STEP 2 - Verification QR (larger, more prominent) -->
+    <section class="step2-section">
+      <span class="step-badge">Step 2</span>
+      <h2 class="step-title">Verify Your Presence</h2>
+      <p class="step-desc">From inside the app, scan this live code to confirm you're in the classroom</p>
+      <div class="qr-container" id="verificationQr">
+        <div class="qr-placeholder">Press Start to display the verification code</div>
+      </div>
+      <p class="status-text" id="challengeCountdown">Waiting to start session…</p>
+    </section>
   </div>
 
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
