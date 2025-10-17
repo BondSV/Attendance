@@ -32,8 +32,8 @@
     .teacher-section {
       grid-area: teacher;
       background:
-        linear-gradient(to bottom, rgba(255,255,255,.55) 0%, rgba(255,255,255,.32) 8%, rgba(255,255,255,.14) 26%, rgba(255,255,255,.06) 46%, rgba(255,255,255,.02) 64%, rgba(255,255,255,0) 100%), /* silver sheen */
-        radial-gradient(120% 60% at 50% -10%, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 60%), /* top glow */
+        linear-gradient(to top, rgba(255,255,255,.55) 0%, rgba(255,255,255,.32) 8%, rgba(255,255,255,.14) 26%, rgba(255,255,255,.06) 46%, rgba(255,255,255,.02) 64%, rgba(255,255,255,0) 100%), /* silver sheen at bottom */
+        radial-gradient(120% 60% at 50% 110%, rgba(255,255,255,.35) 0%, rgba(255,255,255,0) 60%), /* bottom glow */
         linear-gradient(145deg, #0f1b2d 0%, #1b2a3a 45%, #26384a 100%); /* deep navy base */
       border-radius: 14px;
       padding: 18px;
@@ -197,10 +197,10 @@
     .step1-section {
       grid-area: step1;
       background: #ffffff;
-      border-radius: 18px;
+      border-radius: 20px; /* match Step 2 */
       padding: 20px 28px 32px;
       box-shadow: 0 10px 32px rgba(0, 0, 0, 0.10);
-      border: 1px solid rgba(15, 23, 42, 0.06);
+      border: 2px solid rgba(37, 99, 235, 0.12); /* match Step 2 */
       display: flex;
       flex-direction: column;
       align-items: center;
