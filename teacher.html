@@ -110,16 +110,31 @@
       color: rgba(255, 255, 255, 0.6);
     }
 
-    /* Custom arrow for select to unify look with inputs */
-    select {
-      -webkit-appearance: none;
-      -moz-appearance: none;
-      appearance: none;
-      background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>');
-      background-repeat: no-repeat;
-      background-position: right 10px center;
-      padding-right: 34px;
+    /* Dropdown (custom) to match module combobox */
+    .dropdown { position: relative; }
+    .dropdown-btn {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #ffffff;
+      font-size: 13px;
+      cursor: pointer;
     }
+    .dropdown-btn .chevron { margin-left: 8px; opacity: 0.85; }
+    .dropdown-list {
+      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+      padding: 6px; max-height: 220px; overflow-y: auto; z-index: 400;
+    }
+    .dropdown-list[hidden] { display: none; }
+    .dropdown-option { width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #1e293b; cursor: pointer; }
+    .dropdown-option:hover { background: #f1f5f9; }
     
     .combo {
       position: relative;
@@ -407,12 +422,18 @@
         </div>
         <div class="form-group">
   <label for="phase">Phase</label>
-  <select id="phase">
-    <option value="start">Start</option>
-            <option value="break1">Break 1</option>
-            <option value="break2">Break 2</option>
-    <option value="end">End</option>
-  </select>
+          <div class="dropdown" id="phaseDropdown">
+            <button class="dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
+              <span id="phaseLabel">Start</span>
+              <span class="chevron">▾</span>
+            </button>
+            <div class="dropdown-list" role="listbox" hidden>
+              <button class="dropdown-option" type="button" data-value="start">Start</button>
+              <button class="dropdown-option" type="button" data-value="break1">Break 1</button>
+              <button class="dropdown-option" type="button" data-value="break2">Break 2</button>
+              <button class="dropdown-option" type="button" data-value="end">End</button>
+            </div>
+          </div>
         </div>
       </form>
       <div class="teacher-actions">
@@ -448,7 +469,11 @@
     const moduleInput = document.getElementById('moduleInput');
     const moduleOptions = document.getElementById('moduleOptions');
     const groupInput = document.getElementById('groupInput');
-    const phaseSelect = document.getElementById('phase');
+    const phaseDropdown = document.getElementById('phaseDropdown');
+    const phaseBtn = phaseDropdown.querySelector('.dropdown-btn');
+    const phaseList = phaseDropdown.querySelector('.dropdown-list');
+    const phaseLabel = document.getElementById('phaseLabel');
+    let selectedPhase = 'start';
     const startBtn = document.getElementById('startBtn');
     const stopBtn = document.getElementById('stopBtn');
     const sessionQrEl = document.getElementById('sessionQr');
@@ -618,7 +643,7 @@
     startBtn.addEventListener('click', () => {
       const moduleCode = moduleInput.value.trim().toUpperCase();
       const groupNumber = groupInput.value.trim();
-      const phase = phaseSelect.value;
+      const phase = selectedPhase;
       const origin = DEFAULT_ORIGIN.replace(/\/$/, '');
       if (!validateModule(moduleCode)) {
         alert('Please enter a valid module code (e.g. BSM24105).');
@@ -666,6 +691,34 @@
 
     moduleInput.addEventListener('blur', () => {
       setTimeout(closeModuleOptions, 120);
+    });
+
+    // Phase dropdown handlers
+    phaseBtn.addEventListener('click', () => {
+      const isOpen = phaseList.hasAttribute('hidden') === false;
+      if (isOpen) {
+        phaseList.setAttribute('hidden', '');
+        phaseBtn.setAttribute('aria-expanded', 'false');
+      } else {
+        phaseList.removeAttribute('hidden');
+        phaseBtn.setAttribute('aria-expanded', 'true');
+      }
+    });
+
+    phaseList.querySelectorAll('.dropdown-option').forEach(btn => {
+      btn.addEventListener('click', () => {
+        selectedPhase = btn.getAttribute('data-value');
+        phaseLabel.textContent = btn.textContent;
+        phaseList.setAttribute('hidden', '');
+        phaseBtn.setAttribute('aria-expanded', 'false');
+      });
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!phaseDropdown.contains(e.target)) {
+        phaseList.setAttribute('hidden', '');
+        phaseBtn.setAttribute('aria-expanded', 'false');
+      }
     });
 
     fetchModuleSuggestions();
