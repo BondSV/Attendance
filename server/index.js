@@ -80,6 +80,28 @@ function normalizePhaseInput(value) {
   return raw;
 }
 
+function buildDeviceKey({ sid, phase, deviceId, req }) {
+  const parts = [];
+  const normalizedSid = (sid || '').toString().trim();
+  const normalizedPhase = (phase || '').toString().trim().toLowerCase();
+  if (normalizedSid) parts.push(`sid:${normalizedSid}`);
+  if (normalizedPhase) parts.push(`phase:${normalizedPhase}`);
+
+  const stableDeviceId = (deviceId || '').toString().trim();
+  if (stableDeviceId) parts.push(`device:${stableDeviceId}`);
+
+  const clientIp = getClientIp(req);
+  if (clientIp) parts.push(`ip:${clientIp}`);
+
+  const userAgent = (req.headers['user-agent'] || '').toString().trim();
+  if (userAgent) {
+    const truncatedUa = userAgent.length > 160 ? userAgent.slice(0, 160) : userAgent;
+    parts.push(`ua:${truncatedUa}`);
+  }
+
+  return parts.join('|') || 'anon-device';
+}
+
 function readModuleListFromCsv() {
   if (!fs.existsSync(CSV_PATH)) return [];
   try {
@@ -238,7 +260,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, { error: 'Invalid device information' }, 400);
       }
       const stableDeviceId = deviceIdRaw.trim();
-      const deviceKey = [stableDeviceId].join('|');
+      const deviceKey = buildDeviceKey({ sid, phase, deviceId: stableDeviceId, req });
       const lock = peekDeviceLock(deviceKey);
       if (lock) {
         return sendJson(res, { error: 'This device already completed a verification for another student recently.' }, 409);
@@ -273,7 +295,7 @@ const server = http.createServer(async (req, res) => {
         return sendJson(res, { error: 'Manual override password is incorrect.' }, 403);
       }
       const stableDeviceId = deviceIdRaw.trim();
-      const deviceKey = [stableDeviceId].join('|');
+      const deviceKey = buildDeviceKey({ sid, phase, deviceId: stableDeviceId, req });
       const lock = peekDeviceLock(deviceKey);
       if (lock) {
         return sendJson(res, { error: 'This device already completed a verification for another student recently.' }, 409);
@@ -314,8 +336,8 @@ const server = http.createServer(async (req, res) => {
       if (!canCheckin(connectionKey)) {
         return sendJson(res, { error: `Duplicate submission too soon (wait ${CHECKIN_WINDOW_MS}ms)` }, 429);
       }
-      const stableDeviceId = device_id || (req.headers['user-agent'] || '');
-      const deviceKey = [stableDeviceId].join('|');
+      const stableDeviceId = (device_id || '').toString().trim();
+      const deviceKey = buildDeviceKey({ sid, phase, deviceId: stableDeviceId, req });
       const lock = acquireDeviceLock(deviceKey, student_id);
       if (!lock.ok) {
         logAnomaly({ type: 'device_lock_conflict', deviceKey, student_id, existingStudentId: lock.existingStudentId, sid, phase });
