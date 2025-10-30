@@ -390,10 +390,36 @@
     @media (max-width: 1024px) {
       .container {
         grid-template-areas: 
-          "left"
+          "teacher"
+          "step1"
           "step2";
         grid-template-columns: 1fr;
-        gap: 20px;
+        grid-auto-rows: auto;
+        gap: 16px;
+      }
+
+      .teacher-section,
+      .step1-section,
+      .step2-section {
+        max-width: none;
+        width: 100%;
+      }
+
+      .step2-section {
+        grid-row: auto;
+      }
+
+      .teacher-form {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .teacher-actions {
+        flex-direction: column;
+      }
+
+      .btn {
+        width: 100%;
       }
     }
     
