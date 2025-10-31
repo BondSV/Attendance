@@ -11,9 +11,9 @@
              radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.08), transparent 60%),
              #f4f6fb;
       --surface: rgba(255, 255, 255, 0.96);
-      --surface-soft: rgba(248, 250, 255, 0.84);
+      --surface-soft: rgba(248, 250, 255, 0.86);
       --border: rgba(15, 23, 42, 0.08);
-      --border-strong: rgba(15, 23, 42, 0.14);
+      --border-strong: rgba(15, 23, 42, 0.16);
       --text: #0f172a;
       --muted: #475467;
       --primary: #2563eb;
@@ -35,9 +35,9 @@
       align-items: flex-start;
     }
     .shell {
-      width: min(1160px, 100%);
+      width: min(1200px, 100%);
       display: grid;
-      gap: clamp(22px, 3vw, 32px);
+      gap: clamp(22px, 3vw, 36px);
     }
     .header {
       background: var(--surface);
@@ -71,26 +71,161 @@
     }
     h1 {
       margin: 0;
-      font-size: clamp(34px, 6vw, 42px);
+      font-size: clamp(34px, 6vw, 44px);
       letter-spacing: -0.6px;
     }
     .subhead {
       margin: 0;
       color: var(--muted);
       font-size: 17px;
-      max-width: 68ch;
+      max-width: 70ch;
     }
-    .controls {
+    .data-bar {
+      background: var(--surface);
+      border-radius: 24px;
+      border: 1px solid var(--border);
+      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.1);
+      padding: clamp(22px, 3vw, 32px);
+      display: grid;
+      gap: 18px;
+    }
+    .data-flex {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 22px;
+      align-items: flex-start;
+    }
+    .data-inputs {
+      min-width: 260px;
+      flex: 1 1 320px;
+      display: grid;
+      gap: 14px;
+    }
+    .data-inputs label {
+      display: grid;
+      gap: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--muted);
+    }
+    .data-inputs input[type="file"],
+    .data-inputs input[type="text"] {
+      border-radius: 14px;
+      border: 1px solid var(--border-strong);
+      padding: 10px 14px;
+      font-size: 14px;
+      background: #fff;
+      color: var(--text);
+    }
+    .data-inputs input[type="text"]:focus {
+      outline: none;
+      border-color: rgba(37, 99, 235, 0.6);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+    }
+    .action-inline {
+      display: inline-flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+    .ghost-btn {
+      border: 1px solid rgba(15, 23, 42, 0.12);
+      border-radius: 12px;
+      padding: 8px 14px;
+      font-size: 13px;
+      background: rgba(255, 255, 255, 0.92);
+      color: var(--muted);
+      cursor: pointer;
+      transition: border 0.2s ease, color 0.2s ease;
+    }
+    .ghost-btn:hover {
+      border-color: rgba(15, 23, 42, 0.24);
+      color: var(--text);
+    }
+    .primary-btn {
+      border: none;
+      border-radius: 14px;
+      padding: 12px 20px;
+      font-size: 15px;
+      font-weight: 600;
+      background: linear-gradient(135deg, #15803d, #22c55e);
+      color: #fff;
+      box-shadow: 0 12px 24px rgba(21, 128, 61, 0.28);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+    }
+    .primary-btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      box-shadow: none;
+    }
+    .data-stats {
+      flex: 1 1 280px;
+      display: grid;
+      gap: 12px;
+    }
+    .stat-grid {
+      display: grid;
+      gap: 12px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    }
+    .stat-card {
+      border-radius: 16px;
+      border: 1px solid rgba(15, 23, 42, 0.08);
+      background: rgba(255, 255, 255, 0.94);
+      padding: 14px 16px;
+      display: grid;
+      gap: 6px;
+    }
+    .stat-card .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+    }
+    .stat-card .value {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .stat-card .meta {
+      font-size: 12px;
+      color: var(--muted);
+    }
+    .message-stack {
+      display: grid;
+      gap: 10px;
+    }
+    .message {
+      border-radius: 16px;
+      padding: 14px 16px;
+      font-size: 14px;
+      background: rgba(37, 99, 235, 0.08);
+      color: var(--primary);
+      border: 1px solid rgba(37, 99, 235, 0.12);
+    }
+    .message.warning {
+      background: rgba(249, 115, 22, 0.12);
+      color: var(--warning);
+      border-color: rgba(249, 115, 22, 0.18);
+    }
+    .message.danger {
+      background: rgba(220, 38, 38, 0.12);
+      color: var(--danger);
+      border-color: rgba(220, 38, 38, 0.18);
+    }
+    .workspace {
       background: var(--surface);
       border-radius: 24px;
       border: 1px solid var(--border);
       box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
-      padding: clamp(24px, 3vw, 32px);
+      padding: clamp(22px, 3vw, 32px);
       display: grid;
-      gap: clamp(20px, 2.5vw, 26px);
+      gap: 20px;
     }
     .tab-strip {
       display: inline-flex;
+      flex-wrap: wrap;
       align-items: center;
       gap: 8px;
       background: rgba(37, 99, 235, 0.06);
@@ -115,160 +250,115 @@
       box-shadow: 0 12px 24px rgba(37, 99, 235, 0.26);
       transform: translateY(-1px);
     }
-    .mode-panel {
+    .mode-container {
       display: none;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background: var(--surface-soft);
-      padding: clamp(18px, 2.5vw, 24px);
-      gap: 16px;
     }
-    .mode-panel.active {
-      display: grid;
+    .mode-container.active {
+      display: block;
     }
-    .panel-title {
-      font-weight: 600;
-      margin-bottom: 4px;
-    }
-    .field-row {
+    .mode-layout {
       display: flex;
       flex-wrap: wrap;
-      gap: 16px;
-      align-items: flex-end;
+      gap: 24px;
     }
-    .field-column {
+    .mode-controls {
+      flex: 0 0 280px;
       display: grid;
-      gap: 12px;
+      gap: 18px;
+      background: var(--surface-soft);
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 18px;
     }
-    label.field {
+    .mode-results {
+      flex: 1 1 420px;
+      display: grid;
+      gap: 18px;
+    }
+    .control-group {
+      display: grid;
+      gap: 10px;
+    }
+    .control-title {
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 0.3px;
+      color: var(--muted);
+      text-transform: uppercase;
+    }
+    .control-item {
+      display: grid;
+      gap: 6px;
       font-size: 13px;
       font-weight: 600;
       color: var(--muted);
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
     }
-    select, input[type="text"], input[type="search"] {
-      border-radius: 14px;
+    .control-item select,
+    .control-item input[type="search"],
+    .control-item input[type="text"] {
+      border-radius: 12px;
       border: 1px solid var(--border-strong);
-      padding: 12px 14px;
-      font-size: 15px;
+      padding: 10px 12px;
+      font-size: 14px;
       background: #fff;
       color: var(--text);
-      min-width: 220px;
-      transition: border 0.2s ease, box-shadow 0.2s ease;
     }
-    select[multiple] {
-      min-width: 260px;
-      min-height: 160px;
+    .control-item select[multiple] {
+      min-height: 180px;
     }
-    select:focus, input:focus {
+    .control-item select:focus,
+    .control-item input:focus {
       outline: none;
       border-color: rgba(37, 99, 235, 0.6);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
     }
     .status-filter {
       display: flex;
       flex-wrap: wrap;
-      gap: 10px;
-      margin-top: 6px;
+      gap: 8px;
     }
-    .status-checkbox {
+    .status-chip {
       display: inline-flex;
       align-items: center;
       gap: 6px;
-      background: rgba(37, 99, 235, 0.06);
-      padding: 6px 10px;
       border-radius: 999px;
-      font-size: 13px;
+      padding: 6px 10px;
+      background: rgba(37, 99, 235, 0.08);
       color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
       transition: background 0.2s ease, color 0.2s ease;
     }
-    .status-checkbox input {
+    .status-chip input {
       accent-color: #2563eb;
     }
-    .status-checkbox.checked {
-      background: rgba(37, 99, 235, 0.16);
+    .status-chip.active {
+      background: rgba(37, 99, 235, 0.18);
       color: var(--primary);
     }
     .status-actions {
       display: inline-flex;
       gap: 8px;
-      margin-top: 8px;
     }
-    .status-actions button {
-      border: none;
+    .tag {
+      display: inline-flex;
+      padding: 4px 10px;
       border-radius: 999px;
-      padding: 6px 12px;
       font-size: 12px;
-      font-weight: 600;
-      background: rgba(15, 23, 42, 0.06);
-      color: var(--muted);
-      cursor: pointer;
-    }
-    .status-actions button:hover {
-      background: rgba(15, 23, 42, 0.1);
-    }
-    .action-row {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
-      margin-top: 8px;
-    }
-    .primary-btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 20px;
-      font-size: 15px;
-      font-weight: 600;
-      background: linear-gradient(135deg, #15803d, #22c55e);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(21, 128, 61, 0.28);
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-    }
-    .primary-btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    .upload-box {
-      border: 1px dashed rgba(37, 99, 235, 0.26);
-      border-radius: 18px;
-      background: rgba(37, 99, 235, 0.06);
-      padding: 16px;
-      display: grid;
-      gap: 10px;
-      font-size: 13px;
+      background: rgba(15, 23, 42, 0.08);
       color: var(--muted);
     }
-    .upload-box strong {
-      font-size: 14px;
+    .tag.neutral {
+      background: rgba(37, 99, 235, 0.12);
       color: var(--primary);
     }
-    .upload-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      align-items: center;
+    .tag.positive {
+      background: rgba(34, 197, 94, 0.16);
+      color: #15803d;
     }
-    .ghost-btn {
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      border-radius: 12px;
-      padding: 8px 14px;
-      font-size: 13px;
-      background: rgba(255, 255, 255, 0.9);
-      color: var(--muted);
-      cursor: pointer;
-    }
-    .ghost-btn:hover {
-      border-color: rgba(15, 23, 42, 0.2);
-      color: var(--text);
-    }
-    .results {
-      display: grid;
-      gap: clamp(20px, 2.5vw, 26px);
+    .tag.negative {
+      background: rgba(220, 38, 38, 0.16);
+      color: var(--danger);
     }
     .result-card {
       background: var(--surface);
@@ -282,48 +372,7 @@
     .summary-grid {
       display: grid;
       gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    }
-    .summary-card {
-      border-radius: 16px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      background: rgba(255, 255, 255, 0.92);
-      padding: 14px 16px;
-      display: grid;
-      gap: 6px;
-    }
-    .summary-card .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--muted);
-    }
-    .summary-card .value {
-      font-size: 20px;
-      font-weight: 700;
-      color: var(--text);
-    }
-    .summary-card .meta {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .message {
-      border-radius: 18px;
-      padding: 16px 18px;
-      font-size: 14px;
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
-      border: 1px solid rgba(37, 99, 235, 0.12);
-    }
-    .message.warning {
-      background: rgba(249, 115, 22, 0.12);
-      color: var(--warning);
-      border-color: rgba(249, 115, 22, 0.18);
-    }
-    .message.danger {
-      background: rgba(220, 38, 38, 0.12);
-      color: var(--danger);
-      border-color: rgba(220, 38, 38, 0.18);
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     }
     table {
       width: 100%;
@@ -342,21 +391,6 @@
     }
     tbody tr:hover {
       background: rgba(37, 99, 235, 0.04);
-    }
-    .status-present {
-      color: var(--accent);
-      font-weight: 600;
-    }
-    .status-late,
-    .status-late-from-break {
-      color: #f59e0b;
-      font-weight: 600;
-    }
-    .status-left-early,
-    .status-partial,
-    .status-absent {
-      color: var(--danger);
-      font-weight: 600;
     }
     .email-links {
       display: grid;
@@ -383,41 +417,34 @@
       color: var(--warning);
       border-color: rgba(249, 115, 22, 0.18);
     }
-    .tag {
-      display: inline-flex;
-      padding: 4px 8px;
-      border-radius: 999px;
-      font-size: 12px;
-      background: rgba(15, 23, 42, 0.08);
-      color: var(--muted);
-    }
-    .tag.positive {
-      background: rgba(34, 197, 94, 0.16);
-      color: #15803d;
-    }
-    .tag.negative {
-      background: rgba(220, 38, 38, 0.16);
-      color: var(--danger);
-    }
-    .tag.neutral {
-      background: rgba(37, 99, 235, 0.12);
+    .notice-block.tip {
+      background: rgba(37, 99, 235, 0.08);
       color: var(--primary);
+      border-color: rgba(37, 99, 235, 0.14);
     }
-    @media (max-width: 720px) {
-      body {
-        padding: 16px;
-      }
-      .tab-strip {
-        width: 100%;
-        flex-wrap: wrap;
-        justify-content: center;
-      }
-      select, input[type="text"], input[type="search"] {
-        min-width: unset;
-      }
-      select[multiple] {
-        min-height: 120px;
-      }
+    .status-present {
+      color: var(--accent);
+      font-weight: 600;
+    }
+    .status-late,
+    .status-late-from-break {
+      color: #f59e0b;
+      font-weight: 600;
+    }
+    .status-left-early,
+    .status-partial,
+    .status-absent {
+      color: var(--danger);
+      font-weight: 600;
+    }
+    @media (max-width: 900px) {
+      body { padding: 18px; }
+      .mode-controls { flex: 1 1 100%; }
+      .mode-results { flex: 1 1 100%; }
+    }
+    @media (max-width: 640px) {
+      .tab-strip { width: 100%; justify-content: center; }
+      .data-flex { flex-direction: column; }
     }
   </style>
 </head>
@@ -426,104 +453,131 @@
     <header class="header">
       <span class="brand">Analysis Suite</span>
       <h1>Attendance Insights</h1>
-      <p class="subhead">Load the exported attendance CSVs, explore sessions and cohorts, and generate follow-up materials without leaving this lightweight single-page tool.</p>
+      <p class="subhead">Import daily CSV logs, reconcile them with rosters, and switch between targeted and cross-session views designed for lightweight, offline use.</p>
     </header>
 
-    <section class="controls">
-      <div class="tab-strip" role="tablist">
-        <button type="button" class="active" data-mode="session" role="tab" aria-selected="true">One group · one session</button>
-        <button type="button" data-mode="multi" role="tab" aria-selected="false">Groups · multiple sessions</button>
-        <button type="button" data-mode="student" role="tab" aria-selected="false">Individual · multiple sessions</button>
-      </div>
-
-      <div class="mode-panel active" data-mode="session" role="tabpanel">
-        <div class="panel-title">Focus on one group for a specific date/session.</div>
-        <div class="field-row">
-          <label class="field">Date
-            <select id="sessionDateSelect"></select>
+    <section class="data-bar">
+      <div class="data-flex">
+        <div class="data-inputs">
+          <label>Attendance CSVs (hold Cmd/Ctrl to select many)
+            <input id="attendanceUpload" type="file" accept=".csv" multiple>
           </label>
-          <label class="field">Session / Group
-            <select id="sessionKeySelect"></select>
-          </label>
-        </div>
-        <div class="field-column">
-          <span class="panel-title">Statuses to display</span>
-          <div class="status-filter" id="sessionStatusFilter"></div>
-          <div class="status-actions">
-            <button type="button" class="ghost-btn" data-status-action="all">Select all</button>
-            <button type="button" class="ghost-btn" data-status-action="none">Clear</button>
+          <div class="action-inline">
+            <button type="button" class="ghost-btn" id="reloadServerBtn">Reload latest from server</button>
+            <button type="button" class="ghost-btn" id="clearDataBtn">Clear loaded data</button>
           </div>
-        </div>
-        <div class="action-row">
-          <button type="button" id="exportSessionBtn" class="primary-btn" disabled>Download session XLSX</button>
-          <span class="tag neutral" id="sessionRosterTag">No roster loaded</span>
-        </div>
-      </div>
-
-      <div class="mode-panel" data-mode="multi" role="tabpanel" aria-hidden="true">
-        <div class="panel-title">Compare multiple groups or sessions at once.</div>
-        <div class="field-row">
-          <label class="field">Select sessions
-            <select id="multiSessionSelect" multiple></select>
+          <label>Roster CSV (one student ID per line)
+            <input id="rosterUpload" type="file" accept=".csv,.txt">
           </label>
-          <div class="field-column">
-            <span class="panel-title">Statuses in focus</span>
-            <div class="status-filter" id="multiStatusFilter"></div>
-            <div class="status-actions">
-              <button type="button" class="ghost-btn" data-status-action="all">Select all</button>
-              <button type="button" class="ghost-btn" data-status-action="none">Clear</button>
-            </div>
+          <div class="action-inline">
+            <button type="button" class="ghost-btn" id="clearRosterBtn">Clear roster</button>
+            <span class="tag neutral" id="rosterSummary">No roster loaded</span>
           </div>
-        </div>
-        <div class="action-row">
-          <button type="button" id="exportSummaryBtn" class="primary-btn" disabled>Download summary CSV</button>
-          <span class="tag neutral" id="multiSelectionTag">0 sessions selected</span>
-        </div>
-        <span class="notice">Tip: hold Cmd/Ctrl to select more than one session.</span>
-      </div>
-
-      <div class="mode-panel" data-mode="student" role="tabpanel" aria-hidden="true">
-        <div class="panel-title">Review an individual student across multiple sessions.</div>
-        <div class="field-row">
-          <label class="field">Student ID
-            <input type="search" id="studentSearch" placeholder="e.g. 22012345" list="studentSuggestions" autocomplete="off">
-          </label>
-          <label class="field">Date window
-            <select id="studentDateRangeSelect">
-              <option value="30d">Last 30 days</option>
-              <option value="90d">Last 90 days</option>
-              <option value="last10">Last 10 sessions</option>
-              <option value="all">All sessions</option>
-            </select>
-          </label>
-        </div>
-        <div class="action-row">
-          <button type="button" id="exportStudentBtn" class="primary-btn" disabled>Download student CSV</button>
-          <span class="tag neutral" id="studentSessionsTag">Student not selected</span>
-        </div>
-      </div>
-
-      <div class="upload-box">
-        <strong>Data inputs</strong>
-        <label class="field">Load attendance CSVs (hold Cmd/Ctrl for multiple)
-          <input id="attendanceUpload" type="file" accept=".csv" multiple>
-        </label>
-        <label class="field">Roster CSV (one student ID per line)
-          <input id="rosterUpload" type="file" accept=".csv,.txt">
-        </label>
-        <div class="upload-actions">
-          <button type="button" class="ghost-btn" id="clearRosterBtn">Clear roster</button>
-          <label class="field" style="margin: 0;">
-            Email domain for follow-ups
+          <label>Email domain for follow-ups
             <input type="text" id="emailDomainInput" value="rave.ac.uk" placeholder="example.ac.uk">
           </label>
         </div>
-        <span class="notice" id="rosterSummary">No roster loaded – unique attendees per session are used.</span>
+        <div class="data-stats">
+          <div class="stat-grid" id="datasetStats"></div>
+        </div>
       </div>
+      <div class="message-stack" id="dataMessages"></div>
     </section>
 
-    <section class="results" id="results">
-      <div class="message">Loading attendance data…</div>
+    <section class="workspace">
+      <div class="tab-strip" role="tablist">
+        <button type="button" class="active" data-mode="session" role="tab" aria-selected="true">Group · single session</button>
+        <button type="button" data-mode="multi" role="tab" aria-selected="false">Groups · multiple sessions</button>
+        <button type="button" data-mode="student" role="tab" aria-selected="false">Student · multiple sessions</button>
+      </div>
+
+      <div class="mode-container active" data-mode="session" role="tabpanel">
+        <div class="mode-layout">
+          <aside class="mode-controls">
+            <div class="control-group">
+              <div class="control-title">Session selection</div>
+              <label class="control-item">Date
+                <select id="sessionDateSelect"></select>
+              </label>
+              <label class="control-item">Session / group
+                <select id="sessionKeySelect"></select>
+              </label>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Statuses to include</div>
+              <div class="status-filter" id="sessionStatusFilter"></div>
+              <div class="status-actions">
+                <button type="button" class="ghost-btn" data-mode="session" data-status-action="all">All</button>
+                <button type="button" class="ghost-btn" data-mode="session" data-status-action="none">None</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Exports</div>
+              <button type="button" class="primary-btn" id="exportSessionBtn" disabled>Download session XLSX</button>
+              <span class="tag neutral" id="sessionRosterTag">Roster not loaded</span>
+            </div>
+          </aside>
+          <div class="mode-results" id="sessionResults"></div>
+        </div>
+      </div>
+
+      <div class="mode-container" data-mode="multi" role="tabpanel" aria-hidden="true">
+        <div class="mode-layout">
+          <aside class="mode-controls">
+            <div class="control-group">
+              <div class="control-title">Sessions in scope</div>
+              <label class="control-item">Select sessions
+                <select id="multiSessionSelect" multiple></select>
+              </label>
+              <span class="tag neutral" id="multiSelectionTag">0 sessions selected</span>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Statuses to include</div>
+              <div class="status-filter" id="multiStatusFilter"></div>
+              <div class="status-actions">
+                <button type="button" class="ghost-btn" data-mode="multi" data-status-action="all">All</button>
+                <button type="button" class="ghost-btn" data-mode="multi" data-status-action="none">None</button>
+              </div>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Exports</div>
+              <button type="button" class="primary-btn" id="exportSummaryBtn" disabled>Download summary CSV</button>
+            </div>
+            <div class="notice-block tip">Tip: hold Cmd/Ctrl to select more than one session.</div>
+          </aside>
+          <div class="mode-results" id="multiResults"></div>
+        </div>
+      </div>
+
+      <div class="mode-container" data-mode="student" role="tabpanel" aria-hidden="true">
+        <div class="mode-layout">
+          <aside class="mode-controls">
+            <div class="control-group">
+              <div class="control-title">Student</div>
+              <label class="control-item">Student ID
+                <input type="search" id="studentSearch" placeholder="e.g. 22012345" list="studentSuggestions" autocomplete="off">
+              </label>
+              <span class="tag neutral" id="studentSessionsTag">Student not selected</span>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Date window</div>
+              <label class="control-item">Range
+                <select id="studentDateRangeSelect">
+                  <option value="30d">Last 30 days</option>
+                  <option value="90d">Last 90 days</option>
+                  <option value="last10">Last 10 sessions</option>
+                  <option value="all">All sessions</option>
+                </select>
+              </label>
+            </div>
+            <div class="control-group">
+              <div class="control-title">Exports</div>
+              <button type="button" class="primary-btn" id="exportStudentBtn" disabled>Download student CSV</button>
+            </div>
+          </aside>
+          <div class="mode-results" id="studentResults"></div>
+        </div>
+      </div>
     </section>
   </div>
 
@@ -545,9 +599,17 @@
     const percentFormatter = new Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
 
     const elements = {
-      results: document.getElementById('results'),
+      attendanceUpload: document.getElementById('attendanceUpload'),
+      rosterUpload: document.getElementById('rosterUpload'),
+      clearRosterBtn: document.getElementById('clearRosterBtn'),
+      reloadServerBtn: document.getElementById('reloadServerBtn'),
+      clearDataBtn: document.getElementById('clearDataBtn'),
+      emailDomainInput: document.getElementById('emailDomainInput'),
+      rosterSummary: document.getElementById('rosterSummary'),
+      datasetStats: document.getElementById('datasetStats'),
+      dataMessages: document.getElementById('dataMessages'),
       tabButtons: Array.from(document.querySelectorAll('.tab-strip button[data-mode]')),
-      modePanels: Array.from(document.querySelectorAll('.mode-panel')),
+      modeContainers: Array.from(document.querySelectorAll('.mode-container')),
       sessionDateSelect: document.getElementById('sessionDateSelect'),
       sessionKeySelect: document.getElementById('sessionKeySelect'),
       sessionStatusFilter: document.getElementById('sessionStatusFilter'),
@@ -562,23 +624,26 @@
       studentDateRangeSelect: document.getElementById('studentDateRangeSelect'),
       studentSessionsTag: document.getElementById('studentSessionsTag'),
       exportStudentBtn: document.getElementById('exportStudentBtn'),
-      attendanceUpload: document.getElementById('attendanceUpload'),
-      rosterUpload: document.getElementById('rosterUpload'),
-      clearRosterBtn: document.getElementById('clearRosterBtn'),
-      emailDomainInput: document.getElementById('emailDomainInput'),
-      rosterSummary: document.getElementById('rosterSummary'),
+      sessionResults: document.getElementById('sessionResults'),
+      multiResults: document.getElementById('multiResults'),
+      studentResults: document.getElementById('studentResults'),
       statusActionButtons: Array.from(document.querySelectorAll('.status-actions button[data-status-action]'))
     };
 
     const state = {
       selectedMode: MODE.SESSION,
-      statusFilters: new Set(STATUS_ORDER),
+      filters: {
+        [MODE.SESSION]: new Set(STATUS_ORDER),
+        [MODE.MULTI]: new Set(STATUS_ORDER)
+      },
       rosterSet: new Set(),
       rosterVersion: 0,
       sessionsByKey: new Map(),
       sessionKeysSorted: [],
       dateToSessionKeys: new Map(),
       studentIndex: new Map(),
+      allStudentIds: new Set(),
+      datasetSources: new Set(),
       selectedDate: null,
       selectedSessionKey: null,
       selectedMultiSessionKeys: new Set(),
@@ -635,70 +700,96 @@
       return session.sid;
     }
 
-    function getSessionLabel(session) {
-      return `${readableModuleGroup(session)} · ${toLocalDate(session.date)}`;
-    }
-
     function statusClass(status) {
       return `status-${status.toLowerCase().replace(/\\s+/g, '-')}`;
     }
 
-    function initStatusFilters() {
-      const containers = [elements.sessionStatusFilter, elements.multiStatusFilter];
-      containers.forEach(container => {
+    function buildStatCard(label, value, meta) {
+      const card = document.createElement('div');
+      card.className = 'stat-card';
+      const labelEl = document.createElement('div');
+      labelEl.className = 'label';
+      labelEl.textContent = label;
+      const valueEl = document.createElement('div');
+      valueEl.className = 'value';
+      valueEl.textContent = value;
+      card.appendChild(labelEl);
+      card.appendChild(valueEl);
+      if (meta) {
+        const metaEl = document.createElement('div');
+        metaEl.className = 'meta';
+        metaEl.textContent = meta;
+        card.appendChild(metaEl);
+      }
+      return card;
+    }
+
+    function getStatusFilter(mode) {
+      return state.filters[mode] || new Set();
+    }
+
+    function setupStatusFilters() {
+      [
+        { mode: MODE.SESSION, container: elements.sessionStatusFilter },
+        { mode: MODE.MULTI, container: elements.multiStatusFilter }
+      ].forEach(({ mode, container }) => {
         container.innerHTML = '';
         STATUS_ORDER.forEach(status => {
-          const checkboxId = `${container.id}-${status.replace(/\\s+/g, '-')}`;
-          const wrapper = document.createElement('label');
-          wrapper.className = 'status-checkbox';
-          wrapper.htmlFor = checkboxId;
+          const id = `${mode}-status-${status.replace(/\\s+/g, '-')}`;
+          const label = document.createElement('label');
+          label.className = 'status-chip';
+          label.htmlFor = id;
           const input = document.createElement('input');
           input.type = 'checkbox';
-          input.id = checkboxId;
+          input.id = id;
           input.value = status;
-          input.checked = state.statusFilters.has(status);
+          input.dataset.mode = mode;
+          input.checked = getStatusFilter(mode).has(status);
           input.addEventListener('change', handleStatusToggle);
-          wrapper.appendChild(input);
+          label.appendChild(input);
           const span = document.createElement('span');
           span.textContent = status;
-          wrapper.appendChild(span);
-          if (input.checked) wrapper.classList.add('checked');
-          container.appendChild(wrapper);
+          label.appendChild(span);
+          if (input.checked) label.classList.add('active');
+          container.appendChild(label);
         });
       });
     }
 
-    function syncStatusFilterUI() {
-      document.querySelectorAll('.status-checkbox input').forEach(input => {
-        const checked = state.statusFilters.has(input.value);
+    function syncStatusFilterUI(mode) {
+      const container = mode === MODE.SESSION ? elements.sessionStatusFilter : elements.multiStatusFilter;
+      container.querySelectorAll('.status-chip').forEach(chip => {
+        const input = chip.querySelector('input');
+        if (!input) return;
+        const checked = getStatusFilter(mode).has(input.value);
         input.checked = checked;
-        const wrapper = input.closest('.status-checkbox');
-        if (wrapper) {
-          wrapper.classList.toggle('checked', checked);
-        }
+        chip.classList.toggle('active', checked);
       });
     }
 
     function handleStatusToggle(event) {
-      const { value, checked } = event.target;
-      if (!value) return;
+      const { value, checked, dataset } = event.target;
+      const mode = dataset.mode;
+      if (!value || !mode || !state.filters[mode]) return;
       if (checked) {
-        state.statusFilters.add(value);
+        state.filters[mode].add(value);
       } else {
-        state.statusFilters.delete(value);
+        state.filters[mode].delete(value);
       }
-      syncStatusFilterUI();
-      renderResults();
+      syncStatusFilterUI(mode);
+      renderCurrentMode();
     }
 
-    function handleStatusAction(action) {
-      if (action === 'all') {
-        STATUS_ORDER.forEach(status => state.statusFilters.add(status));
-      } else if (action === 'none') {
-        state.statusFilters.clear();
+    function handleStatusAction(event) {
+      const { mode, statusAction } = event.currentTarget.dataset;
+      if (!mode || !state.filters[mode]) return;
+      if (statusAction === 'all') {
+        STATUS_ORDER.forEach(status => state.filters[mode].add(status));
+      } else if (statusAction === 'none') {
+        state.filters[mode].clear();
       }
-      syncStatusFilterUI();
-      renderResults();
+      syncStatusFilterUI(mode);
+      renderCurrentMode();
     }
 
     function setMode(mode) {
@@ -709,27 +800,19 @@
         btn.classList.toggle('active', isActive);
         btn.setAttribute('aria-selected', String(isActive));
       });
-      elements.modePanels.forEach(panel => {
-        const isActive = panel.dataset.mode === mode;
-        panel.classList.toggle('active', isActive);
-        panel.setAttribute('aria-hidden', String(!isActive));
+      elements.modeContainers.forEach(container => {
+        const isActive = container.dataset.mode === mode;
+        container.classList.toggle('active', isActive);
+        container.setAttribute('aria-hidden', String(!isActive));
       });
-      renderResults();
-    }
-
-    function handleTabClick(event) {
-      const mode = event.currentTarget.dataset.mode;
-      setMode(mode);
+      renderCurrentMode();
     }
 
     function parseCsvText(text, sourceLabel) {
       if (typeof Papa === 'undefined') {
         throw new Error('PapaParse library is not available.');
       }
-      const result = Papa.parse(text, {
-        header: true,
-        skipEmptyLines: 'greedy'
-      });
+      const result = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
       const rows = Array.isArray(result.data) ? result.data : [];
       const errors = result.errors?.map(err => `${sourceLabel}: row ${err.row + 1} — ${err.message}`) || [];
       return { rows, errors };
@@ -742,11 +825,14 @@
       state.sessionKeysSorted = [];
       state.ingestionWarnings = [];
       state.parseErrors = [];
+      state.datasetSources.clear();
+      state.allStudentIds.clear();
 
       const moduleRe = /^[A-Z]{3}\\d{5}$/i;
       const groupRe = /group\\s*(\\w+)/i;
 
       rowSets.forEach(({ rows, sourceLabel }) => {
+        state.datasetSources.add(sourceLabel);
         rows.forEach((row, index) => {
           const rawValues = Object.values(row || {});
           if (!rawValues.some(v => (v || '').toString().trim().length)) return;
@@ -826,6 +912,7 @@
           if (ts) studentEntry.timestamps.push(ts);
           studentEntry.rawRows.push(row);
 
+          state.allStudentIds.add(studentId);
           if (!state.studentIndex.has(studentId)) {
             state.studentIndex.set(studentId, new Set());
           }
@@ -897,17 +984,14 @@
         elements.multiSelectionTag.textContent = '0 sessions selected';
         return;
       }
-      const defaultSelection = new Set(
-        state.sessionKeysSorted.slice(-3)
-      );
       if (!state.selectedMultiSessionKeys.size) {
-        state.selectedMultiSessionKeys = defaultSelection;
+        state.selectedMultiSessionKeys = new Set(state.sessionKeysSorted.slice(-3));
       }
       state.sessionKeysSorted.forEach(key => {
         const session = state.sessionsByKey.get(key);
         const option = document.createElement('option');
         option.value = key;
-        option.textContent = getSessionLabel(session);
+        option.textContent = `${toLocalDate(session.date)} · ${readableModuleGroup(session)}`;
         option.selected = state.selectedMultiSessionKeys.has(key);
         elements.multiSessionSelect.appendChild(option);
       });
@@ -930,13 +1014,13 @@
 
     function updateRosterSummary() {
       if (state.rosterSet.size) {
-        elements.rosterSummary.textContent = `${state.rosterSet.size} rostered IDs loaded. Missing students will be highlighted per session.`;
+        elements.rosterSummary.textContent = `${state.rosterSet.size} rostered IDs`;
+        elements.rosterSummary.className = 'tag neutral';
         elements.sessionRosterTag.textContent = `${state.rosterSet.size} in roster`;
-        elements.sessionRosterTag.className = 'tag neutral';
       } else {
-        elements.rosterSummary.textContent = 'No roster loaded – unique attendees per session are used.';
-        elements.sessionRosterTag.textContent = 'No roster loaded';
-        elements.sessionRosterTag.className = 'tag neutral';
+        elements.rosterSummary.textContent = 'No roster loaded';
+        elements.rosterSummary.className = 'tag neutral';
+        elements.sessionRosterTag.textContent = 'Roster not loaded';
       }
     }
 
@@ -1010,19 +1094,12 @@
 
       const totalStudents = rows.length;
       const presentCount = counts['Present'] || 0;
-      const focusStatuses = Array.from(state.statusFilters.values());
-      const focusCount = rows.reduce((acc, row) => {
-        if (state.statusFilters.has(row.status)) acc += 1;
-        return acc;
-      }, 0);
-
       const analytics = {
         rows,
         counts,
         totals: {
           totalStudents,
           presentCount,
-          focusCount,
           presentPercentage: totalStudents ? (presentCount / totalStudents) * 100 : 0
         },
         break1Used,
@@ -1054,60 +1131,65 @@
       return 'Absent';
     }
 
-    function renderResults() {
-      elements.results.innerHTML = '';
-      const fragment = document.createDocumentFragment();
-
+    function renderDataMessages() {
+      elements.dataMessages.innerHTML = '';
       if (state.parseErrors.length) {
-        const errorBlock = document.createElement('div');
-        errorBlock.className = 'message danger';
-        errorBlock.innerHTML = state.parseErrors.map(msg => `<div>${msg}</div>`).join('');
-        fragment.appendChild(errorBlock);
-      } else if (state.ingestionWarnings.length) {
-        const warningBlock = document.createElement('div');
-        warningBlock.className = 'message warning';
-        warningBlock.innerHTML = state.ingestionWarnings.slice(0, 6).map(msg => `<div>${msg}</div>`).join('');
-        if (state.ingestionWarnings.length > 6) {
-          warningBlock.innerHTML += `<div>…and ${state.ingestionWarnings.length - 6} more issues.</div>`;
+        const danger = document.createElement('div');
+        danger.className = 'message danger';
+        danger.innerHTML = state.parseErrors.slice(0, 6).map(msg => `<div>${msg}</div>`).join('');
+        if (state.parseErrors.length > 6) {
+          danger.innerHTML += `<div>…and ${state.parseErrors.length - 6} more issues.</div>`;
         }
-        fragment.appendChild(warningBlock);
+        elements.dataMessages.appendChild(danger);
+      } else if (state.ingestionWarnings.length) {
+        const warning = document.createElement('div');
+        warning.className = 'message warning';
+        warning.innerHTML = state.ingestionWarnings.slice(0, 6).map(msg => `<div>${msg}</div>`).join('');
+        if (state.ingestionWarnings.length > 6) {
+          warning.innerHTML += `<div>…and ${state.ingestionWarnings.length - 6} more warnings.</div>`;
+        }
+        elements.dataMessages.appendChild(warning);
       }
-
-      if (!state.sessionsByKey.size) {
-        const empty = document.createElement('div');
-        empty.className = 'message';
-        empty.textContent = 'Load attendance CSVs from the collector to get started.';
-        fragment.appendChild(empty);
-        elements.results.appendChild(fragment);
-        elements.exportSessionBtn.disabled = true;
-        elements.exportSummaryBtn.disabled = true;
-        elements.exportStudentBtn.disabled = true;
-        return;
-      }
-
-      switch (state.selectedMode) {
-        case MODE.SESSION:
-          renderSessionMode(fragment);
-          break;
-        case MODE.MULTI:
-          renderMultiMode(fragment);
-          break;
-        case MODE.STUDENT:
-          renderStudentMode(fragment);
-          break;
-        default:
-          break;
-      }
-
-      elements.results.appendChild(fragment);
     }
 
-    function renderSessionMode(container) {
+    function updateDatasetStats() {
+      elements.datasetStats.innerHTML = '';
+      const totalSessions = state.sessionsByKey.size;
+      const totalDates = state.dateToSessionKeys.size;
+      const totalStudents = state.allStudentIds.size;
+      const rosterCount = state.rosterSet.size;
+
+      const dateValues = Array.from(state.dateToSessionKeys.keys()).sort();
+      const dateRange = dateValues.length
+        ? `${toLocalDate(dateValues[0])} → ${toLocalDate(dateValues[dateValues.length - 1])}`
+        : '—';
+
+      const sourceCount = state.datasetSources.size;
+
+      elements.datasetStats.appendChild(buildStatCard('Sessions', `${totalSessions}`, `${totalDates} teaching days`));
+      elements.datasetStats.appendChild(buildStatCard('Unique students', `${totalStudents}`, rosterCount ? `${rosterCount} rostered` : 'No roster loaded'));
+      elements.datasetStats.appendChild(buildStatCard('Date span', dateRange, sourceCount ? `${sourceCount} source file${sourceCount === 1 ? '' : 's'}` : 'No files loaded'));
+    }
+
+    function createMessageCard(text, variant = 'info') {
+      const div = document.createElement('div');
+      div.className = 'result-card';
+      const message = document.createElement('div');
+      message.className = `message${variant === 'warning' ? ' warning' : variant === 'danger' ? ' danger' : ''}`;
+      message.textContent = text;
+      div.appendChild(message);
+      return div;
+    }
+
+    function renderSessionMode() {
+      elements.sessionResults.innerHTML = '';
+      if (!state.sessionsByKey.size) {
+        elements.sessionResults.appendChild(createMessageCard('Load attendance CSVs to get started.'));
+        elements.exportSessionBtn.disabled = true;
+        return;
+      }
       if (!state.selectedSessionKey || !state.sessionsByKey.has(state.selectedSessionKey)) {
-        const msg = document.createElement('div');
-        msg.className = 'message';
-        msg.textContent = 'Select a date and session to display attendance.';
-        container.appendChild(msg);
+        elements.sessionResults.appendChild(createMessageCard('Choose a date and session to display attendance.'));
         elements.exportSessionBtn.disabled = true;
         return;
       }
@@ -1116,7 +1198,10 @@
       const analytics = buildSessionAnalytics(session);
       state.sessionExportRows = analytics.rows;
 
-      const visibleRows = analytics.rows.filter(row => state.statusFilters.has(row.status));
+      const filterSet = getStatusFilter(MODE.SESSION);
+      const visibleRows = analytics.rows.filter(row => filterSet.has(row.status));
+      const focusCount = visibleRows.length;
+
       const card = document.createElement('div');
       card.className = 'result-card';
 
@@ -1131,10 +1216,10 @@
 
       const summary = document.createElement('div');
       summary.className = 'summary-grid';
-      summary.appendChild(buildSummaryCard('Present', `${analytics.counts['Present']}`, `${percentFormatter.format(analytics.totals.presentPercentage)}%`));
-      summary.appendChild(buildSummaryCard('In focus', `${visibleRows.length}`, `${state.statusFilters.size} statuses selected`));
-      summary.appendChild(buildSummaryCard('Late / Break issues', `${analytics.counts['Late']} + ${analytics.counts['Late from break']}`, 'Late · late from break'));
-      summary.appendChild(buildSummaryCard('At risk', `${analytics.counts['Absent'] + analytics.counts['Partial'] + analytics.counts['Left Early']}`, 'Absent · partial · left early'));
+      summary.appendChild(buildStatCard('Present', `${analytics.counts['Present']}`, `${percentFormatter.format(analytics.totals.presentPercentage)}%`));
+      summary.appendChild(buildStatCard('In focus', `${focusCount}`, `${filterSet.size} statuses`));
+      summary.appendChild(buildStatCard('Late / break issues', `${analytics.counts['Late']} + ${analytics.counts['Late from break']}`, 'Late · late from break'));
+      summary.appendChild(buildStatCard('At risk', `${analytics.counts['Absent'] + analytics.counts['Partial'] + analytics.counts['Left Early']}`, 'Absent · partial · left early'));
       card.appendChild(summary);
 
       if (analytics.missingFromRoster.length) {
@@ -1142,6 +1227,11 @@
         missingBlock.className = 'notice-block';
         missingBlock.innerHTML = `<strong>${analytics.missingFromRoster.length} rostered students missing:</strong> ${analytics.missingFromRoster.join(', ')}`;
         card.appendChild(missingBlock);
+        elements.sessionRosterTag.className = 'tag negative';
+        elements.sessionRosterTag.textContent = `${analytics.missingFromRoster.length} missing from roster`;
+      } else {
+        elements.sessionRosterTag.className = 'tag neutral';
+        elements.sessionRosterTag.textContent = state.rosterSet.size ? `${state.rosterSet.size} in roster` : 'Roster not loaded';
       }
       if (analytics.outOfRoster.length) {
         const extraBlock = document.createElement('div');
@@ -1150,22 +1240,22 @@
         card.appendChild(extraBlock);
       }
       if (analytics.duplicateCount) {
-        const dupBlock = document.createElement('div');
-        dupBlock.className = 'notice-block warning';
-        dupBlock.textContent = `${analytics.duplicateCount} duplicate check-ins detected (same student/phase).`;
-        card.appendChild(dupBlock);
+        const duplicateBlock = document.createElement('div');
+        duplicateBlock.className = 'notice-block warning';
+        duplicateBlock.textContent = `${analytics.duplicateCount} duplicate check-ins (same student/phase) detected.`;
+        card.appendChild(duplicateBlock);
       }
 
       const table = document.createElement('table');
       table.innerHTML = '<thead><tr><th>Student ID</th><th>Start</th><th>Break 1</th><th>Break 2</th><th>End</th><th>Status</th><th>Last activity</th></tr></thead>';
       const tbody = document.createElement('tbody');
       if (!visibleRows.length) {
-        const emptyRow = document.createElement('tr');
+        const tr = document.createElement('tr');
         const td = document.createElement('td');
         td.colSpan = 7;
         td.textContent = 'No students match the selected statuses.';
-        emptyRow.appendChild(td);
-        tbody.appendChild(emptyRow);
+        tr.appendChild(td);
+        tbody.appendChild(tr);
       } else {
         visibleRows.forEach(row => {
           const tr = document.createElement('tr');
@@ -1208,68 +1298,49 @@
         card.appendChild(links);
       }
 
-      container.appendChild(card);
+      elements.sessionResults.appendChild(card);
       elements.exportSessionBtn.disabled = !analytics.rows.length;
     }
 
-    function buildSummaryCard(label, value, meta) {
-      const card = document.createElement('div');
-      card.className = 'summary-card';
-      const labelEl = document.createElement('div');
-      labelEl.className = 'label';
-      labelEl.textContent = label;
-      const valueEl = document.createElement('div');
-      valueEl.className = 'value';
-      valueEl.textContent = value;
-      card.appendChild(labelEl);
-      card.appendChild(valueEl);
-      if (meta) {
-        const metaEl = document.createElement('div');
-        metaEl.className = 'meta';
-        metaEl.textContent = meta;
-        card.appendChild(metaEl);
-      }
-      return card;
-    }
-
-    function renderMultiMode(container) {
-      const selectedKeys = Array.from(state.selectedMultiSessionKeys).filter(key => state.sessionsByKey.has(key));
-      if (!selectedKeys.length) {
-        const msg = document.createElement('div');
-        msg.className = 'message';
-        msg.textContent = 'Select one or more sessions to compare.';
-        container.appendChild(msg);
+    function renderMultiMode() {
+      elements.multiResults.innerHTML = '';
+      if (!state.sessionsByKey.size) {
+        elements.multiResults.appendChild(createMessageCard('Load attendance CSVs to compare multiple sessions.'));
         elements.exportSummaryBtn.disabled = true;
         elements.multiSelectionTag.textContent = '0 sessions selected';
         return;
       }
+      const selectedKeys = Array.from(state.selectedMultiSessionKeys).filter(key => state.sessionsByKey.has(key));
+      if (!selectedKeys.length) {
+        elements.multiResults.appendChild(createMessageCard('Select one or more sessions to compare.'));
+        elements.exportSummaryBtn.disabled = true;
+        elements.multiSelectionTag.textContent = '0 sessions selected';
+        return;
+      }
+      elements.multiSelectionTag.textContent = `${selectedKeys.length} session${selectedKeys.length === 1 ? '' : 's'} selected`;
+
+      const filterSet = getStatusFilter(MODE.MULTI);
       const rows = selectedKeys.map(key => {
         const session = state.sessionsByKey.get(key);
         const analytics = buildSessionAnalytics(session);
-        return {
-          session,
-          analytics
-        };
+        const focusCount = analytics.rows.filter(row => filterSet.has(row.status)).length;
+        return { session, analytics, focusCount };
       }).sort((a, b) => a.session.date.localeCompare(b.session.date));
-
-      const totalSessions = rows.length;
-      elements.multiSelectionTag.textContent = `${totalSessions} session${totalSessions === 1 ? '' : 's'} selected`;
 
       const card = document.createElement('div');
       card.className = 'result-card';
 
       const title = document.createElement('h2');
-      title.textContent = `Summary across ${totalSessions} session${totalSessions === 1 ? '' : 's'}`;
+      title.textContent = `Summary across ${rows.length} session${rows.length === 1 ? '' : 's'}`;
       card.appendChild(title);
 
-      const focusStatuses = Array.from(state.statusFilters.values()).join(', ') || 'None';
       const focusTag = document.createElement('div');
       focusTag.className = 'tag neutral';
-      focusTag.textContent = `Statuses in focus: ${focusStatuses}`;
+      focusTag.textContent = `Statuses in focus: ${Array.from(filterSet).join(', ') || 'None'}`;
       card.appendChild(focusTag);
 
       const table = document.createElement('table');
-      const header = `
+      table.innerHTML = `
         <thead>
           <tr>
             <th>Session</th>
@@ -1287,7 +1358,6 @@
             <th>Duplicates</th>
           </tr>
         </thead>`;
-      table.innerHTML = header;
       const tbody = document.createElement('tbody');
 
       const totals = {
@@ -1299,14 +1369,14 @@
         partial: 0,
         absent: 0,
         focus: 0,
-        rosterGaps: 0,
+        rosterMissing: 0,
         outOfRoster: 0,
         duplicates: 0
       };
 
       state.multiExportRows = [];
 
-      rows.forEach(({ session, analytics }) => {
+      rows.forEach(({ session, analytics, focusCount }) => {
         totals.students += analytics.totals.totalStudents;
         totals.present += analytics.counts['Present'];
         totals.late += analytics.counts['Late'];
@@ -1314,8 +1384,8 @@
         totals.leftEarly += analytics.counts['Left Early'];
         totals.partial += analytics.counts['Partial'];
         totals.absent += analytics.counts['Absent'];
-        totals.focus += analytics.totals.focusCount;
-        totals.rosterGaps += analytics.missingFromRoster.length;
+        totals.focus += focusCount;
+        totals.rosterMissing += analytics.missingFromRoster.length;
         totals.outOfRoster += analytics.outOfRoster.length;
         totals.duplicates += analytics.duplicateCount;
 
@@ -1330,7 +1400,7 @@
           <td>${analytics.counts['Left Early']}</td>
           <td>${analytics.counts['Partial']}</td>
           <td>${analytics.counts['Absent']}</td>
-          <td>${analytics.totals.focusCount}</td>
+          <td>${focusCount}</td>
           <td>${analytics.missingFromRoster.length}</td>
           <td>${analytics.outOfRoster.length}</td>
           <td>${analytics.duplicateCount}</td>
@@ -1347,7 +1417,7 @@
           LeftEarly: analytics.counts['Left Early'],
           Partial: analytics.counts['Partial'],
           Absent: analytics.counts['Absent'],
-          FocusTotal: analytics.totals.focusCount,
+          FocusTotal: focusCount,
           RosterMissing: analytics.missingFromRoster.length,
           OutOfRoster: analytics.outOfRoster.length,
           Duplicates: analytics.duplicateCount
@@ -1366,7 +1436,7 @@
         <td><strong>${totals.partial}</strong></td>
         <td><strong>${totals.absent}</strong></td>
         <td><strong>${totals.focus}</strong></td>
-        <td><strong>${totals.rosterGaps}</strong></td>
+        <td><strong>${totals.rosterMissing}</strong></td>
         <td><strong>${totals.outOfRoster}</strong></td>
         <td><strong>${totals.duplicates}</strong></td>
       `;
@@ -1374,51 +1444,43 @@
 
       table.appendChild(tbody);
       card.appendChild(table);
-
-      container.appendChild(card);
+      elements.multiResults.appendChild(card);
       elements.exportSummaryBtn.disabled = !state.multiExportRows.length;
     }
 
-    function renderStudentMode(container) {
-      const studentId = sanitizeId(state.selectedStudentId);
-      if (!studentId) {
-        const msg = document.createElement('div');
-        msg.className = 'message';
-        msg.textContent = 'Enter or select a student ID to review their attendance history.';
-        container.appendChild(msg);
+    function renderStudentMode() {
+      elements.studentResults.innerHTML = '';
+      if (!state.sessionsByKey.size) {
+        elements.studentResults.appendChild(createMessageCard('Load attendance CSVs to explore student history.'));
         elements.exportStudentBtn.disabled = true;
         elements.studentSessionsTag.textContent = 'Student not selected';
         return;
       }
-
+      const studentId = sanitizeId(state.selectedStudentId);
+      if (!studentId) {
+        elements.studentResults.appendChild(createMessageCard('Enter or select a student ID to review their sessions.'));
+        elements.exportStudentBtn.disabled = true;
+        elements.studentSessionsTag.textContent = 'Student not selected';
+        return;
+      }
       const sessionKeys = state.studentIndex.get(studentId);
       if (!sessionKeys || !sessionKeys.size) {
-        const msg = document.createElement('div');
-        msg.className = 'message warning';
-        msg.textContent = `No attendance records found for ${studentId}.`;
-        container.appendChild(msg);
+        elements.studentResults.appendChild(createMessageCard(`No attendance records found for ${studentId}.`, 'warning'));
         elements.exportStudentBtn.disabled = true;
         elements.studentSessionsTag.textContent = 'No sessions for this student';
         return;
       }
 
-      const rows = [];
-      Array.from(sessionKeys).forEach(key => {
+      const allRows = Array.from(sessionKeys).map(key => {
         const session = state.sessionsByKey.get(key);
-        if (!session) return;
+        if (!session) return null;
         const analytics = buildSessionAnalytics(session);
         const row = analytics.rows.find(entry => entry.studentId === studentId);
-        if (!row) return;
-        rows.push({
-          session,
-          analytics,
-          row
-        });
-      });
+        if (!row) return null;
+        return { session, analytics, row };
+      }).filter(Boolean).sort((a, b) => a.session.date.localeCompare(b.session.date));
 
-      rows.sort((a, b) => a.session.date.localeCompare(b.session.date));
-
-      const filteredRows = applyStudentDateFilter(rows, state.studentDateRange);
+      const filteredRows = applyStudentDateFilter(allRows, state.studentDateRange);
       state.studentExportRows = filteredRows.map(item => ({
         StudentID: studentId,
         Date: item.session.date,
@@ -1454,10 +1516,10 @@
       const totalSessions = filteredRows.length;
       const attendanceRate = totalSessions ? (presentCount / totalSessions) * 100 : 0;
       const riskCount = statusTotals['Absent'] + statusTotals['Partial'] + statusTotals['Left Early'];
-      summary.appendChild(buildSummaryCard('Sessions', `${totalSessions}`, `${state.studentDateRange === 'all' ? 'All time' : state.studentDateRange}`));
-      summary.appendChild(buildSummaryCard('Present', `${presentCount}`, `${percentFormatter.format(attendanceRate)}% rate`));
-      summary.appendChild(buildSummaryCard('Late / break issues', `${statusTotals['Late']} + ${statusTotals['Late from break']}`, 'Late · late from break'));
-      summary.appendChild(buildSummaryCard('At risk flags', `${riskCount}`, 'Absent · partial · left early'));
+      summary.appendChild(buildStatCard('Sessions', `${totalSessions}`, `${state.studentDateRange === 'all' ? 'All time' : state.studentDateRange}`));
+      summary.appendChild(buildStatCard('Present', `${presentCount}`, `${percentFormatter.format(attendanceRate)}% rate`));
+      summary.appendChild(buildStatCard('Late / break issues', `${statusTotals['Late']} + ${statusTotals['Late from break']}`, 'Late · late from break'));
+      summary.appendChild(buildStatCard('At risk flags', `${riskCount}`, 'Absent · partial · left early'));
       card.appendChild(summary);
 
       const table = document.createElement('table');
@@ -1496,7 +1558,7 @@
         card.appendChild(alert);
       }
 
-      container.appendChild(card);
+      elements.studentResults.appendChild(card);
       elements.exportStudentBtn.disabled = !filteredRows.length;
     }
 
@@ -1568,22 +1630,12 @@
     function exportSummaryCsv() {
       if (!state.multiExportRows.length) return;
       const header = Object.keys(state.multiExportRows[0]);
-      const lines = [
-        header.join(',')
-      ];
+      const lines = [header.join(',')];
       state.multiExportRows.forEach(row => {
         const line = header.map(key => row[key]).join(',');
         lines.push(line);
       });
-      const blob = new Blob([lines.join('\\n')], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = 'session_summary.csv';
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
+      triggerDownload(lines.join('\\n'), 'session_summary.csv');
     }
 
     function exportStudentCsv() {
@@ -1594,11 +1646,15 @@
         const line = header.map(key => row[key]).join(',');
         lines.push(line);
       });
-      const blob = new Blob([lines.join('\\n')], { type: 'text/csv' });
+      triggerDownload(lines.join('\\n'), `student_${state.selectedStudentId || 'report'}.csv`);
+    }
+
+    function triggerDownload(content, filename) {
+      const blob = new Blob([content], { type: 'text/csv' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `student_${state.selectedStudentId || 'report'}.csv`;
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -1612,7 +1668,8 @@
         const text = await response.text();
         applyAttendanceData([text], 'Server CSV');
       } catch (err) {
-        elements.results.innerHTML = `<div class="message warning">${err.message}</div>`;
+        state.parseErrors = [err.message];
+        renderAll();
       }
     }
 
@@ -1624,9 +1681,7 @@
         try {
           const { rows, errors } = parseCsvText(text, label);
           parsedSets.push({ rows, sourceLabel: label });
-          if (errors.length) {
-            parseErrors.push(...errors);
-          }
+          if (errors.length) parseErrors.push(...errors);
         } catch (err) {
           parseErrors.push(`${label}: ${err.message}`);
         }
@@ -1638,7 +1693,51 @@
       populateMultiSessionSelect();
       populateStudentSuggestions();
       updateRosterSummary();
-      renderResults();
+      renderAll();
+    }
+
+    function clearDataset() {
+      state.sessionsByKey.clear();
+      state.dateToSessionKeys.clear();
+      state.sessionKeysSorted = [];
+      state.studentIndex.clear();
+      state.allStudentIds.clear();
+      state.datasetSources.clear();
+      state.selectedDate = null;
+      state.selectedSessionKey = null;
+      state.selectedMultiSessionKeys.clear();
+      state.selectedStudentId = '';
+      state.sessionExportRows = [];
+      state.multiExportRows = [];
+      state.studentExportRows = [];
+      state.ingestionWarnings = [];
+      state.parseErrors = [];
+      populateSessionSelectors();
+      populateMultiSessionSelect();
+      populateStudentSuggestions();
+      renderAll();
+    }
+
+    function renderCurrentMode() {
+      switch (state.selectedMode) {
+        case MODE.SESSION:
+          renderSessionMode();
+          break;
+        case MODE.MULTI:
+          renderMultiMode();
+          break;
+        case MODE.STUDENT:
+          renderStudentMode();
+          break;
+        default:
+          break;
+      }
+    }
+
+    function renderAll() {
+      renderDataMessages();
+      updateDatasetStats();
+      renderCurrentMode();
     }
 
     function handleAttendanceUpload(event) {
@@ -1648,7 +1747,7 @@
         .then(texts => applyAttendanceData(texts, 'Upload'))
         .catch(err => {
           state.parseErrors = [err.message];
-          renderResults();
+          renderAll();
         });
     }
 
@@ -1662,9 +1761,11 @@
         state.rosterVersion += 1;
         clearSessionCaches();
         updateRosterSummary();
-        renderResults();
+        renderCurrentMode();
+        updateDatasetStats();
       }).catch(err => {
-        elements.rosterSummary.textContent = `Failed to load roster: ${err.message}`;
+        state.parseErrors = [`Roster: ${err.message}`];
+        renderAll();
       });
     }
 
@@ -1673,35 +1774,36 @@
       state.rosterVersion += 1;
       clearSessionCaches();
       updateRosterSummary();
-      renderResults();
+      renderCurrentMode();
+      updateDatasetStats();
     }
 
     function handleSessionDateChange(event) {
       state.selectedDate = event.target.value;
       populateSessionKeySelect(state.selectedDate);
-      renderResults();
+      renderSessionMode();
     }
 
     function handleSessionKeyChange(event) {
       state.selectedSessionKey = event.target.value;
-      renderResults();
+      renderSessionMode();
     }
 
     function handleMultiSessionChange(event) {
       const options = Array.from(event.target.options || []);
       state.selectedMultiSessionKeys = new Set(options.filter(opt => opt.selected).map(opt => opt.value));
       elements.multiSelectionTag.textContent = `${state.selectedMultiSessionKeys.size} session${state.selectedMultiSessionKeys.size === 1 ? '' : 's'} selected`;
-      renderResults();
+      renderMultiMode();
     }
 
     function handleStudentSearch(event) {
       state.selectedStudentId = sanitizeId(event.target.value);
-      renderResults();
+      renderStudentMode();
     }
 
     function handleStudentDateRangeChange(event) {
       state.studentDateRange = event.target.value;
-      renderResults();
+      renderStudentMode();
     }
 
     function handleEmailDomainChange(event) {
@@ -1711,8 +1813,10 @@
       }
     }
 
-    elements.tabButtons.forEach(button => button.addEventListener('click', handleTabClick));
+    elements.tabButtons.forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
     elements.attendanceUpload.addEventListener('change', handleAttendanceUpload);
+    elements.reloadServerBtn.addEventListener('click', loadAttendanceFromServer);
+    elements.clearDataBtn.addEventListener('click', clearDataset);
     elements.rosterUpload.addEventListener('change', handleRosterUpload);
     elements.clearRosterBtn.addEventListener('click', clearRoster);
     elements.sessionDateSelect.addEventListener('change', handleSessionDateChange);
@@ -1725,12 +1829,12 @@
     elements.exportSessionBtn.addEventListener('click', exportSessionToExcel);
     elements.exportSummaryBtn.addEventListener('click', exportSummaryCsv);
     elements.exportStudentBtn.addEventListener('click', exportStudentCsv);
-    elements.statusActionButtons.forEach(button => {
-      button.addEventListener('click', () => handleStatusAction(button.dataset.statusAction));
-    });
+    elements.statusActionButtons.forEach(button => button.addEventListener('click', handleStatusAction));
 
-    initStatusFilters();
-    loadAttendanceFromServer();
+    setupStatusFilters();
+    updateRosterSummary();
+    updateDatasetStats();
+    renderAll();
   </script>
 </body>
 </html>
