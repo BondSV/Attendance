@@ -1,430 +1,357 @@
 (() => {
-  const decodePayload = (hash) => {
-    if (!hash) return null;
-    try {
-      const base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
-      const jsonStr = atob(base64);
-      return JSON.parse(jsonStr);
-    } catch (err) {
-      console.error('Failed to decode payload', err);
-      return null;
-    }
+  // --- State & Config ---
+  const state = {
+    scanning: false,
+    mediaStream: null,
+    verificationId: null,
+    payload: null,
+    deviceId: getOrCreateDeviceId(),
+    pageSessionId: crypto.randomUUID()
   };
 
-  function getOrCreateDeviceId() {
-    try {
-      const existing = localStorage.getItem('attendance_device_id');
-      if (existing) return existing;
-      const id = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `dev-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
-      localStorage.setItem('attendance_device_id', id);
-      return id;
-    } catch (err) {
-      console.warn('Unable to access localStorage, falling back to session device id.', err);
-      return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `dev-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
-    }
-  }
-
-  const deviceId = getOrCreateDeviceId();
-
-  const fragment = window.location.hash.slice(1);
-  const payload = decodePayload(fragment);
-  if (!payload || !payload.sid) {
-    document.body.innerHTML = '<div style="padding:32px;font-family:Inter,system-ui,sans-serif;color:#dc2626;">Invalid or missing session information.<br/>Please scan the Step 1 QR again.</div>';
-    return;
-  }
-
-  const sid = payload.sid;
-  const moduleCode = payload.m || payload.module || '';
-  const groupNumber = payload.g || payload.group || '';
-  const normalizePhase = (value) => {
-    const raw = (value || 'start').toString().trim().toLowerCase();
-    if (raw === 'break' || raw === 'break1' || raw === 'break 1') return 'break1';
-    if (raw === 'break2' || raw === 'break 2') return 'break2';
-    if (raw === 'start' || raw === 'end') return raw;
-    return 'start';
+  const elements = {
+    // Sections
+    scannerSection: document.getElementById('scannerSection'),
+    inputSection: document.getElementById('inputSection'),
+    passCard: document.getElementById('passCard'),
+    manualOverrideSection: document.getElementById('manualOverrideSection'),
+    historySection: document.getElementById('historySection'),
+    
+    // Elements
+    video: document.getElementById('video'),
+    sessionLabel: document.getElementById('sessionLabel'),
+    scannerStatus: document.getElementById('scannerStatus'),
+    startScanBtn: document.getElementById('startScanBtn'),
+    studentIdInput: document.getElementById('studentIdInput'),
+    submitIdBtn: document.getElementById('submitIdBtn'),
+    manualOverrideBtn: document.getElementById('manualOverrideBtn'),
+    manualOverridePassword: document.getElementById('manualOverridePassword'),
+    manualOverrideSubmitBtn: document.getElementById('manualOverrideSubmitBtn'),
+    manualOverrideStatus: document.getElementById('manualOverrideStatus'),
+    
+    // Pass Card Elements
+    passTime: document.getElementById('passTime'),
+    passModule: document.getElementById('passModule'),
+    passStudentId: document.getElementById('passStudentId'),
+    passDate: document.getElementById('passDate'),
+    historyList: document.getElementById('historyList')
   };
-  const phase = normalizePhase(payload.p || payload.phase);
-  const moduleRe = /^[A-Z]{3}\d{5}$/;
-  const groupRe = /^[0-9]$/;
-  if (!moduleRe.test(moduleCode) || !groupRe.test(groupNumber)) {
-    document.body.innerHTML = '<div style="padding:32px;font-family:Inter,system-ui,sans-serif;color:#dc2626;">Session data is incomplete. Please return to the QR and try again.</div>';
-    return;
-  }
-  const sessionLabel = document.getElementById('sessionLabel');
-  const scanBtn = document.getElementById('scanBtn');
-  const cameraFrame = document.getElementById('cameraFrame');
-  const scannerPlaceholder = document.getElementById('scannerPlaceholder');
-  const statusCard = document.getElementById('statusCard');
-  const statusIcon = document.getElementById('statusIcon');
-  const statusHeading = document.getElementById('statusHeading');
-  const statusMessage = document.getElementById('statusMessage');
-  const video = document.getElementById('video');
-  const idCard = document.getElementById('idCard');
-  const submitBtn = document.getElementById('submit-btn');
-  const idInput = document.getElementById('student-id');
-  const cameraHint = document.getElementById('cameraHint');
-  const scannerStatus = document.getElementById('scannerStatus');
-  const manualOverrideDetails = document.getElementById('manualOverrideDetails');
-  const manualOverrideBtn = document.getElementById('manual-override-btn');
-  const manualOverrideStatus = document.getElementById('manualOverrideStatus');
-  const manualOverrideForm = document.getElementById('manualOverrideForm');
-  const manualOverridePasswordInput = document.getElementById('manualOverridePassword');
-  const manualOverrideSubmit = document.getElementById('manualOverrideSubmit');
 
-  const pageSessionId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : `ps-${Date.now().toString(16)}-${Math.random().toString(16).slice(2)}`;
+  // --- Initialization ---
+  function init() {
+    renderHistory();
+    
+    const fragment = window.location.hash.slice(1);
+    state.payload = decodePayload(fragment);
 
-  sessionLabel.textContent = `${moduleCode} — Group ${groupNumber}`;
+    if (!state.payload || !state.payload.sid) {
+      showError('Invalid Session. Please rescan the QR code.');
+      return;
+    }
 
-  let mediaStream = null;
-  let barcodeDetector = null;
-  let scanning = false;
-  let verificationId = null;
-  const challengeCache = new Set();
+    const { m, module, g, group } = state.payload;
+    const moduleCode = m || module || 'Unknown';
+    const groupNum = g || group || '';
+    elements.sessionLabel.textContent = `${moduleCode} ${groupNum ? '· G' + groupNum : ''}`;
 
-  const supportsBarcodeDetector = 'BarcodeDetector' in window;
+    // Event Listeners
+    elements.startScanBtn.addEventListener('click', startScanning);
+    elements.submitIdBtn.addEventListener('click', handleSubmitId);
+    elements.manualOverrideBtn.addEventListener('click', toggleManualOverride);
+    elements.manualOverrideSubmitBtn.addEventListener('click', submitManualOverride);
 
-  function setScannerStatus(message = '', tone = 'info') {
-    if (!scannerStatus) return;
-    const colors = { error: '#dc2626', success: '#16a34a', info: '#475467' };
-    const normalizedTone = colors[tone] ? tone : 'info';
-    scannerStatus.textContent = message || '';
-    scannerStatus.style.color = message ? colors[normalizedTone] : colors.info;
+    // Auto-start scanning if permission was granted previously
+    startScanning();
   }
 
-  function setManualOverrideStatus(message = '', tone = 'info') {
-    if (!manualOverrideStatus) return;
-    const colors = { error: '#dc2626', success: '#16a34a', info: '#475467' };
-    const normalizedTone = colors[tone] ? tone : 'info';
-    manualOverrideStatus.textContent = message || '';
-    manualOverrideStatus.style.color = message ? colors[normalizedTone] : colors.info;
-    if (message && manualOverrideDetails) {
-      manualOverrideDetails.open = true;
+  // --- Core Logic ---
+
+  async function startScanning() {
+    if (state.scanning) return;
+    
+    try {
+      elements.scannerStatus.textContent = 'Starting camera...';
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } 
+      });
+      
+      state.mediaStream = stream;
+      elements.video.srcObject = stream;
+      elements.video.setAttribute('playsinline', true); // iOS fix
+      await elements.video.play();
+      
+      state.scanning = true;
+      elements.startScanBtn.classList.add('hidden');
+      elements.scannerSection.classList.add('scanner-active');
+      elements.scannerStatus.textContent = 'Align QR code to verify';
+      
+      requestAnimationFrame(scanFrame);
+    } catch (err) {
+      console.error(err);
+      elements.scannerStatus.textContent = 'Camera access denied. Use Manual Verification.';
+      elements.scannerStatus.classList.add('text-error');
     }
   }
 
-  function hasLiveVideoTrack(stream) {
-    if (!stream || typeof stream.getVideoTracks !== 'function') return false;
-    return stream.getVideoTracks().some(track => track.readyState === 'live');
+  function stopScanning() {
+    state.scanning = false;
+    elements.scannerSection.classList.remove('scanner-active');
+    if (state.mediaStream) {
+      state.mediaStream.getTracks().forEach(track => track.stop());
+      state.mediaStream = null;
+    }
   }
 
-  async function ensureCamera() {
-    if (hasLiveVideoTrack(mediaStream)) return mediaStream;
-    const constraintsList = [
-      { video: { facingMode: { ideal: 'environment' } }, audio: false },
-      { video: { facingMode: 'environment' }, audio: false },
-      { video: true, audio: false }
-    ];
-    let lastError = null;
-    for (const constraints of constraintsList) {
-      try {
-        mediaStream = await navigator.mediaDevices.getUserMedia(constraints);
-        return mediaStream;
-      } catch (err) {
-        lastError = err;
+  function scanFrame() {
+    if (!state.scanning) return;
+    
+    if (elements.video.readyState === elements.video.HAVE_ENOUGH_DATA) {
+      const canvas = document.createElement('canvas');
+      canvas.width = elements.video.videoWidth;
+      canvas.height = elements.video.videoHeight;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(elements.video, 0, 0, canvas.width, canvas.height);
+      
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const code = jsQR(imageData.data, imageData.width, imageData.height, {
+        inversionAttempts: 'dontInvert',
+      });
+
+      if (code) {
+        handleQrDetected(code.data);
+        return;
       }
     }
-    mediaStream = null;
-    throw lastError || new Error('Unable to access the camera.');
+    requestAnimationFrame(scanFrame);
   }
 
-  async function ensureDetector() {
-    if (!supportsBarcodeDetector) return null;
-    if (!barcodeDetector) {
-      try {
-        barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-      } catch (err) {
-        console.warn('BarcodeDetector init failed', err);
-        barcodeDetector = null;
-      }
+  async function handleQrDetected(data) {
+    // Simple debounce/validation
+    if (!data || data.length > 256) return;
+    
+    stopScanning();
+    vibrateSuccess();
+    elements.scannerStatus.textContent = 'Verifying...';
+    
+    try {
+      await submitChallenge(data);
+      // Success
+      elements.scannerSection.classList.add('hidden');
+      elements.inputSection.classList.remove('hidden');
+      elements.studentIdInput.focus();
+    } catch (err) {
+      elements.scannerStatus.textContent = err.message || 'Verification failed. Try again.';
+      elements.scannerStatus.classList.add('text-error');
+      elements.startScanBtn.classList.remove('hidden');
     }
-    return barcodeDetector;
-  }
-
-  function stopScanning(reason = '', tone = 'info') {
-    scanning = false;
-    cameraFrame.setAttribute('hidden', '');
-    scannerPlaceholder.removeAttribute('hidden');
-    scanBtn.disabled = false;
-    setScannerStatus(reason, tone);
-    const cleanup = (stream) => {
-      if (stream && typeof stream.getTracks === 'function') {
-        stream.getTracks().forEach(track => track.stop());
-      }
-    };
-    cleanup(video.srcObject);
-    video.srcObject = null;
-    cleanup(mediaStream);
-    mediaStream = null;
   }
 
   async function submitChallenge(challenge) {
-    const body = { sid, module: moduleCode, group: groupNumber, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
-    const resp = await fetch('/api/validate-challenge', {
+    const { sid, p, phase, m, module, g, group } = state.payload;
+    
+    const res = await fetch('/api/validate-challenge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body)
+      body: JSON.stringify({
+        sid,
+        phase: p || phase,
+        challenge,
+        page_session_id: state.pageSessionId,
+        device_id: state.deviceId
+      })
     });
-    const data = await resp.json();
-    if (!resp.ok || !data.verified) {
-      throw new Error(data.error || 'Verification failed. Wait for the next code.');
+    
+    const data = await res.json();
+    if (!data.verified) throw new Error(data.error || 'Invalid code');
+    state.verificationId = data.verification_id;
+  }
+
+  async function handleSubmitId() {
+    const studentId = elements.studentIdInput.value.trim();
+    if (!/^\d{6,12}$/.test(studentId)) {
+      alert('Please enter a valid Student ID (6-12 digits).');
+      return;
     }
-    verificationId = data.verification_id;
-  }
 
-  function parseChallengePayload(text) {
-    if (typeof text !== 'string') return null;
-    if (text.length === 0 || text.length > 256) return null;
-    return text;
-  }
-
-  async function startScanning() {
-    if (scanning) return;
-    scanning = true;
-    statusCard.setAttribute('hidden', '');
-    idCard.setAttribute('hidden', '');
-    statusMessage.textContent = '';
-    setScannerStatus('');
-    scannerPlaceholder.setAttribute('hidden', '');
-    cameraFrame.removeAttribute('hidden');
-    scanBtn.disabled = true;
-    scanBtn.removeAttribute('hidden');
+    elements.submitIdBtn.disabled = true;
+    elements.submitIdBtn.textContent = 'Submitting...';
 
     try {
-      const stream = await ensureCamera();
-      video.srcObject = stream;
-      // iOS often needs metadata before play; also require playsinline & muted attributes
-      if (!video.hasAttribute('playsinline')) video.setAttribute('playsinline', '');
-      if (!video.hasAttribute('webkit-playsinline')) video.setAttribute('webkit-playsinline', '');
-      video.muted = true;
-      await new Promise((resolve) => {
-        const onReady = () => { video.removeEventListener('loadedmetadata', onReady); resolve(); };
-        if (video.readyState >= 1) return resolve();
-        video.addEventListener('loadedmetadata', onReady, { once: true });
-        setTimeout(resolve, 500); // safety timeout
-      });
-      await video.play().catch(() => {});
-      const detector = await ensureDetector();
-      if (detector) {
-        await scanWithDetector(detector);
-      } else {
-        await scanWithFallback();
-      }
-    } catch (err) {
-      console.error(err);
-      const message = err && err.message ? err.message : 'Camera error. Please try again.';
-    stopScanning(message, 'error');
-    }
-  }
-
-  async function scanWithDetector(detector) {
-    while (scanning) {
-      try {
-        if (!video.videoWidth || !video.videoHeight) {
-          await new Promise(r => setTimeout(r, 80));
-          continue;
-        }
-        const barcodes = await detector.detect(video);
-        if (barcodes && barcodes.length) {
-          const value = barcodes[0].rawValue || '';
-          const challenge = parseChallengePayload(value);
-          if (challenge && !challengeCache.has(challenge)) {
-            challengeCache.add(challenge);
-            await submitChallenge(challenge);
-            handleVerified();
-            return;
-          }
-        }
-      } catch (err) {
-        console.warn('Detector error', err);
-      }
-      await new Promise(r => setTimeout(r, 150));
-    }
-  }
-
-  async function scanWithFallback() {
-    const canvas = document.createElement('canvas');
-    const context = canvas.getContext('2d');
-    if (!window.jsQR) {
-      stopScanning('QR scanning is not supported on this browser. Update iOS or try a different browser.', 'error');
-      return;
-    }
-
-    while (scanning) {
-      try {
-        if (!video.videoWidth || !video.videoHeight) {
-          await new Promise(r => setTimeout(r, 100));
-          continue;
-        }
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
-        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-        const result = window.jsQR(imageData.data, canvas.width, canvas.height, { inversionAttempts: 'dontInvert' });
-        if (result && result.data) {
-          const challenge = parseChallengePayload(result.data);
-          if (challenge && !challengeCache.has(challenge)) {
-            challengeCache.add(challenge);
-            await submitChallenge(challenge);
-            handleVerified();
-            return;
-          }
-        }
-      } catch (err) {
-        if (!scanning) return;
-        console.warn('Fallback decode error', err);
-      }
-      await new Promise(r => setTimeout(r, 200));
-    }
-  }
-
-  function updateStatus({ type = 'success', heading, message }) {
-    const styles = {
-      success: { icon: '✔', bg: 'rgba(22, 163, 74, 0.12)', border: 'rgba(22, 163, 74, 0.24)', iconBg: '#16a34a' },
-      error: { icon: '!', bg: 'rgba(220, 38, 38, 0.12)', border: 'rgba(220, 38, 38, 0.24)', iconBg: '#dc2626' },
-      info: { icon: 'ℹ', bg: 'rgba(37, 99, 235, 0.12)', border: 'rgba(37, 99, 235, 0.24)', iconBg: '#2563eb' }
-    };
-    const theme = styles[type] || styles.success;
-    statusCard.style.background = theme.bg;
-    statusCard.style.borderColor = theme.border;
-    statusIcon.textContent = theme.icon;
-    statusIcon.style.background = theme.iconBg;
-    statusHeading.textContent = heading;
-    statusMessage.textContent = message;
-    statusCard.removeAttribute('hidden');
-  }
-
-  function handleVerified() {
-    scanning = false;
-    stopScanning();
-    cameraFrame.setAttribute('hidden', '');
-    scannerPlaceholder.setAttribute('hidden', '');
-    scanBtn.setAttribute('hidden', '');
-    scanBtn.disabled = true;
-    setScannerStatus('');
-    updateStatus({ type: 'success', heading: 'Presence verified', message: 'Great! Now enter your student ID to finish the check-in.' });
-    idCard.removeAttribute('hidden');
-  }
-
-  scanBtn.addEventListener('click', () => {
-    startScanning();
-  });
-
-  let manualOverrideReady = false;
-
-  if (manualOverrideBtn) {
-    manualOverrideBtn.addEventListener('click', async () => {
-      manualOverrideReady = false;
-      if (manualOverrideForm) manualOverrideForm.setAttribute('hidden', '');
-      if (manualOverridePasswordInput) {
-        manualOverridePasswordInput.value = '';
-        manualOverridePasswordInput.disabled = false;
-      }
-      if (manualOverrideSubmit) manualOverrideSubmit.disabled = false;
-      manualOverrideBtn.disabled = true;
-      setManualOverrideStatus('Checking device status…', 'info');
-      try {
-        const checkResp = await fetch('/api/manual-override/check', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId })
-        });
-        const checkData = await checkResp.json();
-        if (!checkResp.ok || !checkData.ok) {
-          throw new Error(checkData.error || 'Manual override is unavailable right now.');
-        }
-        manualOverrideReady = true;
-        if (manualOverrideForm) manualOverrideForm.removeAttribute('hidden');
-        setManualOverrideStatus('Ask your teacher to enter the password.', 'info');
-        if (manualOverridePasswordInput) {
-          manualOverridePasswordInput.focus();
-        }
-      } catch (err) {
-        console.error('Manual override pre-check failed', err);
-        setManualOverrideStatus(err && err.message ? err.message : 'Manual override could not start. Please try again or use the scanner.', 'error');
-        manualOverrideBtn.disabled = false;
-      }
-    });
-  }
-
-  if (manualOverrideForm) {
-    manualOverrideForm.addEventListener('submit', async (event) => {
-      event.preventDefault();
-      if (!manualOverrideReady) {
-        setManualOverrideStatus('Run the manual override check first.', 'error');
-        if (manualOverrideBtn && !manualOverrideBtn.disabled) manualOverrideBtn.focus();
-        return;
-      }
-      const passwordValue = manualOverridePasswordInput ? manualOverridePasswordInput.value.trim() : '';
-      if (!passwordValue) {
-        setManualOverrideStatus('Password is required to continue.', 'error');
-        if (manualOverridePasswordInput) manualOverridePasswordInput.focus();
-        return;
-      }
-      setManualOverrideStatus('Awaiting teacher confirmation…', 'info');
-      if (manualOverridePasswordInput) manualOverridePasswordInput.disabled = true;
-      if (manualOverrideSubmit) manualOverrideSubmit.disabled = true;
-      try {
-        const completeResp = await fetch('/api/manual-override/complete', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: passwordValue })
-        });
-        const completeData = await completeResp.json();
-        if (!completeResp.ok || !completeData.verified || !completeData.verification_id) {
-          throw new Error(completeData.error || 'Manual override failed.');
-        }
-        verificationId = completeData.verification_id;
-        handleVerified();
-        setManualOverrideStatus('Override approved. Enter your student ID to finish.', 'success');
-        manualOverrideReady = false;
-        if (manualOverrideBtn) manualOverrideBtn.disabled = true;
-      } catch (err) {
-        console.error('Manual override completion failed', err);
-        setManualOverrideStatus(err && err.message ? err.message : 'Manual override failed. Please try again.', 'error');
-        if (manualOverridePasswordInput) {
-          manualOverridePasswordInput.disabled = false;
-          manualOverridePasswordInput.focus();
-          manualOverridePasswordInput.select();
-        }
-        if (manualOverrideSubmit) manualOverrideSubmit.disabled = false;
-      }
-    });
-  }
-
-  submitBtn.addEventListener('click', async () => {
-    const studentId = idInput.value.trim();
-    if (!studentId) {
-      updateStatus({ type: 'error', heading: 'Student ID missing', message: 'Please enter your student ID before submitting.' });
-      return;
-    }
-    if (!/^9\d{7}$/.test(studentId)) {
-      updateStatus({ type: 'error', heading: 'Check your student ID', message: 'Student ID must be eight digits starting with 9. Please double-check and try again.' });
-      return;
-    }
-    if (!verificationId) {
-      updateStatus({ type: 'error', heading: 'Verification required', message: 'Scan the live verification QR-code before submitting your student ID.' });
-      return;
-    }
-    submitBtn.disabled = true;
-    updateStatus({ type: 'info', heading: 'Submitting…', message: 'Please wait while we record your attendance.' });
-    try {
-      const resp = await fetch('/api/checkin', {
+      const { sid, p, phase, m, module, g, group } = state.payload;
+      
+      const res = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
+        body: JSON.stringify({
+          sid,
+          phase: p || phase,
+          student_id: studentId,
+          verification_id: state.verificationId,
+          page_session_id: state.pageSessionId,
+          device_id: state.deviceId,
+          module: m || module,
+          group: g || group
+        })
       });
-      const data = await resp.json();
-      if (data.ok) {
-        updateStatus({ type: 'success', heading: 'Attendance recorded', message: 'Your check-in has been submitted. You can close this page.' });
-        submitBtn.disabled = true;
-        idInput.disabled = true;
-      } else {
-        throw new Error(data.error || 'Submission failed');
-      }
+
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Submission failed');
+
+      showPass(studentId);
     } catch (err) {
-      console.error(err);
-      updateStatus({ type: 'error', heading: 'Submission failed', message: err.message || 'Something went wrong. Please try again.' });
-      submitBtn.disabled = false;
+      alert(err.message);
+      elements.submitIdBtn.disabled = false;
+      elements.submitIdBtn.textContent = 'Submit';
     }
-  });
+  }
+
+  function showPass(studentId) {
+    vibrateSuccess();
+    elements.inputSection.classList.add('hidden');
+    elements.manualOverrideSection.classList.add('hidden');
+    elements.manualOverrideBtn.classList.add('hidden');
+    elements.passCard.classList.remove('hidden');
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const dateStr = now.toLocaleDateString([], { weekday: 'short', day: 'numeric', month: 'short' });
+    const { m, module } = state.payload;
+
+    elements.passTime.textContent = timeStr;
+    elements.passDate.textContent = dateStr;
+    elements.passModule.textContent = m || module || 'N/A';
+    elements.passStudentId.textContent = studentId;
+
+    saveToHistory({
+      module: m || module || 'N/A',
+      studentId,
+      timestamp: now.toISOString()
+    });
+  }
+
+  // --- Manual Override ---
+  
+  async function toggleManualOverride() {
+    elements.manualOverrideSection.classList.toggle('hidden');
+    if (!elements.manualOverrideSection.classList.contains('hidden')) {
+      // Pre-check
+      try {
+        const { sid, p, phase, m, module, g, group } = state.payload;
+        await fetch('/api/manual-override/check', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            sid, phase: p || phase, module: m || module, group: g || group,
+            device_id: state.deviceId, page_session_id: state.pageSessionId
+          })
+        });
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+  }
+
+  async function submitManualOverride() {
+    const password = elements.manualOverridePassword.value;
+    if (!password) return;
+
+    elements.manualOverrideSubmitBtn.disabled = true;
+    elements.manualOverrideStatus.textContent = 'Verifying...';
+    elements.manualOverrideStatus.className = 'text-center text-sm mt-2 text-muted';
+
+    try {
+      const { sid, p, phase, m, module, g, group } = state.payload;
+      const res = await fetch('/api/manual-override/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sid, phase: p || phase, module: m || module, group: g || group,
+          device_id: state.deviceId, page_session_id: state.pageSessionId,
+          teacher_password: password
+        })
+      });
+
+      const data = await res.json();
+      if (!data.verified) throw new Error(data.error || 'Incorrect password');
+
+      state.verificationId = data.verification_id;
+      
+      // Success
+      elements.manualOverrideSection.classList.add('hidden');
+      elements.scannerSection.classList.add('hidden');
+      elements.inputSection.classList.remove('hidden');
+      elements.studentIdInput.focus();
+      
+    } catch (err) {
+      elements.manualOverrideStatus.textContent = err.message;
+      elements.manualOverrideStatus.className = 'text-center text-sm mt-2 text-error';
+      elements.manualOverrideSubmitBtn.disabled = false;
+    }
+  }
+
+  // --- History & Utils ---
+
+  function saveToHistory(item) {
+    try {
+      const history = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+      history.unshift(item);
+      if (history.length > 5) history.pop();
+      localStorage.setItem('attendance_history', JSON.stringify(history));
+      renderHistory();
+    } catch (e) {
+      console.warn('LocalStorage failed', e);
+    }
+  }
+
+  function renderHistory() {
+    try {
+      const history = JSON.parse(localStorage.getItem('attendance_history') || '[]');
+      if (history.length === 0) return;
+
+      elements.historySection.classList.remove('hidden');
+      elements.historyList.innerHTML = history.map((item, index) => {
+        const date = new Date(item.timestamp);
+        const isRecent = index === 0 && (Date.now() - date.getTime() < 60000);
+        return `
+          <div class="history-item ${isRecent ? 'recent' : ''}">
+            <div>
+              <div class="font-bold">${item.module}</div>
+              <div class="text-xs text-muted">${date.toLocaleDateString()} ${date.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</div>
+            </div>
+            <div class="font-mono text-sm">${item.studentId}</div>
+          </div>
+        `;
+      }).join('');
+    } catch (e) {
+      console.warn(e);
+    }
+  }
+
+  function decodePayload(hash) {
+    if (!hash) return null;
+    try {
+      const base64 = hash.replace(/-/g, '+').replace(/_/g, '/');
+      return JSON.parse(atob(base64));
+    } catch { return null; }
+  }
+
+  function getOrCreateDeviceId() {
+    let id = localStorage.getItem('device_id');
+    if (!id) {
+      id = crypto.randomUUID();
+      localStorage.setItem('device_id', id);
+    }
+    return id;
+  }
+
+  function vibrateSuccess() {
+    if (navigator.vibrate) navigator.vibrate([50, 50, 50]);
+  }
+
+  function showError(msg) {
+    document.body.innerHTML = `<div style="padding:20px; color:var(--error); text-align:center;">${msg}</div>`;
+  }
+
+  // Start
+  init();
 })();

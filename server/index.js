@@ -57,7 +57,7 @@ function logAnomaly(obj) {
   const msg = `[ANOMALY] ${new Date().toISOString()} ${JSON.stringify(obj)}`;
   console.warn(msg);
   if (ANOMALY_LOG_PATH) {
-    try { fs.appendFileSync(ANOMALY_LOG_PATH, msg + '\n'); } catch (e) {}
+    try { fs.appendFileSync(ANOMALY_LOG_PATH, msg + '\n'); } catch (e) { }
   }
 }
 
@@ -204,6 +204,41 @@ function serveStatic(req, res) {
   return false;
 }
 
+const readline = require('readline');
+
+// --- Stats Logic ---
+const sessionCounts = new Map();
+
+function hydrateStats() {
+  if (!fs.existsSync(CSV_PATH)) return;
+
+  const rl = readline.createInterface({
+    input: fs.createReadStream(CSV_PATH),
+    crlfDelay: Infinity
+  });
+
+  rl.on('line', (line) => {
+    // Skip header or empty
+    if (!line || line.startsWith('ts_utc')) return;
+
+    // CSV format: ts_utc,module,group,sid,phase,student_id,...
+    // We want to count by 'sid'. 
+    // Note: The CSV writer joins fields with comma. 
+    // If SID contains commas, it might be tricky, but our SIDs are "Module Group X".
+
+    const parts = line.split(',');
+    // sid is index 3 based on header: ts_utc,module,group,sid,...
+    const sid = parts[3];
+    if (sid) {
+      const current = sessionCounts.get(sid) || 0;
+      sessionCounts.set(sid, current + 1);
+    }
+  });
+}
+
+// Initialize stats on load
+hydrateStats();
+
 const server = http.createServer(async (req, res) => {
   if (serveStatic(req, res)) return;
   const parsed = new URL(req.url, 'http://localhost');
@@ -212,6 +247,14 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/modules' && req.method === 'GET') {
       const modules = readModuleListFromCsv();
       return sendJson(res, { modules });
+    }
+
+    if (pathname === '/api/stats' && req.method === 'GET') {
+      const sid = parsed.searchParams.get('sid');
+      if (!sid) return sendJson(res, { error: 'Missing sid' }, 400);
+
+      const count = sessionCounts.get(sid) || 0;
+      return sendJson(res, { count });
     }
 
     if (pathname === '/api/challenge' && req.method === 'GET') {
@@ -346,6 +389,11 @@ const server = http.createServer(async (req, res) => {
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
       await appendCsvRow([tsUtc, moduleCode, `Group ${groupCode}`, sid, phase, student_id, '', ua]);
+
+      // Update stats
+      const currentCount = sessionCounts.get(sid) || 0;
+      sessionCounts.set(sid, currentCount + 1);
+
       if (manualOverrideMeta) {
         logManualOverrideUsage({
           ...manualOverrideMeta,

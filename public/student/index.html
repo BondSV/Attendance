@@ -1,78 +1,95 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>In-Class Attendance</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Attendance Pass</title>
+  <link rel="stylesheet" href="/design-system.css">
   <link rel="stylesheet" href="/student/styles.css">
 </head>
+
 <body>
-  <div class="page">
-    <header class="page__header">
-      <div>
-        <p class="session-label" id="sessionLabel">Live session</p>
+  <header class="app-header">
+    <div class="brand">Attendance</div>
+    <div class="session-badge" id="sessionLabel">Loading...</div>
+  </header>
+
+  <main>
+    <!-- State 1: Scanner -->
+    <section id="scannerSection" class="card scanner-card animate-fade-in">
+      <video id="video" autoplay muted playsinline webkit-playsinline></video>
+      <div class="scanner-overlay">
+        <div class="scan-guide"></div>
+        <p class="text-muted text-sm" id="scannerStatus">Align QR code to verify</p>
+        <button id="startScanBtn" class="btn btn-primary" style="margin-top: 16px;">Start Camera</button>
       </div>
-    </header>
-
-    <main class="page__grid">
-      <section class="card scanner" id="scannerCard">
-        <h2>Step 2 – Verify attendance</h2>
-        <p class="muted small step-note">Use the scanner below to read the verification QR-code in the center of the screen.</p>
-        <div class="scanner-placeholder" id="scannerPlaceholder">
-          <p>Tap “Start scanning” to open the camera.</p>
-          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while keeping the QR-code in the frame.</p>
-        </div>
-        <div class="camera-frame" id="cameraFrame" hidden>
-          <video id="video" autoplay muted playsinline webkit-playsinline></video>
-          <div class="camera-overlay">
-            <div class="bracket top-left"></div>
-            <div class="bracket top-right"></div>
-            <div class="bracket bottom-left"></div>
-            <div class="bracket bottom-right"></div>
-            <p class="camera-hint" id="cameraHint">Align the QR inside the frame</p>
-          </div>
-        </div>
-        <button class="primary" id="scanBtn">Start scanning</button>
-        <p class="muted small" id="scannerStatus" role="status" aria-live="polite"></p>
-        <div class="status-card" id="statusCard" hidden>
-          <span class="status-icon" id="statusIcon">✔</span>
-          <div class="status-copy">
-            <h3 id="statusHeading">Presence verified</h3>
-            <p class="muted" id="statusMessage">Great! Now enter your student ID to finish the check-in.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="card form" id="idCard" hidden>
-        <h2>Finalise your check-in</h2>
-        <p class="muted small">by submitting your student ID</p>
-        <div class="id-input-row">
-          <input type="text" id="student-id" maxlength="8" placeholder="Enter your student ID" inputmode="numeric" pattern="9\d{7}">
-          <button class="primary" id="submit-btn">Submit</button>
-        </div>
-      </section>
-    </main>
-
-    <section class="card help-card" id="manualOverrideCard">
-      <details id="manualOverrideDetails" class="help-details">
-        <summary class="help-summary">Need help verifying?</summary>
-        <div class="help-body">
-          <p class="muted small">If the live scanner will not verify, ask your teacher to enter the manual override password on this device.</p>
-          <button class="secondary" id="manual-override-btn">Request manual override</button>
-          <form class="override-form" id="manualOverrideForm" hidden>
-            <label class="override-label" for="manualOverridePassword">Teacher password</label>
-            <div class="override-row">
-              <input type="password" id="manualOverridePassword" autocomplete="off" inputmode="text" minlength="4" maxlength="32" placeholder="Enter password">
-              <button class="primary" id="manualOverrideSubmit">Approve override</button>
-            </div>
-          </form>
-          <p class="muted small" id="manualOverrideStatus" role="status" aria-live="polite"></p>
-        </div>
-      </details>
     </section>
-  </div>
+
+    <!-- State 2: ID Input (Hidden by default) -->
+    <section id="inputSection" class="card animate-slide-up hidden">
+      <h2 class="text-lg font-bold text-center mb-2">Almost there</h2>
+      <p class="text-muted text-center text-sm mb-4">Enter your Student ID to finish</p>
+
+      <div class="id-input-group">
+        <input type="tel" id="studentIdInput" class="input-field" placeholder="90000000" maxlength="8" pattern="[0-9]*">
+      </div>
+      <button id="submitIdBtn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Submit</button>
+    </section>
+
+    <!-- State 3: Pass Card (Hidden by default) -->
+    <section id="passCard" class="card pass-card animate-slide-up hidden">
+      <div class="pass-header">
+        <div class="pass-icon">✓</div>
+        <div class="pass-time">
+          <div class="label">Checked In</div>
+          <div class="value" id="passTime">--:--</div>
+        </div>
+      </div>
+      <div class="pass-details">
+        <div class="detail-row">
+          <span class="detail-label">Module</span>
+          <span class="detail-value font-mono" id="passModule">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Student ID</span>
+          <span class="detail-value font-mono" id="passStudentId">--</span>
+        </div>
+        <div class="detail-row">
+          <span class="detail-label">Date</span>
+          <span class="detail-value" id="passDate">--</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Manual Override (Collapsible) -->
+    <div class="text-center mt-4">
+      <button id="manualOverrideBtn" class="btn btn-ghost text-sm">Having trouble?</button>
+    </div>
+
+    <!-- Manual Override Form (Hidden) -->
+    <section id="manualOverrideSection" class="card animate-slide-up hidden" style="margin-top: 16px;">
+      <h3 class="text-sm font-bold uppercase text-muted mb-2">Manual Verification</h3>
+      <p class="text-sm text-muted mb-4">Ask your teacher to enter the session password.</p>
+      <div class="id-input-group">
+        <input type="password" id="manualOverridePassword" class="input-field" placeholder="Password">
+      </div>
+      <button id="manualOverrideSubmitBtn" class="btn btn-primary"
+        style="width: 100%; margin-top: 16px;">Verify</button>
+      <p id="manualOverrideStatus" class="text-center text-sm mt-2 text-muted"></p>
+    </section>
+
+    <!-- History -->
+    <section id="historySection" class="history-section hidden">
+      <h3 class="history-title">Recent Passes</h3>
+      <div id="historyList" class="history-list">
+        <!-- History items will be injected here -->
+      </div>
+    </section>
+  </main>
 
   <script src="/student/jsqr.min.js"></script>
   <script src="/student/student.js"></script>
 </body>
+
 </html>

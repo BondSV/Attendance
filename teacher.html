@@ -1,738 +1,401 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Teacher Attendance Console</title>
+  <title>Teacher Console</title>
+  <link rel="stylesheet" href="/design-system.css">
   <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      min-height: 100vh;
-      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #dbeafe 100%);
-      font-family: 'Inter', system-ui, -apple-system, sans-serif;
-      color: #0f172a;
-      padding: 16px;
-      overflow-x: hidden;
-    }
-    
-    .container {
-      max-width: 1600px;
-      margin: 0 auto;
-      display: grid;
-      grid-template-areas: 
-        "teacher step2"
-        "step1 step2";
-      grid-template-columns: 1fr minmax(680px, 800px);
-      gap: 20px;
-      align-items: start;
-      min-height: calc(100vh - 32px);
-    }
-    
-    /* TEACHER CONTROLS - Compact top-left */
-    .teacher-section {
-      grid-area: teacher;
-      background: linear-gradient(180deg, #2a3b57 0%, #16233a 100%);
-      border-radius: 14px;
-      padding: 18px;
-      border: 1px solid rgba(255, 255, 255, 0.22);
-      box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
-      max-width: 552px;
-      position: relative;
-      overflow: visible; /* allow dropdowns to overflow the card */
-    }
-    
-    .teacher-section::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 1px;
-      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
-    }
-    
-    .teacher-section h1 {
-      font-size: 16px;
-      font-weight: 700;
-      color: #ffffff;
-      margin-bottom: 14px;
-      letter-spacing: 0.2px;
-    }
-    
-    .teacher-form {
-      display: grid;
-      grid-template-columns: 1fr 1fr 1fr;
-      gap: 10px;
-      margin-bottom: 14px;
-      align-items: end;
-    }
-    
-    .form-group {
       display: flex;
       flex-direction: column;
-      gap: 4px;
-    }
-    
-    .form-group label {
-      font-size: 11px;
-      font-weight: 700;
-      color: rgba(255, 255, 255, 0.95);
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-    }
-    
-    input[type="text"], select {
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      padding: 9px 12px;
-      color: #ffffff;
-      font-size: 13px;
-      transition: all 0.2s;
-      width: 100%;
-    }
-    
-    input[type="text"]:focus {
-      outline: none;
-      border-color: rgba(96, 165, 250, 0.9);
-      background: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
+      height: 100vh;
+      overflow: hidden;
+      background: var(--bg-app);
     }
 
-    select:focus {
-      outline: none;
-      border-color: rgba(96, 165, 250, 0.9);
-      background: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-    }
-    
-    input[type="text"]::placeholder {
-      color: rgba(255, 255, 255, 0.6);
-    }
-
-    /* Dropdown (custom) to match module combobox */
-    .dropdown { position: relative; }
-    .dropdown-btn {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      background: rgba(255, 255, 255, 0.14);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: 8px;
-      padding: 9px 12px;
-      color: #ffffff;
-      font-size: 13px;
-      cursor: pointer;
-    }
-    .dropdown-btn:focus {
-      outline: none;
-      border-color: rgba(96, 165, 250, 0.9);
-      background: rgba(255, 255, 255, 0.2);
-      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.2);
-    }
-    .dropdown-btn .chevron { margin-left: 8px; opacity: 0.85; }
-    .dropdown-list {
-      position: absolute; top: calc(100% + 4px); left: 0; right: 0;
-      background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px;
-      box-shadow: 0 12px 24px rgba(0,0,0,0.15);
-      padding: 6px; max-height: 220px; overflow-y: auto; z-index: 400;
-    }
-    .dropdown-list[hidden] { display: none; }
-    .dropdown-option { width: 100%; text-align: left; background: transparent; border: 0; padding: 8px 10px; border-radius: 6px; font-size: 12px; color: #1e293b; cursor: pointer; }
-    .dropdown-option:hover { background: #f1f5f9; }
-    
-    .combo {
-      position: relative;
-      z-index: 200; /* keep above native dropdown */
-    }
-    
-    .combo input {
-      width: 100%;
-      text-transform: uppercase;
-    }
-    
-    .group-input {
-      text-align: center;
-      font-weight: 600;
-    }
-    
-    .combo-list {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      right: 0;
-      background: #ffffff; /* light, readable dropdown */
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
-      padding: 6px;
-      max-height: 220px;
-      overflow-y: auto;
-      z-index: 400;
-    }
-    
-    .combo-list[hidden] {
-      display: none;
-    }
-    
-    .combo-option {
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      padding: 8px 10px;
-      width: 100%;
-      text-align: left;
-      font-size: 12px;
-      color: #1e293b;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    
-    .combo-option:hover {
-      background: #f1f5f9;
-    }
-    
-    .teacher-actions {
-      display: flex;
-      gap: 8px;
-    }
-    
-    .btn {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 18px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s ease;
+    /* Main Stage (Presentation Area) */
+    .stage {
       flex: 1;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-    
-    .btn-start {
-      background: linear-gradient(135deg, #065f46 0%, #22c55e 100%);
-      color: #fff;
-      box-shadow: 
-        0 8px 18px rgba(34, 197, 94, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-      border: 0;
-    }
-    
-    .btn-start:not(:disabled):hover {
-      transform: translateY(-2px);
-      box-shadow: 
-        0 8px 20px rgba(5, 150, 105, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-    
-    .btn-start:disabled {
-      opacity: 0.5;
-      cursor: not-allowed;
-    }
-    
-    .btn-stop {
-      background: linear-gradient(135deg, #991b1b 0%, #ef4444 100%);
-      color: #fff;
-      box-shadow: 
-        0 8px 18px rgba(239, 68, 68, 0.35),
-        inset 0 1px 0 rgba(255, 255, 255, 0.22);
-      border: 0;
-    }
-    
-    .btn-stop:not(:disabled):hover {
-      transform: translateY(-2px);
-      box-shadow: 
-        0 8px 20px rgba(220, 38, 38, 0.4),
-        inset 0 1px 0 rgba(255, 255, 255, 0.3);
-    }
-    
-    .btn-stop:disabled {
-      opacity: 0.4;
-      cursor: not-allowed;
-    }
-    
-    /* STUDENT-FACING STEPS */
-    .step1-section {
-      grid-area: step1;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 255, 0.85));
-      border-radius: 24px;
-      padding: 20px 28px 32px;
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      border: 1px solid rgba(15, 23, 42, 0.08);
       display: flex;
       flex-direction: column;
       align-items: center;
-      justify-content: space-between;
-      text-align: center;
-      gap: 12px;
-      max-width: 552px;
-      align-self: stretch;
+      justify-content: center;
+      position: relative;
+      padding: 40px;
     }
 
-    .step2-section {
-      grid-area: step2;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 255, 0.85));
-      border-radius: 24px;
-      padding: 20px 28px 32px;
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      display: grid;
-      grid-template-rows: auto auto 1fr;
-      row-gap: 16px;
-      justify-items: center;
+    .session-info {
       text-align: center;
-      grid-row: 1 / 3;
-      align-self: stretch;
+      margin-bottom: 40px;
+      animation: slideUp 0.6s var(--ease-out);
     }
-    
-    .step-badge {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      border-radius: 999px;
+
+    .module-code {
+      font-size: 5rem;
       font-weight: 800;
-      letter-spacing: 1.3px;
-      text-transform: uppercase;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
-    
-    .step1-section .step-badge {
-      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-      color: #1e40af;
-      box-shadow: 0 5px 14px rgba(59, 130, 246, 0.24);
-      font-size: 24px;
-      padding: 10px 24px;
-    }
-    
-    .step2-section .step-badge {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      color: #b45309;
-      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
-      font-size: 26px;
-      padding: 12px 30px;
-    }
-    
-    .step-desc {
-      font-size: 24px;
-      color: #1e293b;
+
+    .phase-badge {
+      display: inline-block;
+      margin-top: 16px;
+      padding: 8px 24px;
+      border-radius: var(--radius-full);
+      background: rgba(59, 130, 246, 0.15);
+      color: var(--primary);
       font-weight: 700;
-      line-height: 1.5;
-      margin: 0;
-      max-width: 100%;
-      padding: 0 8px;
+      font-size: 1.5rem;
+      border: 1px solid rgba(59, 130, 246, 0.3);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    
-    .step2-section .step-desc {
-      font-size: 24px;
-      color: #1e293b;
-      max-width: 100%;
-      margin: 0;
+
+    /* QR Container */
+    .qr-frame {
+      background: #fff;
+      padding: 32px;
+      border-radius: 32px;
+      box-shadow: 0 0 100px rgba(59, 130, 246, 0.15);
+      animation: fadeIn 0.8s var(--ease-out);
+      position: relative;
     }
-    
-    .qr-container {
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 255, 0.85));
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      border: 1px solid rgba(15, 23, 42, 0.08);
+
+    .qr-frame canvas {
+      display: block;
+    }
+
+    .qr-placeholder {
+      width: 400px;
+      height: 400px;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 8px 0;
+      color: var(--text-muted);
+      border: 2px dashed var(--bg-surface-hover);
+      border-radius: 16px;
     }
 
-    .step1-section .qr-container {
-      width: 380px;
-      height: 380px;
+    /* Live Counter */
+    .live-counter {
+      position: absolute;
+      top: 40px;
+      right: 40px;
+      background: var(--bg-surface);
+      padding: 12px 24px;
+      border-radius: var(--radius-full);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+      transition: transform 0.2s;
     }
 
-    .step2-section .qr-container {
-      width: 600px;
-      height: 600px;
-      border: 1px solid rgba(37, 99, 235, 0.14);
-      box-shadow: 0 32px 64px rgba(37, 99, 235, 0.18);
-      margin: 16px 0 0;
-      align-self: center;
+    .live-counter.pulse {
+      transform: scale(1.05);
+      border-color: var(--success);
     }
-    
-    .qr-container canvas {
-      max-width: 100%;
-      max-height: 100%;
+
+    .counter-icon {
+      font-size: 1.5rem;
     }
-    
-    .qr-placeholder {
-      font-size: 14px;
-      color: #94a3b8;
-      padding: 0 20px;
-      line-height: 1.5;
+
+    .counter-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      font-family: var(--font-mono);
+    }
+
+    /* Control Bar (Bottom) */
+    .control-bar {
+      background: var(--bg-surface);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 20px 40px;
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+    }
+
+    .control-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .input-dark {
+      background: rgba(0, 0, 0, 0.3);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      width: 140px;
       text-align: center;
     }
-    
-    .step2-section .qr-placeholder {
-      font-size: 16px;
-      color: #64748b;
+
+    .input-dark:focus {
+      outline: none;
+      border-color: var(--primary);
     }
-    
-    .status-text {
-      font-size: 14px;
-      color: #64748b;
-      font-weight: 500;
+
+    select.input-dark {
+      width: auto;
+      cursor: pointer;
     }
-    
-    .step2-section .status-text {
-      font-size: 17px;
-      font-weight: 600;
-      color: #2563eb;
+
+    .divider {
+      width: 1px;
+      height: 32px;
+      background: rgba(255, 255, 255, 0.1);
     }
-    
-    /* Responsive adjustments */
-    @media (max-width: 1024px) {
-      .container {
-        grid-template-areas: 
-          "teacher"
-          "step1"
-          "step2";
-        grid-template-columns: 1fr;
-        grid-auto-rows: auto;
-        gap: 16px;
-      }
 
-      .teacher-section,
-      .step1-section,
-      .step2-section {
-        max-width: none;
-        width: 100%;
-      }
-
-      .step2-section {
-        grid-row: auto;
-      }
-
-      .teacher-form {
-        grid-template-columns: 1fr;
-        gap: 12px;
-      }
-
-      .teacher-actions {
-        flex-direction: column;
-      }
-
-      .btn {
-        width: 100%;
-      }
+    /* Step 1 QR (Small, corner) */
+    .session-qr-mini {
+      position: absolute;
+      bottom: 120px;
+      left: 40px;
+      background: #fff;
+      padding: 10px;
+      border-radius: 12px;
+      opacity: 0.8;
+      transition: opacity 0.2s;
     }
-    
-    @media (max-width: 768px) {
-      body {
-        padding: 12px;
-      }
-      .step1-section .qr-container {
-        width: 260px;
-        height: 260px;
-      }
-      .step2-section .qr-container {
-        width: 340px;
-        height: 340px;
-      }
+
+    .session-qr-mini:hover {
+      opacity: 1;
+    }
+
+    .session-qr-mini canvas {
+      width: 100px;
+      height: 100px;
+    }
+
+    .session-qr-label {
+      position: absolute;
+      top: -25px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      font-weight: 700;
     }
   </style>
 </head>
+
 <body>
-  <div class="container">
-    <!-- TEACHER CONTROLS - Compact, top-left -->
-    <section class="teacher-section">
-      <h1>Teacher Controls</h1>
-      <form class="teacher-form">
-        <div class="form-group">
-          <label for="moduleInput">Module</label>
-          <div class="combo">
-            <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
-            <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
-          </div>
-        </div>
-        <div class="form-group">
-          <label for="groupInput">Group</label>
-          <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
-        </div>
-        <div class="form-group">
-  <label for="phase">Phase</label>
-          <div class="dropdown" id="phaseDropdown">
-            <button class="dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
-              <span id="phaseLabel">Start</span>
-              <span class="chevron">▾</span>
-            </button>
-            <div class="dropdown-list" role="listbox" hidden>
-              <button class="dropdown-option" type="button" data-value="start">Start</button>
-              <button class="dropdown-option" type="button" data-value="break1">Break 1</button>
-              <button class="dropdown-option" type="button" data-value="break2">Break 2</button>
-              <button class="dropdown-option" type="button" data-value="end">End</button>
-            </div>
-          </div>
-        </div>
-      </form>
-      <div class="teacher-actions">
-        <button class="btn btn-start" id="startBtn">Start</button>
-        <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
-      </div>
-    </section>
 
-    <!-- STEP 1 - Student app QR -->
-    <section class="step1-section">
-      <span class="step-badge">Step 1</span>
-      <p class="step-desc">Use your phone camera to scan this code to launch the attendance check-in app</p>
-      <div class="qr-container" id="sessionQr">
-        <div class="qr-placeholder">Press Start to generate the QR code</div>
-      </div>
-    </section>
-
-    <!-- STEP 2 - Verification QR (larger, more prominent) -->
-    <section class="step2-section">
-      <span class="step-badge">Step 2</span>
-      <p class="step-desc">From inside the app, scan this live code to confirm you're in the classroom</p>
-      <div class="qr-container" id="verificationQr">
-        <div class="qr-placeholder">Press Start to display the verification code</div>
-      </div>
-    </section>
+  <!-- Live Counter -->
+  <div class="live-counter" id="liveCounter" hidden>
+    <span class="counter-icon">👤</span>
+    <span class="counter-value" id="counterValue">0</span>
+    <span class="text-sm text-muted">Verified</span>
   </div>
+
+  <!-- Main Stage -->
+  <div class="stage">
+    <div class="session-info">
+      <div class="module-code" id="displayModule">READY</div>
+      <div class="phase-badge" id="displayPhase">Setup</div>
+    </div>
+
+    <div class="qr-frame">
+      <div id="verificationQr">
+        <div class="qr-placeholder">
+          <div class="text-center">
+            <p class="font-bold mb-2">Start Session</p>
+            <p class="text-sm text-muted">to generate verification code</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Session QR (Bottom Left) -->
+  <div class="session-qr-mini" id="sessionQr" hidden>
+    <div class="session-qr-label">Join</div>
+  </div>
+
+  <!-- Controls -->
+  <footer class="control-bar">
+    <div class="control-group">
+      <input type="text" id="moduleInput" class="input-dark" placeholder="MODULE" value="BSM24105">
+      <input type="text" id="groupInput" class="input-dark" placeholder="GRP" value="1" style="width: 60px;">
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="control-group">
+      <select id="phaseSelect" class="input-dark">
+        <option value="start">Start</option>
+        <option value="break1">Break 1</option>
+        <option value="break2">Break 2</option>
+        <option value="end">End</option>
+      </select>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="control-group">
+      <button id="startBtn" class="btn btn-primary">Start Session</button>
+      <button id="stopBtn" class="btn btn-ghost" disabled>Stop</button>
+    </div>
+  </footer>
 
   <script src="https://unpkg.com/qrcodejs@1.0.0/qrcode.min.js"></script>
   <script>
-  (function() {
-    const DEFAULT_ORIGIN = 'https://attendance-i9lt.onrender.com';
+    (() => {
+      const DEFAULT_ORIGIN = window.location.origin;
 
-    const moduleInput = document.getElementById('moduleInput');
-    const moduleOptions = document.getElementById('moduleOptions');
-    const groupInput = document.getElementById('groupInput');
-    const phaseDropdown = document.getElementById('phaseDropdown');
-    const phaseBtn = phaseDropdown.querySelector('.dropdown-btn');
-    const phaseList = phaseDropdown.querySelector('.dropdown-list');
-    const phaseLabel = document.getElementById('phaseLabel');
-    let selectedPhase = 'start';
-    const startBtn = document.getElementById('startBtn');
-    const stopBtn = document.getElementById('stopBtn');
-    const sessionQrEl = document.getElementById('sessionQr');
-    const verificationQrEl = document.getElementById('verificationQr');
+      const elements = {
+        moduleInput: document.getElementById('moduleInput'),
+        groupInput: document.getElementById('groupInput'),
+        phaseSelect: document.getElementById('phaseSelect'),
+        startBtn: document.getElementById('startBtn'),
+        stopBtn: document.getElementById('stopBtn'),
+        displayModule: document.getElementById('displayModule'),
+        displayPhase: document.getElementById('displayPhase'),
+        verificationQr: document.getElementById('verificationQr'),
+        sessionQr: document.getElementById('sessionQr'),
+        liveCounter: document.getElementById('liveCounter'),
+        counterValue: document.getElementById('counterValue')
+      };
 
-    let sessionQr = null;
-    let verificationQr = null;
-    let activeSession = null;
-    let challengeTimerId = null;
-    let comboOpen = false;
+      let state = {
+        active: false,
+        sid: null,
+        phase: null,
+        timer: null,
+        statsTimer: null,
+        lastCount: 0
+      };
 
-    function clearQr(container) {
-      container.innerHTML = '<div class="qr-placeholder">Start the session to display the verification QR.</div>';
-    }
+      // --- Actions ---
 
-    function renderSessionQr(url) {
-      sessionQrEl.innerHTML = '';
-      sessionQr = new QRCode(sessionQrEl, {
-        text: url,
-        width: 320,
-        height: 320,
-        correctLevel: QRCode.CorrectLevel.M,
-        colorDark: '#000000',
-        colorLight: '#ffffff'
-      });
-    }
+      function startSession() {
+        const module = elements.moduleInput.value.trim().toUpperCase();
+        const group = elements.groupInput.value.trim();
+        const phase = elements.phaseSelect.value;
 
-    function renderVerificationQr(text) {
-      verificationQrEl.innerHTML = '';
-      verificationQr = new QRCode(verificationQrEl, {
-        text,
-        width: 540,
-        height: 540,
-        correctLevel: QRCode.CorrectLevel.M,
-        colorDark: '#000000',
-        colorLight: '#ffffff'
-      });
-    }
-
-    function encodePayload(obj) {
-      const json = JSON.stringify(obj);
-      return btoa(json).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-    }
-
-    function clearTimers() {
-      if (challengeTimerId) {
-        clearTimeout(challengeTimerId);
-        challengeTimerId = null;
-      }
-    }
-
-    let cachedModules = [];
-
-    function renderModuleOptions(filterValue = '') {
-      if (!comboOpen) return;
-      const query = filterValue.trim().toUpperCase();
-      moduleOptions.innerHTML = '';
-      const matches = cachedModules.filter(mod => mod.includes(query)).slice(0, 8);
-      if (!matches.length) {
-        moduleOptions.hidden = true;
-        moduleInput.setAttribute('aria-expanded', 'false');
-        return;
-      }
-      matches.forEach(mod => {
-        const option = document.createElement('button');
-        option.type = 'button';
-        option.className = 'combo-option';
-        option.textContent = mod;
-        option.setAttribute('role', 'option');
-        option.addEventListener('click', () => {
-          moduleInput.value = mod;
-          closeModuleOptions();
-          groupInput.focus();
-        });
-        moduleOptions.appendChild(option);
-      });
-      moduleOptions.hidden = false;
-      moduleInput.setAttribute('aria-expanded', 'true');
-    }
-
-    function closeModuleOptions() {
-      comboOpen = false;
-      moduleOptions.hidden = true;
-      moduleInput.setAttribute('aria-expanded', 'false');
-    }
-
-    async function fetchModuleSuggestions() {
-      try {
-        const resp = await fetch('/api/modules', { cache: 'no-store' });
-        if (!resp.ok) return;
-      const data = await resp.json();
-        if (!data || !Array.isArray(data.modules)) return;
-        cachedModules = data.modules.map(mod => mod.toUpperCase());
-        if (comboOpen) renderModuleOptions(moduleInput.value || '');
-    } catch (err) {
-        console.warn('Failed to load module suggestions', err);
-      }
-    }
-
-    async function fetchChallenge() {
-      if (!activeSession) return;
-      const { sid, phase } = activeSession;
-      try {
-        if (!/^[A-Za-z0-9 _\-:.,]{3,80}$/.test(sid)) {
-          throw new Error('Invalid Session ID. Use letters, numbers, dash, underscore, colon, or dot.');
+        if (!module || !group) {
+          alert('Please enter Module and Group');
+          return;
         }
-        const url = `/api/challenge?sid=${encodeURIComponent(sid)}&phase=${encodeURIComponent(phase)}`;
-        const resp = await fetch(url, { cache: 'no-store' });
-        if (!resp.ok) throw new Error('Challenge fetch failed');
-        const data = await resp.json();
-        renderVerificationQr(data.challenge);
-        const ttlMs = data.ttl_ms || 3000;
-        const nextDelay = Math.max(1000, ttlMs - 200);
-        challengeTimerId = setTimeout(fetchChallenge, nextDelay);
-      } catch (err) {
-        console.error(err);
-        verificationQrEl.innerHTML = `<div class="qr-placeholder">Unable to load verification code. Retrying…</div>`;
-        challengeTimerId = setTimeout(fetchChallenge, 2000);
+
+        state.active = true;
+        state.sid = `${module} Group ${group}`;
+        state.phase = phase;
+
+        // Update UI
+        elements.displayModule.textContent = module;
+        elements.displayPhase.textContent = elements.phaseSelect.options[elements.phaseSelect.selectedIndex].text;
+        elements.startBtn.disabled = true;
+        elements.stopBtn.disabled = false;
+        elements.moduleInput.disabled = true;
+        elements.groupInput.disabled = true;
+        elements.phaseSelect.disabled = true;
+
+        elements.liveCounter.hidden = false;
+        elements.sessionQr.hidden = false;
+
+        // Generate Session QR (Static)
+        const payload = { v: 1, sid: state.sid, p: phase, m: module, g: group };
+        const url = `${DEFAULT_ORIGIN}/student#${btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_')}`;
+        renderQr(elements.sessionQr, url, 100);
+
+        // Start Loops
+        fetchChallenge();
+        fetchStats();
+        state.statsTimer = setInterval(fetchStats, 5000);
       }
-    }
 
-    function stopSession() {
-      clearTimers();
-      activeSession = null;
-      startBtn.disabled = false;
-      stopBtn.disabled = true;
-      clearQr(verificationQrEl);
-    }
+      function stopSession() {
+        state.active = false;
+        clearTimeout(state.timer);
+        clearInterval(state.statsTimer);
 
-    function buildSessionId(moduleCode, groupNumber) {
-      return `${moduleCode} Group ${groupNumber}`;
-    }
+        elements.startBtn.disabled = false;
+        elements.stopBtn.disabled = true;
+        elements.moduleInput.disabled = false;
+        elements.groupInput.disabled = false;
+        elements.phaseSelect.disabled = false;
 
-    function validateModule(moduleCode) {
-      return /^[A-Z]{3}\d{5}$/.test(moduleCode);
-    }
-
-    function validateGroup(groupNumber) {
-      return /^[0-9]$/.test(groupNumber);
-    }
-
-    startBtn.addEventListener('click', () => {
-      const moduleCode = moduleInput.value.trim().toUpperCase();
-      const groupNumber = groupInput.value.trim();
-      const phase = selectedPhase;
-      const origin = DEFAULT_ORIGIN.replace(/\/$/, '');
-      if (!validateModule(moduleCode)) {
-        alert('Please enter a valid module code (e.g. BSM24105).');
-        moduleInput.focus();
-        return;
+        elements.displayModule.textContent = 'PAUSED';
+        elements.verificationQr.innerHTML = '<div class="qr-placeholder"><p class="text-muted">Session Paused</p></div>';
+        elements.liveCounter.hidden = true;
       }
-      if (!validateGroup(groupNumber)) {
-        alert('Group must be a single digit (0-9).');
-        groupInput.focus();
-      return;
-    }
-      const sid = buildSessionId(moduleCode, groupNumber);
-      const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber };
-      const frag = encodePayload(sessionPayload);
-      const url = `${origin}/student#${frag}`;
-      renderSessionQr(url);
-      activeSession = { sid, phase, module: moduleCode, group: groupNumber };
-      startBtn.disabled = true;
-      stopBtn.disabled = false;
-      clearTimers();
-      fetchChallenge();
-    });
 
-    stopBtn.addEventListener('click', () => {
-      stopSession();
-    });
+      // --- API Calls ---
 
-    window.addEventListener('beforeunload', () => {
-      clearTimers();
-    });
+      async function fetchChallenge() {
+        if (!state.active) return;
+        try {
+          const res = await fetch(`/api/challenge?sid=${encodeURIComponent(state.sid)}&phase=${state.phase}`);
+          const data = await res.json();
 
-    moduleInput.addEventListener('input', (event) => {
-      const value = event.target.value.toUpperCase();
-      moduleInput.value = value;
-      if (!comboOpen) {
-        comboOpen = true;
+          renderQr(elements.verificationQr, data.challenge, 400);
+
+          const ttl = data.ttl_ms || 3000;
+          state.timer = setTimeout(fetchChallenge, Math.max(1000, ttl - 200));
+        } catch (e) {
+          console.error(e);
+          state.timer = setTimeout(fetchChallenge, 2000);
+        }
       }
-      renderModuleOptions(value);
-    });
 
-    moduleInput.addEventListener('focus', () => {
-      comboOpen = true;
-      renderModuleOptions(moduleInput.value);
-    });
-
-    moduleInput.addEventListener('blur', () => {
-      setTimeout(closeModuleOptions, 120);
-    });
-
-    // Phase dropdown handlers
-    phaseBtn.addEventListener('click', () => {
-      const isOpen = phaseList.hasAttribute('hidden') === false;
-      if (isOpen) {
-        phaseList.setAttribute('hidden', '');
-        phaseBtn.setAttribute('aria-expanded', 'false');
-      } else {
-        phaseList.removeAttribute('hidden');
-        phaseBtn.setAttribute('aria-expanded', 'true');
+      async function fetchStats() {
+        if (!state.active) return;
+        try {
+          const res = await fetch(`/api/stats?sid=${encodeURIComponent(state.sid)}`);
+          if (res.ok) {
+            const data = await res.json();
+            updateCounter(data.count || 0);
+          }
+        } catch (e) {
+          console.warn('Stats failed', e);
+        }
       }
-    });
 
-    phaseList.querySelectorAll('.dropdown-option').forEach(btn => {
-      btn.addEventListener('click', () => {
-        selectedPhase = btn.getAttribute('data-value');
-        phaseLabel.textContent = btn.textContent;
-        phaseList.setAttribute('hidden', '');
-        phaseBtn.setAttribute('aria-expanded', 'false');
-      });
-    });
+      // --- Helpers ---
 
-    document.addEventListener('click', (e) => {
-      if (!phaseDropdown.contains(e.target)) {
-        phaseList.setAttribute('hidden', '');
-        phaseBtn.setAttribute('aria-expanded', 'false');
+      function renderQr(el, text, size) {
+        el.innerHTML = '';
+        new QRCode(el, {
+          text: text,
+          width: size,
+          height: size,
+          colorDark: "#000000",
+          colorLight: "#ffffff",
+          correctLevel: QRCode.CorrectLevel.L
+        });
       }
-    });
 
-    fetchModuleSuggestions();
-  })();
+      function updateCounter(count) {
+        if (count !== state.lastCount) {
+          elements.counterValue.textContent = count;
+          elements.liveCounter.classList.remove('pulse');
+          void elements.liveCounter.offsetWidth; // trigger reflow
+          elements.liveCounter.classList.add('pulse');
+          state.lastCount = count;
+        }
+      }
+
+      // --- Events ---
+      elements.startBtn.addEventListener('click', startSession);
+      elements.stopBtn.addEventListener('click', stopSession);
+
+    })();
   </script>
 </body>
+
 </html>
