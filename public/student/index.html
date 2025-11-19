@@ -17,47 +17,54 @@
 
   <main>
     <!-- State 1: Scanner -->
-    <section id="scannerSection" class="card scanner-card animate-fade-in">
+    <section id="scannerSection" class="scanner-card animate-fade-in">
       <video id="video" autoplay muted playsinline webkit-playsinline></video>
       <div class="scanner-overlay">
-        <div class="scan-guide"></div>
-        <p class="text-muted text-sm" id="scannerStatus">Align QR code to verify</p>
-        <button id="startScanBtn" class="btn btn-primary" style="margin-top: 16px;">Start Camera</button>
+        <div class="scan-guide">
+          <div class="corner-tr"></div>
+          <div class="corner-bl"></div>
+        </div>
+        <p class="text-muted text-sm font-bold uppercase" style="letter-spacing: 0.05em;" id="scannerStatus">Align QR
+          code to verify</p>
+        <button id="startScanBtn" class="btn btn-primary" style="margin-top: 24px; min-width: 160px;">Start
+          Camera</button>
       </div>
     </section>
 
     <!-- State 2: ID Input (Hidden by default) -->
-    <section id="inputSection" class="card animate-slide-up hidden">
-      <h2 class="text-lg font-bold text-center mb-2">Almost there</h2>
-      <p class="text-muted text-center text-sm mb-4">Enter your Student ID to finish</p>
+    <section id="inputSection" class="input-card animate-slide-up hidden">
+      <h2 class="text-xl font-bold text-center mb-2">Verify Identity</h2>
+      <p class="text-muted text-center text-sm mb-4">Enter your Student ID to complete check-in</p>
 
       <div class="id-input-group">
         <input type="tel" id="studentIdInput" class="input-field" placeholder="90000000" maxlength="8" pattern="[0-9]*">
       </div>
-      <button id="submitIdBtn" class="btn btn-primary" style="width: 100%; margin-top: 16px;">Submit</button>
+      <button id="submitIdBtn" class="btn btn-primary" style="width: 100%;">Submit & Verify</button>
     </section>
 
     <!-- State 3: Pass Card (Hidden by default) -->
-    <section id="passCard" class="card pass-card animate-slide-up hidden">
-      <div class="pass-header">
-        <div class="pass-icon">✓</div>
-        <div class="pass-time">
-          <div class="label">Checked In</div>
-          <div class="value" id="passTime">--:--</div>
+    <section id="passCard" class="pass-card animate-slide-up hidden">
+      <div class="pass-content">
+        <div class="pass-header">
+          <div class="pass-icon">✓</div>
+          <div class="pass-status">
+            <div class="label">Status</div>
+            <div class="value">Verified</div>
+          </div>
         </div>
-      </div>
-      <div class="pass-details">
-        <div class="detail-row">
-          <span class="detail-label">Module</span>
-          <span class="detail-value font-mono" id="passModule">--</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Student ID</span>
-          <span class="detail-value font-mono" id="passStudentId">--</span>
-        </div>
-        <div class="detail-row">
-          <span class="detail-label">Date</span>
-          <span class="detail-value" id="passDate">--</span>
+        <div class="pass-details">
+          <div class="detail-group">
+            <span class="detail-label">Student ID</span>
+            <span class="detail-value" id="passStudentId">--</span>
+          </div>
+          <div class="detail-group">
+            <span class="detail-label">Module</span>
+            <span class="detail-value small" id="passModule">--</span>
+          </div>
+          <div class="detail-group">
+            <span class="detail-label">Timestamp</span>
+            <span class="detail-value small" id="passTime">--</span>
+          </div>
         </div>
       </div>
     </section>
@@ -68,15 +75,14 @@
     </div>
 
     <!-- Manual Override Form (Hidden) -->
-    <section id="manualOverrideSection" class="card animate-slide-up hidden" style="margin-top: 16px;">
-      <h3 class="text-sm font-bold uppercase text-muted mb-2">Manual Verification</h3>
-      <p class="text-sm text-muted mb-4">Ask your teacher to enter the session password.</p>
+    <section id="manualOverrideSection" class="input-card animate-slide-up hidden" style="margin-top: 16px;">
+      <h3 class="text-sm font-bold uppercase text-muted mb-2 text-center">Manual Verification</h3>
+      <p class="text-sm text-muted mb-4 text-center">Ask your teacher to enter the session password.</p>
       <div class="id-input-group">
         <input type="password" id="manualOverridePassword" class="input-field" placeholder="Password">
       </div>
-      <button id="manualOverrideSubmitBtn" class="btn btn-primary"
-        style="width: 100%; margin-top: 16px;">Verify</button>
-      <p id="manualOverrideStatus" class="text-center text-sm mt-2 text-muted"></p>
+      <button id="manualOverrideSubmitBtn" class="btn btn-primary" style="width: 100%;">Verify</button>
+      <p id="manualOverrideStatus" class="text-center text-sm mt-4 text-muted"></p>
     </section>
 
     <!-- History -->

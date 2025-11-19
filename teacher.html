@@ -13,230 +13,207 @@
       height: 100vh;
       overflow: hidden;
       background: var(--bg-app);
+      /* Richer background for large screen */
+      background-image:
+        radial-gradient(circle at 20% 30%, rgba(59, 130, 246, 0.15), transparent 40%),
+        radial-gradient(circle at 80% 70%, rgba(139, 92, 246, 0.15), transparent 40%);
     }
 
-    /* Main Stage (Presentation Area) */
-    .stage {
-      flex: 1;
+    /* Header Bar */
+    .top-bar {
       display: flex;
-      flex-direction: column;
+      justify-content: space-between;
       align-items: center;
-      justify-content: center;
-      position: relative;
-      padding: 40px;
+      padding: 20px 40px;
+      background: rgba(3, 7, 18, 0.5);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      z-index: 50;
     }
 
-    .session-info {
-      text-align: center;
-      margin-bottom: 40px;
-      animation: slideUp 0.6s var(--ease-out);
+    .session-title {
+      display: flex;
+      align-items: baseline;
+      gap: 16px;
     }
 
-    .module-code {
-      font-size: 5rem;
+    .module-display {
+      font-size: 2.5rem;
       font-weight: 800;
-      letter-spacing: -0.04em;
-      line-height: 1;
-      background: linear-gradient(135deg, #fff 0%, #94a3b8 100%);
+      background: linear-gradient(to right, #fff, #94a3b8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
+      letter-spacing: -0.03em;
     }
 
     .phase-badge {
-      display: inline-block;
-      margin-top: 16px;
-      padding: 8px 24px;
+      padding: 6px 16px;
       border-radius: var(--radius-full);
       background: rgba(59, 130, 246, 0.15);
-      color: var(--primary);
+      color: #60a5fa;
       font-weight: 700;
-      font-size: 1.5rem;
+      font-size: 1rem;
       border: 1px solid rgba(59, 130, 246, 0.3);
       text-transform: uppercase;
       letter-spacing: 0.05em;
     }
 
-    /* QR Container */
-    .qr-frame {
-      background: #fff;
-      padding: 32px;
-      border-radius: 32px;
-      box-shadow: 0 0 100px rgba(59, 130, 246, 0.15);
-      animation: fadeIn 0.8s var(--ease-out);
-      position: relative;
-    }
-
-    .qr-frame canvas {
-      display: block;
-    }
-
-    .qr-placeholder {
-      width: 400px;
-      height: 400px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: var(--text-muted);
-      border: 2px dashed var(--bg-surface-hover);
-      border-radius: 16px;
-    }
-
-    /* Live Counter */
     .live-counter {
-      position: absolute;
-      top: 40px;
-      right: 40px;
-      background: var(--bg-surface);
-      padding: 12px 24px;
-      border-radius: var(--radius-full);
       display: flex;
       align-items: center;
       gap: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-      transition: transform 0.2s;
+      padding: 10px 24px;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.2);
+      border-radius: var(--radius-full);
+      color: var(--success);
+      transition: all 0.3s;
     }
 
     .live-counter.pulse {
+      box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
       transform: scale(1.05);
-      border-color: var(--success);
     }
 
-    .counter-icon {
-      font-size: 1.5rem;
-    }
-
-    .counter-value {
-      font-size: 1.5rem;
-      font-weight: 700;
-      font-family: var(--font-mono);
-    }
-
-    /* Control Bar (Bottom) */
-    .control-bar {
-      background: var(--bg-surface);
-      border-top: 1px solid rgba(255, 255, 255, 0.1);
-      padding: 20px 40px;
+    /* Main Content - Split View */
+    .main-stage {
+      flex: 1;
       display: flex;
-      gap: 24px;
+      padding: 40px;
+      gap: 40px;
+      align-items: stretch;
+    }
+
+    .col {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .qr-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 100;
+      padding: 40px;
+      position: relative;
+    }
+
+    .qr-label {
+      position: absolute;
+      top: 30px;
+      left: 0;
+      width: 100%;
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+    }
+
+    .qr-wrapper {
+      background: #fff;
+      padding: 24px;
+      border-radius: 24px;
+      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+    }
+
+    .qr-wrapper canvas {
+      display: block;
+    }
+
+    /* Control Bar */
+    .control-bar {
+      background: rgba(3, 7, 18, 0.8);
+      backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255, 255, 255, 0.1);
+      padding: 24px 40px;
+      display: flex;
+      gap: 32px;
+      align-items: center;
+      justify-content: center;
     }
 
     .control-group {
       display: flex;
-      gap: 12px;
+      gap: 16px;
       align-items: center;
-    }
-
-    .input-dark {
-      background: rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: var(--radius-md);
-      font-family: var(--font-mono);
-      font-size: 1rem;
-      width: 140px;
-      text-align: center;
-    }
-
-    .input-dark:focus {
-      outline: none;
-      border-color: var(--primary);
-    }
-
-    select.input-dark {
-      width: auto;
-      cursor: pointer;
     }
 
     .divider {
       width: 1px;
-      height: 32px;
+      height: 40px;
       background: rgba(255, 255, 255, 0.1);
     }
 
-    /* Step 1 QR (Small, corner) */
-    .session-qr-mini {
-      position: absolute;
-      bottom: 120px;
-      left: 40px;
-      background: #fff;
-      padding: 10px;
-      border-radius: 12px;
-      opacity: 0.8;
-      transition: opacity 0.2s;
-    }
-
-    .session-qr-mini:hover {
-      opacity: 1;
-    }
-
-    .session-qr-mini canvas {
-      width: 100px;
-      height: 100px;
-    }
-
-    .session-qr-label {
-      position: absolute;
-      top: -25px;
-      left: 0;
-      width: 100%;
-      text-align: center;
-      font-size: 0.75rem;
+    /* Utilities */
+    .placeholder-text {
       color: var(--text-muted);
-      text-transform: uppercase;
-      font-weight: 700;
+      font-size: 1.5rem;
+      font-weight: 500;
     }
   </style>
 </head>
 
 <body>
 
-  <!-- Live Counter -->
-  <div class="live-counter" id="liveCounter" hidden>
-    <span class="counter-icon">👤</span>
-    <span class="counter-value" id="counterValue">0</span>
-    <span class="text-sm text-muted">Verified</span>
-  </div>
-
-  <!-- Main Stage -->
-  <div class="stage">
-    <div class="session-info">
-      <div class="module-code" id="displayModule">READY</div>
+  <header class="top-bar">
+    <div class="session-title">
+      <div class="module-display" id="displayModule">READY</div>
       <div class="phase-badge" id="displayPhase">Setup</div>
     </div>
 
-    <div class="qr-frame">
-      <div id="verificationQr">
-        <div class="qr-placeholder">
-          <div class="text-center">
-            <p class="font-bold mb-2">Start Session</p>
-            <p class="text-sm text-muted">to generate verification code</p>
-          </div>
+    <div class="live-counter" id="liveCounter" hidden>
+      <span style="font-size: 1.5rem">👤</span>
+      <span class="font-mono font-bold text-2xl" id="counterValue">0</span>
+      <span class="uppercase text-sm font-bold" style="letter-spacing: 0.05em">Verified</span>
+    </div>
+  </header>
+
+  <main class="main-stage">
+    <!-- Column 1: Join (Static) -->
+    <div class="col">
+      <div class="glass-card qr-card">
+        <div class="qr-label">Step 1: Join</div>
+        <div class="qr-wrapper" id="sessionQrWrapper" hidden>
+          <div id="sessionQr"></div>
+        </div>
+        <div class="placeholder-text" id="sessionPlaceholder">
+          Enter details to start
         </div>
       </div>
     </div>
-  </div>
 
-  <!-- Mini Session QR (Bottom Left) -->
-  <div class="session-qr-mini" id="sessionQr" hidden>
-    <div class="session-qr-label">Join</div>
-  </div>
+    <!-- Column 2: Verify (Dynamic) -->
+    <div class="col">
+      <div class="glass-card qr-card"
+        style="background: linear-gradient(145deg, rgba(59, 130, 246, 0.1) 0%, rgba(3, 7, 18, 0.4) 100%); border-color: rgba(59, 130, 246, 0.2);">
+        <div class="qr-label" style="color: #60a5fa;">Step 2: Verify</div>
+        <div class="qr-wrapper" id="verificationQrWrapper" hidden>
+          <div id="verificationQr"></div>
+        </div>
+        <div class="placeholder-text" id="verificationPlaceholder">
+          Waiting for session...
+        </div>
+      </div>
+    </div>
+  </main>
 
-  <!-- Controls -->
   <footer class="control-bar">
     <div class="control-group">
-      <input type="text" id="moduleInput" class="input-dark" placeholder="MODULE" value="BSM24105">
-      <input type="text" id="groupInput" class="input-dark" placeholder="GRP" value="1" style="width: 60px;">
+      <input type="text" id="moduleInput" class="input-glass" placeholder="MODULE" value="BSM24105"
+        style="width: 160px; text-align: center; font-size: 1.25rem; font-weight: 700;">
+      <input type="text" id="groupInput" class="input-glass" placeholder="GRP" value="1"
+        style="width: 80px; text-align: center; font-size: 1.25rem;">
     </div>
 
     <div class="divider"></div>
 
     <div class="control-group">
-      <select id="phaseSelect" class="input-dark">
+      <select id="phaseSelect" class="input-glass" style="font-size: 1.1rem; cursor: pointer;">
         <option value="start">Start</option>
         <option value="break1">Break 1</option>
         <option value="break2">Break 2</option>
@@ -247,7 +224,8 @@
     <div class="divider"></div>
 
     <div class="control-group">
-      <button id="startBtn" class="btn btn-primary">Start Session</button>
+      <button id="startBtn" class="btn btn-primary" style="font-size: 1.1rem; padding: 16px 32px;">Start
+        Session</button>
       <button id="stopBtn" class="btn btn-ghost" disabled>Stop</button>
     </div>
   </footer>
@@ -265,8 +243,15 @@
         stopBtn: document.getElementById('stopBtn'),
         displayModule: document.getElementById('displayModule'),
         displayPhase: document.getElementById('displayPhase'),
-        verificationQr: document.getElementById('verificationQr'),
+
         sessionQr: document.getElementById('sessionQr'),
+        sessionQrWrapper: document.getElementById('sessionQrWrapper'),
+        sessionPlaceholder: document.getElementById('sessionPlaceholder'),
+
+        verificationQr: document.getElementById('verificationQr'),
+        verificationQrWrapper: document.getElementById('verificationQrWrapper'),
+        verificationPlaceholder: document.getElementById('verificationPlaceholder'),
+
         liveCounter: document.getElementById('liveCounter'),
         counterValue: document.getElementById('counterValue')
       };
@@ -299,6 +284,7 @@
         // Update UI
         elements.displayModule.textContent = module;
         elements.displayPhase.textContent = elements.phaseSelect.options[elements.phaseSelect.selectedIndex].text;
+
         elements.startBtn.disabled = true;
         elements.stopBtn.disabled = false;
         elements.moduleInput.disabled = true;
@@ -306,12 +292,17 @@
         elements.phaseSelect.disabled = true;
 
         elements.liveCounter.hidden = false;
-        elements.sessionQr.hidden = false;
 
-        // Generate Session QR (Static)
+        // Show QR Containers
+        elements.sessionPlaceholder.hidden = true;
+        elements.sessionQrWrapper.hidden = false;
+        elements.verificationPlaceholder.hidden = true;
+        elements.verificationQrWrapper.hidden = false;
+
+        // Generate Session QR (Static) - Large Size
         const payload = { v: 1, sid: state.sid, p: phase, m: module, g: group };
         const url = `${DEFAULT_ORIGIN}/student#${btoa(JSON.stringify(payload)).replace(/\+/g, '-').replace(/\//g, '_')}`;
-        renderQr(elements.sessionQr, url, 100);
+        renderQr(elements.sessionQr, url, 350); // Increased size
 
         // Start Loops
         fetchChallenge();
@@ -331,7 +322,14 @@
         elements.phaseSelect.disabled = false;
 
         elements.displayModule.textContent = 'PAUSED';
-        elements.verificationQr.innerHTML = '<div class="qr-placeholder"><p class="text-muted">Session Paused</p></div>';
+
+        // Hide QRs
+        elements.sessionQrWrapper.hidden = true;
+        elements.sessionPlaceholder.hidden = false;
+        elements.verificationQrWrapper.hidden = true;
+        elements.verificationPlaceholder.hidden = false;
+        elements.verificationPlaceholder.textContent = 'Session Paused';
+
         elements.liveCounter.hidden = true;
       }
 
@@ -343,7 +341,7 @@
           const res = await fetch(`/api/challenge?sid=${encodeURIComponent(state.sid)}&phase=${state.phase}`);
           const data = await res.json();
 
-          renderQr(elements.verificationQr, data.challenge, 400);
+          renderQr(elements.verificationQr, data.challenge, 450); // Massive size
 
           const ttl = data.ttl_ms || 3000;
           state.timer = setTimeout(fetchChallenge, Math.max(1000, ttl - 200));

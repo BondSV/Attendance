@@ -1,4 +1,4 @@
-/* Student App Styles */
+/* Student App Styles - Premium Glassmorphism */
 @import url('../design-system.css');
 
 body {
@@ -8,6 +8,7 @@ body {
   padding: 20px;
   max-width: 480px;
   margin: 0 auto;
+  /* Ensure background from design-system is visible */
 }
 
 /* Header */
@@ -16,24 +17,37 @@ body {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  padding: 0 4px;
+  padding: 16px 20px;
+  border-radius: var(--radius-xl);
+  background: rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 10px;
+  z-index: 100;
 }
 
 .brand {
   font-weight: 800;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
   letter-spacing: -0.02em;
-  color: var(--text-main);
+  background: linear-gradient(to right, #fff, #94a3b8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .session-badge {
-  background: var(--bg-surface-hover);
+  background: rgba(59, 130, 246, 0.15);
   padding: 6px 12px;
   border-radius: var(--radius-full);
   font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--primary);
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  font-weight: 700;
+  color: #60a5fa;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 /* Main Content */
@@ -41,7 +55,8 @@ main {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 24px;
+  padding-top: 10px;
 }
 
 /* Scanner Section */
@@ -49,13 +64,14 @@ main {
   position: relative;
   overflow: hidden;
   background: #000;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   aspect-ratio: 1/1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
 }
 
 .scanner-card video {
@@ -81,162 +97,221 @@ main {
   align-items: center;
 }
 
+/* Viewfinder Effect */
 .scan-guide {
-  width: 200px;
-  height: 200px;
-  border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 24px;
+  width: 220px;
+  height: 220px;
   position: relative;
-  margin-bottom: 16px;
-  box-shadow: 0 0 0 400px rgba(0, 0, 0, 0.5);
+  margin-bottom: 24px;
 }
 
 .scan-guide::before,
 .scan-guide::after {
   content: '';
   position: absolute;
-  width: 20px;
-  height: 20px;
-  border-color: var(--primary);
+  width: 40px;
+  height: 40px;
+  border-color: rgba(255, 255, 255, 0.5);
   border-style: solid;
   transition: all 0.3s;
 }
 
 .scan-guide::before {
-  top: -2px;
-  left: -2px;
+  top: 0;
+  left: 0;
   border-width: 4px 0 0 4px;
-  border-radius: 6px 0 0 0;
+  border-radius: 12px 0 0 0;
 }
 
 .scan-guide::after {
-  bottom: -2px;
-  right: -2px;
+  bottom: 0;
+  right: 0;
   border-width: 0 4px 4px 0;
-  border-radius: 0 0 6px 0;
+  border-radius: 0 0 12px 0;
+}
+
+.scan-guide>.corner-tr {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  border-top: 4px solid rgba(255, 255, 255, 0.5);
+  border-right: 4px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 12px 0 0;
+}
+
+.scan-guide>.corner-bl {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  border-bottom: 4px solid rgba(255, 255, 255, 0.5);
+  border-left: 4px solid rgba(255, 255, 255, 0.5);
+  border-radius: 0 0 0 12px;
+}
+
+.scanner-active .scan-guide::before,
+.scanner-active .scan-guide::after,
+.scanner-active .scan-guide>.corner-tr,
+.scanner-active .scan-guide>.corner-bl {
+  border-color: var(--primary);
+  box-shadow: 0 0 15px var(--primary-glow);
 }
 
 .scanner-active .scan-guide {
-  border-color: var(--primary);
   animation: pulse-ring 2s infinite;
 }
 
-/* Pass Card (Success State) */
+/* Pass Card (Holographic Effect) */
 .pass-card {
-  background: linear-gradient(135deg, var(--bg-surface) 0%, #1e1b4b 100%);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  position: relative;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-xl);
   overflow: hidden;
+  position: relative;
+  backdrop-filter: blur(20px);
+  box-shadow:
+    0 20px 40px -10px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .pass-card::before {
   content: '';
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary), var(--success));
+  inset: 0;
+  background: linear-gradient(125deg, transparent 30%, rgba(255, 255, 255, 0.1) 45%, transparent 60%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.pass-content {
+  padding: 32px;
+  position: relative;
+  z-index: 2;
 }
 
 .pass-header {
   display: flex;
   justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 24px;
+  align-items: center;
+  margin-bottom: 32px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 20px;
 }
 
 .pass-icon {
-  width: 48px;
-  height: 48px;
-  background: var(--success-glow);
+  width: 64px;
+  height: 64px;
+  background: var(--success-gradient);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 24px;
-  color: var(--success);
+  font-size: 32px;
+  color: #fff;
+  box-shadow: 0 0 30px var(--success-glow);
 }
 
-.pass-time {
+.pass-status {
   text-align: right;
 }
 
-.pass-time .label {
+.pass-status .label {
   font-size: 0.75rem;
   color: var(--text-muted);
   text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 4px;
 }
 
-.pass-time .value {
-  font-size: 1.5rem;
-  font-weight: 700;
-  font-family: var(--font-mono);
-  color: var(--text-main);
+.pass-status .value {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: var(--success);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
 .pass-details {
   display: grid;
-  gap: 16px;
-  padding-top: 16px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 20px;
 }
 
-.detail-row {
+.detail-group {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
+  flex-direction: column;
+  gap: 4px;
 }
 
 .detail-label {
   color: var(--text-muted);
-  font-size: 0.875rem;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 .detail-value {
-  font-weight: 600;
-  font-size: 1rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #fff;
+  font-family: var(--font-mono);
+  letter-spacing: -0.03em;
+}
+
+.detail-value.small {
+  font-size: 1.1rem;
+  font-family: var(--font-ui);
 }
 
 /* Input Form */
+.input-card {
+  background: var(--bg-glass);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: var(--radius-xl);
+  padding: 32px;
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.5);
+}
+
 .id-input-group {
-  display: flex;
-  gap: 8px;
-  margin-top: 12px;
+  margin: 24px 0;
 }
 
 .input-field {
-  flex: 1;
-  background: rgba(255, 255, 255, 0.05);
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-md);
-  padding: 12px 16px;
-  color: var(--text-main);
+  padding: 16px;
+  color: #fff;
   font-family: var(--font-mono);
-  font-size: 1.125rem;
+  font-size: 1.5rem;
   text-align: center;
-  letter-spacing: 2px;
+  letter-spacing: 4px;
+  transition: all 0.3s;
 }
 
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  background: rgba(59, 130, 246, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.2);
 }
 
 /* History Section */
 .history-section {
-  margin-top: 32px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  padding-top: 24px;
+  margin-top: 20px;
 }
 
 .history-title {
   font-size: 0.875rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.1em;
   color: var(--text-muted);
   margin-bottom: 16px;
+  padding-left: 8px;
 }
 
 .history-list {
@@ -249,26 +324,23 @@ main {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 16px;
+  padding: 16px 20px;
   background: rgba(255, 255, 255, 0.03);
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: transform 0.2s;
+}
+
+.history-item:active {
+  transform: scale(0.98);
 }
 
 .history-item.recent {
-  border-color: var(--success);
-  background: rgba(34, 197, 94, 0.05);
+  background: linear-gradient(to right, rgba(16, 185, 129, 0.1), transparent);
+  border-left: 2px solid var(--success);
 }
 
 /* Utilities */
 .hidden {
   display: none !important;
-}
-
-.text-success {
-  color: var(--success);
-}
-
-.text-error {
-  color: var(--error);
 }
