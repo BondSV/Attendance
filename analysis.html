@@ -355,7 +355,6 @@ var state = {
   rosterMap: new Map(), rosterModGroup: new Map(), rosterVersion: 0,
   under18Set: new Set(),
   emailDomain: 'rave.ac.uk',
-  emailTemplate: '',
   u18ReportEmail: 'studentattendance@rave.ac.uk',
   filters: { session: new Set(STATUS_ORDER) },
   sel: { year: '', module: '', intake: '', group: '', sessionDate: null, studentId: '', studentYear: '', studentModule: '' },
@@ -781,19 +780,31 @@ function renderPhaseCell(td, value) {
 }
 
 // ── Email ──
-function getEmailTemplate() {
-  var tpl = state.emailTemplate || localStorage.getItem('att_email_template') || '';
-  if (!tpl) {
-    tpl = "{greeting},\n\nOur records show you {status_phrase} the {module} session on {date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk\n\nIf you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.";
+var TPL_KEY_MAP = {
+  'Absent': 'att_email_tpl_absent',
+  'Late': 'att_email_tpl_late',
+  'Late from break': 'att_email_tpl_latefrombreak',
+  'Left Early': 'att_email_tpl_leftearly',
+  'Partial': 'att_email_tpl_partial'
+};
+var DEFAULT_TPL = "{greeting},\n\nOur records show you {status_phrase} the {module} session on {date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk\n\nIf you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.";
+
+function getEmailTemplate(status) {
+  var key = TPL_KEY_MAP[status];
+  if (key) {
+    var saved = localStorage.getItem(key);
+    if (saved) return saved;
   }
-  return tpl;
+  var oldUniversal = localStorage.getItem('att_email_template');
+  if (oldUniversal) return oldUniversal;
+  return DEFAULT_TPL;
 }
 
 function buildEmailBody(sess, row) {
   var phrase = EMAIL_PHRASES[row.status] || "had an attendance issue at";
   var mod = sess.module || sess.sid;
   var date = toLocalDate(sess.date);
-  var tpl = getEmailTemplate();
+  var tpl = getEmailTemplate(row.status);
   return tpl
     .replace('{greeting}', greeting(row.studentId))
     .replace('{status_phrase}', phrase)
