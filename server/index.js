@@ -13,9 +13,37 @@ const PORT = process.env.PORT || 8080;
 const ANOMALY_LOG_PATH = process.env.ANOMALY_LOG_PATH || null;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
 
-const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || 'RaveCheck2025';
+const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || 'RaveCheck2026';
 const MANUAL_OVERRIDE_PASSWORD_BUFFER = MANUAL_OVERRIDE_PASSWORD ? Buffer.from(MANUAL_OVERRIDE_PASSWORD, 'utf8') : null;
 const MANUAL_OVERRIDE_PASSWORD_VERSION = MANUAL_OVERRIDE_PASSWORD ? crypto.createHash('sha256').update(MANUAL_OVERRIDE_PASSWORD_BUFFER).digest('hex').slice(0, 12) : null;
+
+const OVERRIDE_MAX_ATTEMPTS = 5;
+const OVERRIDE_WINDOW_MS = 15 * 60 * 1000;
+const overrideAttempts = new Map();
+
+function checkOverrideRateLimit(ip) {
+  const now = Date.now();
+  const entry = overrideAttempts.get(ip);
+  if (!entry || (now - entry.windowStart) > OVERRIDE_WINDOW_MS) {
+    overrideAttempts.set(ip, { windowStart: now, failures: 0 });
+    return true;
+  }
+  return entry.failures < OVERRIDE_MAX_ATTEMPTS;
+}
+
+function recordOverrideFailure(ip) {
+  const now = Date.now();
+  const entry = overrideAttempts.get(ip);
+  if (!entry || (now - entry.windowStart) > OVERRIDE_WINDOW_MS) {
+    overrideAttempts.set(ip, { windowStart: now, failures: 1 });
+  } else {
+    entry.failures += 1;
+  }
+}
+
+function resetOverrideFailures(ip) {
+  overrideAttempts.delete(ip);
+}
 
 function verifyManualOverridePassword(candidate) {
   if (!MANUAL_OVERRIDE_PASSWORD_BUFFER) return false;
@@ -190,7 +218,7 @@ function serveStatic(req, res) {
       return false;
     }
   }
-  if (pathname === 'analysis.html') {
+  if (pathname === 'analysis' || pathname === 'analysis/' || pathname === 'analysis.html') {
     const filePath = path.join(__dirname, '..', 'analysis.html');
     try {
       const data = fs.readFileSync(filePath);
@@ -287,13 +315,19 @@ const server = http.createServer(async (req, res) => {
       if (!MANUAL_OVERRIDE_PASSWORD_BUFFER) {
         return sendJson(res, { error: 'Manual override is not configured.' }, 503);
       }
+      const rateLimitKey = deviceIdRaw.trim();
+      if (!checkOverrideRateLimit(rateLimitKey)) {
+        return sendJson(res, { error: 'Too many failed attempts from this device. Please wait 15 minutes before trying again.' }, 429);
+      }
       const passwordCandidate = (teacher_password || '').toString();
       if (!passwordCandidate) {
         return sendJson(res, { error: 'Manual override password required.' }, 400);
       }
       if (!verifyManualOverridePassword(passwordCandidate)) {
+        recordOverrideFailure(rateLimitKey);
         return sendJson(res, { error: 'Manual override password is incorrect.' }, 403);
       }
+      resetOverrideFailures(rateLimitKey);
       const stableDeviceId = deviceIdRaw.trim();
       const deviceKey = buildDeviceKey({ sid, phase, deviceId: stableDeviceId, req });
       const lock = peekDeviceLock(deviceKey);

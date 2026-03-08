@@ -9,11 +9,11 @@ const manualOverrideTokens = new Map();
 
 function purgeExpired() {
   const now = Date.now();
+  const expired = [];
   for (const [tokenId, entry] of manualOverrideTokens) {
-    if ((now - entry.issuedAt) > ENTRY_TTL_MS) {
-      manualOverrideTokens.delete(tokenId);
-    }
+    if ((now - entry.issuedAt) > ENTRY_TTL_MS) expired.push(tokenId);
   }
+  expired.forEach(id => manualOverrideTokens.delete(id));
 }
 
 function registerManualOverride(tokenId, meta) {

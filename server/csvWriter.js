@@ -57,7 +57,13 @@ function startFlusher() {
 async function appendCsvRow(fields) {
   ensureStream();
   startFlusher();
-  const safeFields = fields.map((f) => String(f).replace(/[\n,]/g, ' '));
+  const safeFields = fields.map((f) => {
+    let v = String(f).replace(/\n/g, ' ');
+    if (v.includes(',') || v.includes('"')) {
+      v = '"' + v.replace(/"/g, '""') + '"';
+    }
+    return v;
+  });
   const row = safeFields.join(',') + '\n';
   return new Promise((resolve, reject) => {
     stream.write(row, (err) => {

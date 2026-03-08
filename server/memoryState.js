@@ -121,16 +121,17 @@ function peekDeviceLock(deviceKey) {
  */
 function purgeExpired() {
   const now = Date.now();
+  const expiredTokens = [];
   for (const [id, entry] of tokens) {
-    if (entry.expiresAt <= now) {
-      tokens.delete(id);
-    }
+    if (entry.expiresAt <= now) expiredTokens.push(id);
   }
+  expiredTokens.forEach(id => tokens.delete(id));
+
+  const expiredLocks = [];
   for (const [key, entry] of deviceLocks) {
-    if (entry.expiresAt <= now) {
-      deviceLocks.delete(key);
-    }
+    if (entry.expiresAt <= now) expiredLocks.push(key);
   }
+  expiredLocks.forEach(key => deviceLocks.delete(key));
 }
 
 module.exports = {

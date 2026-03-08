@@ -3,1838 +3,1702 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance Analysis Suite</title>
+  <title>Attendance Analysis</title>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: radial-gradient(circle at top left, rgba(37, 99, 235, 0.08), transparent 55%),
-             radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.08), transparent 60%),
-             #f4f6fb;
-      --surface: rgba(255, 255, 255, 0.96);
-      --surface-soft: rgba(248, 250, 255, 0.86);
-      --border: rgba(15, 23, 42, 0.08);
-      --border-strong: rgba(15, 23, 42, 0.16);
+      --bg: #f1f4f9;
+      --sidebar-bg: #1e293b;
+      --sidebar-text: #cbd5e1;
+      --sidebar-heading: #f1f5f9;
+      --sidebar-active: #3b82f6;
+      --sidebar-hover: rgba(255,255,255,0.06);
+      --surface: #ffffff;
+      --surface-alt: #f8fafc;
+      --border: #e2e8f0;
+      --border-strong: #cbd5e1;
       --text: #0f172a;
-      --muted: #475467;
+      --text-secondary: #475569;
+      --muted: #94a3b8;
       --primary: #2563eb;
-      --primary-soft: rgba(37, 99, 235, 0.12);
-      --accent: #22c55e;
-      --danger: #dc2626;
-      --warning: #f97316;
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --primary-soft: rgba(37,99,235,0.1);
+      --green: #16a34a;
+      --green-soft: rgba(22,163,74,0.1);
+      --amber: #d97706;
+      --amber-soft: rgba(217,119,6,0.1);
+      --orange: #ea580c;
+      --orange-soft: rgba(234,88,12,0.1);
+      --rose: #e11d48;
+      --rose-soft: rgba(225,29,72,0.1);
+      --red: #dc2626;
+      --red-soft: rgba(220,38,38,0.1);
+      --slate: #64748b;
+      --slate-soft: rgba(100,116,139,0.1);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
     }
-    * { box-sizing: border-box; }
-    body {
-      margin: 0;
-      min-height: 100vh;
-      background: var(--bg);
-      color: var(--text);
-      padding: clamp(24px, 5vw, 48px);
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { display: flex; min-height: 100vh; background: var(--bg); color: var(--text); }
+    :where([hidden]) { display: none !important; }
+
+    /* ── Sidebar ── */
+    .sidebar {
+      width: 280px;
+      min-width: 280px;
+      background: var(--sidebar-bg);
+      color: var(--sidebar-text);
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      flex-direction: column;
+      height: 100vh;
+      position: sticky;
+      top: 0;
+      overflow-y: auto;
+      z-index: 100;
     }
-    .shell {
-      width: min(1200px, 100%);
-      display: grid;
-      gap: clamp(22px, 3vw, 36px);
-    }
-    .header {
-      background: var(--surface);
-      border-radius: 28px;
-      border: 1px solid var(--border);
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      padding: clamp(28px, 4vw, 44px);
-      display: grid;
-      gap: 16px;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 8px 16px;
-      border-radius: 999px;
-      background: var(--primary-soft);
-      color: var(--primary);
-      font-weight: 700;
-      letter-spacing: 0.45px;
-      text-transform: uppercase;
-      font-size: 14px;
-    }
-    .brand::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #0ea5e9, #2563eb);
-      box-shadow: 0 0 10px rgba(37, 99, 235, 0.4);
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(34px, 6vw, 44px);
-      letter-spacing: -0.6px;
-    }
-    .subhead {
-      margin: 0;
-      color: var(--muted);
-      font-size: 17px;
-      max-width: 70ch;
-    }
-    .data-bar {
-      background: var(--surface);
-      border-radius: 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.1);
-      padding: clamp(22px, 3vw, 32px);
-      display: grid;
-      gap: 18px;
-    }
-    .data-flex {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 22px;
-      align-items: flex-start;
-    }
-    .data-inputs {
-      min-width: 260px;
-      flex: 1 1 320px;
-      display: grid;
-      gap: 14px;
-    }
-    .data-inputs label {
-      display: grid;
-      gap: 6px;
-      font-size: 13px;
-      font-weight: 600;
-      color: var(--muted);
-    }
-    .data-inputs input[type="file"],
-    .data-inputs input[type="text"] {
-      border-radius: 14px;
-      border: 1px solid var(--border-strong);
-      padding: 10px 14px;
-      font-size: 14px;
-      background: #fff;
-      color: var(--text);
-    }
-    .data-inputs input[type="text"]:focus {
-      outline: none;
-      border-color: rgba(37, 99, 235, 0.6);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
-    }
-    .action-inline {
-      display: inline-flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-    .ghost-btn {
-      border: 1px solid rgba(15, 23, 42, 0.12);
-      border-radius: 12px;
-      padding: 8px 14px;
-      font-size: 13px;
-      background: rgba(255, 255, 255, 0.92);
-      color: var(--muted);
-      cursor: pointer;
-      transition: border 0.2s ease, color 0.2s ease;
-    }
-    .ghost-btn:hover {
-      border-color: rgba(15, 23, 42, 0.24);
-      color: var(--text);
-    }
-    .primary-btn {
-      border: none;
-      border-radius: 14px;
-      padding: 12px 20px;
+    .sidebar-brand {
+      padding: 20px 18px 16px;
       font-size: 15px;
-      font-weight: 600;
-      background: linear-gradient(135deg, #15803d, #22c55e);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(21, 128, 61, 0.28);
-      cursor: pointer;
-      transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
-    }
-    .primary-btn:disabled {
-      opacity: 0.55;
-      cursor: not-allowed;
-      box-shadow: none;
-    }
-    .data-stats {
-      flex: 1 1 280px;
-      display: grid;
-      gap: 12px;
-    }
-    .stat-grid {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    }
-    .stat-card {
-      border-radius: 16px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      background: rgba(255, 255, 255, 0.94);
-      padding: 14px 16px;
-      display: grid;
-      gap: 6px;
-    }
-    .stat-card .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      color: var(--muted);
-    }
-    .stat-card .value {
-      font-size: 20px;
       font-weight: 700;
-      color: var(--text);
-    }
-    .stat-card .meta {
-      font-size: 12px;
-      color: var(--muted);
-    }
-    .message-stack {
-      display: grid;
-      gap: 10px;
-    }
-    .message {
-      border-radius: 16px;
-      padding: 14px 16px;
-      font-size: 14px;
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--primary);
-      border: 1px solid rgba(37, 99, 235, 0.12);
-    }
-    .message.warning {
-      background: rgba(249, 115, 22, 0.12);
-      color: var(--warning);
-      border-color: rgba(249, 115, 22, 0.18);
-    }
-    .message.danger {
-      background: rgba(220, 38, 38, 0.12);
-      color: var(--danger);
-      border-color: rgba(220, 38, 38, 0.18);
-    }
-    .workspace {
-      background: var(--surface);
-      border-radius: 24px;
-      border: 1px solid var(--border);
-      box-shadow: 0 24px 48px rgba(15, 23, 42, 0.12);
-      padding: clamp(22px, 3vw, 32px);
-      display: grid;
-      gap: 20px;
-    }
-    .tab-strip {
-      display: inline-flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-      background: rgba(37, 99, 235, 0.06);
-      padding: 6px;
-      border-radius: 16px;
-      width: fit-content;
-    }
-    .tab-strip button {
-      border: none;
-      border-radius: 12px;
-      background: transparent;
-      color: var(--muted);
-      padding: 10px 16px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease, transform 0.15s ease;
-    }
-    .tab-strip button.active {
-      background: linear-gradient(135deg, #2563eb, #3b82f6);
-      color: #fff;
-      box-shadow: 0 12px 24px rgba(37, 99, 235, 0.26);
-      transform: translateY(-1px);
-    }
-    .mode-container {
-      display: none;
-    }
-    .mode-container.active {
-      display: block;
-    }
-    .mode-layout {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 24px;
-    }
-    .mode-controls {
-      flex: 0 0 280px;
-      display: grid;
-      gap: 18px;
-      background: var(--surface-soft);
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      padding: 18px;
-    }
-    .mode-results {
-      flex: 1 1 420px;
-      display: grid;
-      gap: 18px;
-    }
-    .control-group {
-      display: grid;
-      gap: 10px;
-    }
-    .control-title {
-      font-size: 13px;
-      font-weight: 700;
+      color: var(--sidebar-heading);
       letter-spacing: 0.3px;
-      color: var(--muted);
-      text-transform: uppercase;
+      border-bottom: 1px solid rgba(255,255,255,0.08);
     }
-    .control-item {
-      display: grid;
-      gap: 6px;
+    .sidebar-section {
+      padding: 14px 14px 6px;
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .sidebar-section:last-child { border-bottom: none; }
+    .sidebar-label {
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: rgba(255,255,255,0.4);
+      margin-bottom: 8px;
+    }
+    .nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      width: 100%;
+      border: none;
+      background: transparent;
+      color: var(--sidebar-text);
+      padding: 10px 12px;
+      border-radius: 10px;
       font-size: 13px;
       font-weight: 600;
-      color: var(--muted);
+      cursor: pointer;
+      transition: background 0.15s;
+      text-align: left;
+      margin-bottom: 2px;
     }
-    .control-item select,
-    .control-item input[type="search"],
-    .control-item input[type="text"] {
-      border-radius: 12px;
-      border: 1px solid var(--border-strong);
-      padding: 10px 12px;
-      font-size: 14px;
-      background: #fff;
-      color: var(--text);
+    .nav-btn:hover { background: var(--sidebar-hover); }
+    .nav-btn.active { background: var(--sidebar-active); color: #fff; }
+    .nav-btn .nav-icon { font-size: 16px; width: 22px; text-align: center; }
+
+    .sb-control { margin-bottom: 10px; }
+    .sb-control label {
+      display: block;
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(255,255,255,0.55);
+      margin-bottom: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
     }
-    .control-item select[multiple] {
-      min-height: 180px;
+    .sb-control select,
+    .sb-control input[type="text"],
+    .sb-control input[type="search"],
+    .sb-control input[type="date"] {
+      width: 100%;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px;
+      padding: 8px 10px;
+      color: #fff;
+      font-size: 13px;
     }
-    .control-item select:focus,
-    .control-item input:focus {
+    .sb-control select:focus,
+    .sb-control input:focus {
       outline: none;
-      border-color: rgba(37, 99, 235, 0.6);
-      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.14);
+      border-color: rgba(96,165,250,0.7);
+      box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
     }
-    .status-filter {
+    .sb-control select option { background: #1e293b; color: #fff; }
+    .sb-control input::placeholder { color: rgba(255,255,255,0.35); }
+
+    .sb-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      width: 100%;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.06);
+      color: var(--sidebar-text);
+      padding: 9px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s, border-color 0.15s;
+      margin-bottom: 6px;
+    }
+    .sb-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
+    .sb-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .sb-btn.primary { background: var(--sidebar-active); border-color: var(--sidebar-active); color: #fff; }
+    .sb-btn.primary:hover { background: #2563eb; }
+    .sb-btn.export { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.3); color: #4ade80; }
+    .sb-btn.export:hover { background: rgba(22,163,74,0.25); }
+
+    .sb-info {
+      font-size: 11px;
+      color: rgba(255,255,255,0.4);
+      padding: 4px 0;
+    }
+    .sb-tag {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      background: rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.6);
+      margin-bottom: 4px;
+    }
+    .sb-disabled-note {
+      font-size: 10px;
+      color: rgba(255,255,255,0.3);
+      font-style: italic;
+      margin-top: 2px;
+    }
+    .sb-file-input { display: none; }
+    .sb-drop-zone {
+      border: 2px dashed rgba(255,255,255,0.15);
+      border-radius: 10px;
+      padding: 14px;
+      text-align: center;
+      font-size: 12px;
+      color: rgba(255,255,255,0.4);
+      cursor: pointer;
+      transition: border-color 0.2s, background 0.2s;
+      margin-bottom: 6px;
+    }
+    .sb-drop-zone:hover,
+    .sb-drop-zone.drag-over {
+      border-color: rgba(96,165,250,0.5);
+      background: rgba(96,165,250,0.06);
+      color: rgba(255,255,255,0.6);
+    }
+    .sb-loaded-files {
+      font-size: 11px;
+      color: rgba(255,255,255,0.5);
+      margin-bottom: 6px;
+    }
+
+    .status-chips {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 4px;
+      margin-bottom: 6px;
     }
     .status-chip {
       display: inline-flex;
       align-items: center;
-      gap: 6px;
-      border-radius: 999px;
-      padding: 6px 10px;
-      background: rgba(37, 99, 235, 0.08);
-      color: var(--muted);
-      font-size: 13px;
+      gap: 4px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
       cursor: pointer;
-      transition: background 0.2s ease, color 0.2s ease;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      color: rgba(255,255,255,0.5);
+      transition: all 0.15s;
     }
-    .status-chip input {
-      accent-color: #2563eb;
-    }
-    .status-chip.active {
-      background: rgba(37, 99, 235, 0.18);
-      color: var(--primary);
-    }
-    .status-actions {
-      display: inline-flex;
-      gap: 8px;
-    }
-    .tag {
-      display: inline-flex;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      background: rgba(15, 23, 42, 0.08);
-      color: var(--muted);
-    }
-    .tag.neutral {
-      background: rgba(37, 99, 235, 0.12);
-      color: var(--primary);
-    }
-    .tag.positive {
-      background: rgba(34, 197, 94, 0.16);
-      color: #15803d;
-    }
-    .tag.negative {
-      background: rgba(220, 38, 38, 0.16);
-      color: var(--danger);
-    }
-    .result-card {
-      background: var(--surface);
-      border-radius: 22px;
-      border: 1px solid var(--border);
-      box-shadow: 0 22px 44px rgba(15, 23, 42, 0.12);
-      padding: clamp(24px, 3vw, 32px);
-      display: grid;
-      gap: 18px;
-    }
-    .summary-grid {
-      display: grid;
-      gap: 12px;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      border-radius: 16px;
-      overflow: hidden;
-      font-size: 14px;
-    }
-    thead {
-      background: var(--surface-soft);
-    }
-    th, td {
-      padding: 12px 14px;
-      border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-      text-align: left;
-    }
-    tbody tr:hover {
-      background: rgba(37, 99, 235, 0.04);
-    }
-    .email-links {
-      display: grid;
-      gap: 8px;
-    }
-    .email-links a {
-      font-size: 13px;
-      color: var(--primary);
-      text-decoration: none;
-    }
-    .email-links a:hover {
+    .status-chip input { display: none; }
+    .status-chip.active { border-color: rgba(96,165,250,0.5); background: rgba(96,165,250,0.15); color: #93c5fd; }
+    .chip-actions { display: flex; gap: 4px; margin-bottom: 8px; }
+    .chip-actions button {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.35);
+      font-size: 11px;
+      cursor: pointer;
       text-decoration: underline;
     }
-    .notice-block {
-      border-radius: 16px;
-      padding: 12px 16px;
-      background: rgba(220, 38, 38, 0.08);
-      color: var(--danger);
-      border: 1px solid rgba(220, 38, 38, 0.18);
+    .chip-actions button:hover { color: rgba(255,255,255,0.6); }
+
+    /* ── Main pane ── */
+    .main {
+      flex: 1;
+      min-width: 0;
+      padding: clamp(20px, 3vw, 36px);
+      overflow-y: auto;
+    }
+    .main-header {
+      margin-bottom: 24px;
+    }
+    .main-header h1 {
+      font-size: clamp(22px, 3vw, 30px);
+      font-weight: 800;
+      letter-spacing: -0.4px;
+      margin-bottom: 4px;
+    }
+    .main-header .subtitle {
+      font-size: 14px;
+      color: var(--text-secondary);
+    }
+
+    .stats-bar {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px 16px;
+    }
+    .stat-card .stat-label {
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    .stat-card .stat-value {
+      font-size: 22px;
+      font-weight: 800;
+      color: var(--text);
+    }
+    .stat-card .stat-meta {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .chart-bar-container {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .chart-bar-container h3 {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 10px;
+    }
+    .stacked-bar {
+      display: flex;
+      height: 28px;
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface-alt);
+    }
+    .stacked-bar .bar-segment {
+      height: 100%;
+      transition: width 0.3s;
+      position: relative;
+    }
+    .bar-legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 10px;
+    }
+    .bar-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .bar-legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 3px;
+    }
+
+    .data-table-wrapper {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 20px;
+    }
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
       font-size: 13px;
     }
-    .notice-block.warning {
-      background: rgba(249, 115, 22, 0.1);
-      color: var(--warning);
-      border-color: rgba(249, 115, 22, 0.18);
+    .data-table thead { background: var(--surface-alt); }
+    .data-table th {
+      padding: 10px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--muted);
+      cursor: pointer;
+      user-select: none;
+      white-space: nowrap;
+      border-bottom: 1px solid var(--border);
     }
-    .notice-block.tip {
-      background: rgba(37, 99, 235, 0.08);
+    .data-table th:hover { color: var(--text); }
+    .data-table th .sort-arrow { font-size: 10px; margin-left: 3px; opacity: 0.4; }
+    .data-table th .sort-arrow.active { opacity: 1; color: var(--primary); }
+    .data-table td {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: middle;
+    }
+    .data-table tbody tr:hover { background: rgba(37,99,235,0.03); }
+    .data-table tbody tr:last-child td { border-bottom: none; }
+    .data-table .totals-row td { font-weight: 700; background: var(--surface-alt); border-top: 2px solid var(--border-strong); }
+
+    .phase-yes { color: var(--green); font-weight: 700; }
+    .phase-no { color: var(--red); font-weight: 700; }
+    .phase-na { color: var(--muted); }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .status-present { background: var(--green-soft); color: var(--green); }
+    .status-late { background: var(--amber-soft); color: var(--amber); }
+    .status-late-from-break { background: var(--orange-soft); color: var(--orange); }
+    .status-left-early { background: var(--rose-soft); color: var(--rose); }
+    .status-partial { background: var(--slate-soft); color: var(--slate); }
+    .status-absent { background: var(--red-soft); color: var(--red); }
+
+    .u18-flag { color: var(--red); font-weight: 800; font-size: 12px; }
+    .not-on-roster { background: rgba(249,115,22,0.08); }
+    .not-on-roster-badge {
+      display: inline-block;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      font-weight: 700;
+      background: rgba(249,115,22,0.15);
+      color: var(--orange);
+    }
+
+    .row-green { }
+    .row-amber td:first-child { border-left: 3px solid var(--amber); }
+    .row-red td:first-child { border-left: 3px solid var(--red); }
+
+    .alert-block {
+      border-radius: 12px;
+      padding: 12px 16px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+    }
+    .alert-block.danger { background: var(--red-soft); color: var(--red); border: 1px solid rgba(220,38,38,0.15); }
+    .alert-block.warning { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(217,119,6,0.15); }
+    .alert-block.info { background: var(--primary-soft); color: var(--primary); border: 1px solid rgba(37,99,235,0.12); }
+    .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+
+    .email-section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 16px;
+      margin-bottom: 20px;
+    }
+    .email-section h3 {
+      font-size: 14px;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+    .email-list { display: grid; gap: 6px; }
+    .email-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: var(--surface-alt);
+      font-size: 13px;
+    }
+    .email-row .student-info { flex: 1; }
+    .email-row a {
       color: var(--primary);
-      border-color: rgba(37, 99, 235, 0.14);
-    }
-    .status-present {
-      color: var(--accent);
+      text-decoration: none;
       font-weight: 600;
+      font-size: 12px;
     }
-    .status-late,
-    .status-late-from-break {
-      color: #f59e0b;
+    .email-row a:hover { text-decoration: underline; }
+
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 300px;
+      text-align: center;
+      color: var(--muted);
+    }
+    .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
+    .empty-state h2 { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
+    .empty-state p { font-size: 14px; max-width: 400px; }
+
+    .toast-container {
+      position: fixed;
+      top: 20px;
+      right: 20px;
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .toast {
+      background: var(--sidebar-bg);
+      color: #fff;
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 600;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
+      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
     }
-    .status-left-early,
-    .status-partial,
-    .status-absent {
-      color: var(--danger);
-      font-weight: 600;
-    }
+    @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
+
+    .sparkline-container { display: flex; align-items: end; gap: 2px; height: 30px; }
+    .sparkline-bar { width: 6px; border-radius: 2px 2px 0 0; min-height: 3px; }
+
     @media (max-width: 900px) {
-      body { padding: 18px; }
-      .mode-controls { flex: 1 1 100%; }
-      .mode-results { flex: 1 1 100%; }
-    }
-    @media (max-width: 640px) {
-      .tab-strip { width: 100%; justify-content: center; }
-      .data-flex { flex-direction: column; }
+      body { flex-direction: column; }
+      .sidebar {
+        width: 100%;
+        min-width: 100%;
+        height: auto;
+        position: relative;
+        max-height: 50vh;
+      }
+      .main { padding: 16px; }
     }
   </style>
 </head>
 <body>
-  <div class="shell">
-    <header class="header">
-      <span class="brand">Analysis Suite</span>
-      <h1>Attendance Insights</h1>
-      <p class="subhead">Import daily CSV logs, reconcile them with rosters, and switch between targeted and cross-session views designed for lightweight, offline use.</p>
-    </header>
 
-    <section class="data-bar">
-      <div class="data-flex">
-        <div class="data-inputs">
-          <label>Attendance CSVs (hold Cmd/Ctrl to select many)
-            <input id="attendanceUpload" type="file" accept=".csv" multiple>
-          </label>
-          <div class="action-inline">
-            <button type="button" class="ghost-btn" id="reloadServerBtn">Reload latest from server</button>
-            <button type="button" class="ghost-btn" id="clearDataBtn">Clear loaded data</button>
-          </div>
-          <label>Roster CSV (one student ID per line)
-            <input id="rosterUpload" type="file" accept=".csv,.txt">
-          </label>
-          <div class="action-inline">
-            <button type="button" class="ghost-btn" id="clearRosterBtn">Clear roster</button>
-            <span class="tag neutral" id="rosterSummary">No roster loaded</span>
-          </div>
-          <label>Email domain for follow-ups
-            <input type="text" id="emailDomainInput" value="rave.ac.uk" placeholder="example.ac.uk">
-          </label>
-        </div>
-        <div class="data-stats">
-          <div class="stat-grid" id="datasetStats"></div>
-        </div>
-      </div>
-      <div class="message-stack" id="dataMessages"></div>
-    </section>
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-brand">Attendance Analysis</div>
 
-    <section class="workspace">
-      <div class="tab-strip" role="tablist">
-        <button type="button" class="active" data-mode="session" role="tab" aria-selected="true">Group · single session</button>
-        <button type="button" data-mode="multi" role="tab" aria-selected="false">Groups · multiple sessions</button>
-        <button type="button" data-mode="student" role="tab" aria-selected="false">Student · multiple sessions</button>
-      </div>
-
-      <div class="mode-container active" data-mode="session" role="tabpanel">
-        <div class="mode-layout">
-          <aside class="mode-controls">
-            <div class="control-group">
-              <div class="control-title">Session selection</div>
-              <label class="control-item">Date
-                <select id="sessionDateSelect"></select>
-              </label>
-              <label class="control-item">Session / group
-                <select id="sessionKeySelect"></select>
-              </label>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Statuses to include</div>
-              <div class="status-filter" id="sessionStatusFilter"></div>
-              <div class="status-actions">
-                <button type="button" class="ghost-btn" data-mode="session" data-status-action="all">All</button>
-                <button type="button" class="ghost-btn" data-mode="session" data-status-action="none">None</button>
-              </div>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Exports</div>
-              <button type="button" class="primary-btn" id="exportSessionBtn" disabled>Download session XLSX</button>
-              <span class="tag neutral" id="sessionRosterTag">Roster not loaded</span>
-            </div>
-          </aside>
-          <div class="mode-results" id="sessionResults"></div>
-        </div>
-      </div>
-
-      <div class="mode-container" data-mode="multi" role="tabpanel" aria-hidden="true">
-        <div class="mode-layout">
-          <aside class="mode-controls">
-            <div class="control-group">
-              <div class="control-title">Sessions in scope</div>
-              <label class="control-item">Select sessions
-                <select id="multiSessionSelect" multiple></select>
-              </label>
-              <span class="tag neutral" id="multiSelectionTag">0 sessions selected</span>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Statuses to include</div>
-              <div class="status-filter" id="multiStatusFilter"></div>
-              <div class="status-actions">
-                <button type="button" class="ghost-btn" data-mode="multi" data-status-action="all">All</button>
-                <button type="button" class="ghost-btn" data-mode="multi" data-status-action="none">None</button>
-              </div>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Exports</div>
-              <button type="button" class="primary-btn" id="exportSummaryBtn" disabled>Download summary CSV</button>
-            </div>
-            <div class="notice-block tip">Tip: hold Cmd/Ctrl to select more than one session.</div>
-          </aside>
-          <div class="mode-results" id="multiResults"></div>
-        </div>
-      </div>
-
-      <div class="mode-container" data-mode="student" role="tabpanel" aria-hidden="true">
-        <div class="mode-layout">
-          <aside class="mode-controls">
-            <div class="control-group">
-              <div class="control-title">Student</div>
-              <label class="control-item">Student ID
-                <input type="search" id="studentSearch" placeholder="e.g. 22012345" list="studentSuggestions" autocomplete="off">
-              </label>
-              <span class="tag neutral" id="studentSessionsTag">Student not selected</span>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Date window</div>
-              <label class="control-item">Range
-                <select id="studentDateRangeSelect">
-                  <option value="30d">Last 30 days</option>
-                  <option value="90d">Last 90 days</option>
-                  <option value="last10">Last 10 sessions</option>
-                  <option value="all">All sessions</option>
-                </select>
-              </label>
-            </div>
-            <div class="control-group">
-              <div class="control-title">Exports</div>
-              <button type="button" class="primary-btn" id="exportStudentBtn" disabled>Download student CSV</button>
-            </div>
-          </aside>
-          <div class="mode-results" id="studentResults"></div>
-        </div>
-      </div>
-    </section>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Views</div>
+    <button class="nav-btn active" data-view="session" type="button">
+      <span class="nav-icon">📋</span> Session View
+    </button>
+    <button class="nav-btn" data-view="group" type="button">
+      <span class="nav-icon">👥</span> Group Performance
+    </button>
+    <button class="nav-btn" data-view="student" type="button">
+      <span class="nav-icon">🎓</span> Student Profile
+    </button>
   </div>
 
-  <datalist id="studentSuggestions"></datalist>
+  <div class="sidebar-section">
+    <div class="sidebar-label">Data</div>
+    <div class="sb-drop-zone" id="attendanceDropZone">Drop attendance CSV here or click to upload</div>
+    <input type="file" class="sb-file-input" id="attendanceFileInput" accept=".csv" multiple>
+    <div class="sb-loaded-files" id="loadedFilesInfo"></div>
+    <button class="sb-btn" id="reloadServerBtn" type="button">Reload from server</button>
+    <button class="sb-btn" id="clearDataBtn" type="button">Clear data</button>
+    <div class="sb-drop-zone" id="rosterDropZone" style="margin-top:8px">Drop roster CSV here or click</div>
+    <input type="file" class="sb-file-input" id="rosterFileInput" accept=".csv,.txt">
+    <div class="sb-loaded-files" id="rosterInfo"></div>
+    <button class="sb-btn" id="clearRosterBtn" type="button">Clear roster</button>
+  </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script type="module">
-    const MODE = Object.freeze({
-      SESSION: 'session',
-      MULTI: 'multi',
-      STUDENT: 'student'
+  <!-- Session view controls -->
+  <div class="sidebar-section view-controls" data-for="session" id="sessionControls">
+    <div class="sidebar-label">Session Selection</div>
+    <div class="sb-control">
+      <label for="sessionDateSelect">Date</label>
+      <select id="sessionDateSelect"></select>
+    </div>
+    <div class="sb-control">
+      <label for="sessionKeySelect">Session</label>
+      <select id="sessionKeySelect"></select>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px">Status Filter</div>
+    <div class="status-chips" id="sessionStatusChips"></div>
+    <div class="chip-actions"><button type="button" data-action="all" data-target="session">All</button><button type="button" data-action="none" data-target="session">None</button></div>
+  </div>
+
+  <!-- Group performance controls -->
+  <div class="sidebar-section view-controls" data-for="group" id="groupControls" hidden>
+    <div class="sidebar-label">Module & Group</div>
+    <div class="sb-control">
+      <label for="groupModuleSelect">Module</label>
+      <select id="groupModuleSelect"></select>
+    </div>
+    <div class="sb-control">
+      <label for="groupGroupSelect">Group</label>
+      <select id="groupGroupSelect"></select>
+    </div>
+    <div class="sb-control">
+      <label for="groupDateFrom">From</label>
+      <input type="date" id="groupDateFrom">
+    </div>
+    <div class="sb-control">
+      <label for="groupDateTo">To</label>
+      <input type="date" id="groupDateTo">
+    </div>
+    <div class="sb-control" style="opacity:0.4;pointer-events:none">
+      <label>Semester</label>
+      <select disabled><option>Coming soon</option></select>
+      <div class="sb-disabled-note">Configurable via admin panel</div>
+    </div>
+    <div class="sb-control" style="opacity:0.4;pointer-events:none">
+      <label>Year</label>
+      <select disabled><option>Coming soon</option></select>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px">Status Filter</div>
+    <div class="status-chips" id="groupStatusChips"></div>
+    <div class="chip-actions"><button type="button" data-action="all" data-target="group">All</button><button type="button" data-action="none" data-target="group">None</button></div>
+  </div>
+
+  <!-- Student profile controls -->
+  <div class="sidebar-section view-controls" data-for="student" id="studentControls" hidden>
+    <div class="sidebar-label">Student</div>
+    <div class="sb-control">
+      <label for="studentSearchInput">Student ID</label>
+      <input type="search" id="studentSearchInput" placeholder="e.g. 90012345" list="studentSuggest" autocomplete="off">
+    </div>
+    <div class="sb-tag" id="studentTag">Not selected</div>
+    <div class="sb-control" style="margin-top:8px">
+      <label for="studentRangeSelect">Date range</label>
+      <select id="studentRangeSelect">
+        <option value="30d">Last 30 days</option>
+        <option value="90d">Last 90 days</option>
+        <option value="last10">Last 10 sessions</option>
+        <option value="all" selected>All sessions</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Export</div>
+    <button class="sb-btn export" id="exportXlsxBtn" type="button" disabled>Export XLSX</button>
+    <button class="sb-btn export" id="exportCsvBtn" type="button" disabled>Export CSV</button>
+  </div>
+
+  <div class="sidebar-section">
+    <div class="sidebar-label">Settings</div>
+    <div class="sb-control">
+      <label for="emailDomainInput">Email domain</label>
+      <input type="text" id="emailDomainInput" value="rave.ac.uk" placeholder="rave.ac.uk">
+    </div>
+  </div>
+</aside>
+
+<datalist id="studentSuggest"></datalist>
+
+<main class="main" id="mainPane">
+  <div class="empty-state" id="emptyState">
+    <div class="empty-icon">📊</div>
+    <h2>No data loaded</h2>
+    <p>Upload an attendance CSV using the sidebar, or click "Reload from server" to load the latest data.</p>
+  </div>
+  <div id="viewContent" hidden></div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script type="module">
+
+const STATUS_ORDER = ['Present', 'Late', 'Late from break', 'Left Early', 'Partial', 'Absent'];
+const VALID_PHASES = new Set(['start', 'break1', 'break2', 'end']);
+const STATUS_COLORS = {
+  'Present': { bg: 'var(--green-soft)', fg: 'var(--green)', hex: '#16a34a' },
+  'Late': { bg: 'var(--amber-soft)', fg: 'var(--amber)', hex: '#d97706' },
+  'Late from break': { bg: 'var(--orange-soft)', fg: 'var(--orange)', hex: '#ea580c' },
+  'Left Early': { bg: 'var(--rose-soft)', fg: 'var(--rose)', hex: '#e11d48' },
+  'Partial': { bg: 'var(--slate-soft)', fg: 'var(--slate)', hex: '#64748b' },
+  'Absent': { bg: 'var(--red-soft)', fg: 'var(--red)', hex: '#dc2626' }
+};
+
+const EMAIL_PHRASES = {
+  'Absent': "haven't attended",
+  'Late': 'were late for',
+  'Late from break': 'missed a break check-in during',
+  'Left Early': 'left early from',
+  'Partial': 'had incomplete attendance for'
+};
+
+const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+const timeFmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
+
+// ── State ──
+const state = {
+  activeView: 'session',
+  sessions: new Map(),
+  sessionKeys: [],
+  dateToKeys: new Map(),
+  studentIndex: new Map(),
+  allStudentIds: new Set(),
+  allModules: new Set(),
+  moduleGroups: new Map(),
+  rosterMap: new Map(),
+  rosterVersion: 0,
+  under18Set: new Set(),
+  sources: new Set(),
+  warnings: [],
+  errors: [],
+  emailDomain: 'rave.ac.uk',
+  filters: { session: new Set(STATUS_ORDER), group: new Set(STATUS_ORDER) },
+  sel: { date: null, sessionKey: null, module: null, group: null, dateFrom: '', dateTo: '', studentId: '', studentRange: 'all' },
+  exportRows: []
+};
+
+// ── DOM refs ──
+const $ = id => document.getElementById(id);
+const el = {
+  sidebar: $('sidebar'),
+  mainPane: $('mainPane'),
+  emptyState: $('emptyState'),
+  viewContent: $('viewContent'),
+  toastContainer: $('toastContainer'),
+  attendanceDropZone: $('attendanceDropZone'),
+  attendanceFileInput: $('attendanceFileInput'),
+  loadedFilesInfo: $('loadedFilesInfo'),
+  reloadServerBtn: $('reloadServerBtn'),
+  clearDataBtn: $('clearDataBtn'),
+  rosterDropZone: $('rosterDropZone'),
+  rosterFileInput: $('rosterFileInput'),
+  rosterInfo: $('rosterInfo'),
+  clearRosterBtn: $('clearRosterBtn'),
+  sessionDateSelect: $('sessionDateSelect'),
+  sessionKeySelect: $('sessionKeySelect'),
+  sessionStatusChips: $('sessionStatusChips'),
+  groupModuleSelect: $('groupModuleSelect'),
+  groupGroupSelect: $('groupGroupSelect'),
+  groupDateFrom: $('groupDateFrom'),
+  groupDateTo: $('groupDateTo'),
+  groupStatusChips: $('groupStatusChips'),
+  studentSearchInput: $('studentSearchInput'),
+  studentTag: $('studentTag'),
+  studentRangeSelect: $('studentRangeSelect'),
+  studentSuggest: $('studentSuggest'),
+  exportXlsxBtn: $('exportXlsxBtn'),
+  exportCsvBtn: $('exportCsvBtn'),
+  emailDomainInput: $('emailDomainInput')
+};
+
+// ── Helpers ──
+function normalizePhase(v) {
+  const raw = (v || '').toString().trim().toLowerCase();
+  if (raw === 'break' || raw === 'break 1' || raw === 'break1') return 'break1';
+  if (raw === 'break 2' || raw === 'break2') return 'break2';
+  if (raw === 'start' || raw === 'end') return raw;
+  return raw;
+}
+function sanitizeId(v) { return (v || '').toString().replace(/[^0-9]/g, '').trim(); }
+function extractDate(ts) {
+  if (!ts) return '';
+  const m = ts.match(/\d{4}-\d{2}-\d{2}/);
+  if (m) return m[0];
+  const d = new Date(ts);
+  if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
+  return '';
+}
+function toLocalDate(ds) {
+  if (!ds) return '';
+  const [y, m, d] = ds.split('-').map(Number);
+  return dateFmt.format(new Date(y, (m||1)-1, d||1));
+}
+function readableLabel(s) {
+  const mod = s.module ? s.module.toUpperCase() : '';
+  const grp = s.group ? `Group ${s.group}` : '';
+  if (mod && grp) return `${mod} — ${grp}`;
+  return mod || grp || s.sid;
+}
+function statusClass(s) { return 'status-' + s.toLowerCase().replace(/\s+/g, '-'); }
+function csvEscape(v) {
+  const s = String(v);
+  if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+function showToast(msg) {
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.textContent = msg;
+  el.toastContainer.appendChild(t);
+  setTimeout(() => t.remove(), 3000);
+}
+function studentName(id) {
+  const r = state.rosterMap.get(id);
+  return r && r.name ? r.name : null;
+}
+function greeting(id) {
+  const name = studentName(id);
+  return name ? `Dear ${name}` : `Dear Student (${id})`;
+}
+
+// ── CSV Ingestion ──
+function parseCsv(text, label) {
+  const result = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+  return { rows: result.data || [], errors: (result.errors || []).map(e => `${label}: row ${e.row+1} — ${e.message}`) };
+}
+
+function ingestRows(rowSets) {
+  state.sessions.clear(); state.dateToKeys.clear(); state.studentIndex.clear();
+  state.sessionKeys = []; state.warnings = []; state.errors = []; state.sources.clear();
+  state.allStudentIds.clear(); state.allModules.clear(); state.moduleGroups.clear();
+  const moduleRe = /^[A-Z]{3}\d{5}$/i;
+  const groupRe = /group\s*(\w+)/i;
+  rowSets.forEach(({rows, label}) => {
+    state.sources.add(label);
+    rows.forEach((row, i) => {
+      const vals = Object.values(row || {});
+      if (!vals.some(v => (v||'').toString().trim())) return;
+      const sid = (row.sid || row.SID || row.session_id || '').toString().trim();
+      if (!sid) { state.warnings.push(`${label}: row ${i+2} skipped — no session ID.`); return; }
+      const phase = normalizePhase(row.phase || row.Phase || row.ph);
+      if (!VALID_PHASES.has(phase)) { state.warnings.push(`${label}: row ${i+2} skipped — unknown phase.`); return; }
+      const studentId = sanitizeId(row.student_id || row.Student_ID || row.studentId || row.StudentId);
+      if (!studentId) { state.warnings.push(`${label}: row ${i+2} skipped — no student ID.`); return; }
+      const ts = row.ts_utc || row.timestamp || row.ts || '';
+      const date = extractDate(ts);
+      if (!date) { state.warnings.push(`${label}: row ${i+2} skipped — bad timestamp.`); return; }
+      let mod = (row.module || row.Module || '').toString().trim().toUpperCase();
+      if (!mod && moduleRe.test(sid)) mod = sid.slice(0, 8).toUpperCase();
+      let grp = (row.group || row.Group || '').toString().trim();
+      if (grp) { const gm = grp.match(groupRe); if (gm) grp = gm[1]; }
+      else if (row['group code']) grp = row['group code'].toString().trim();
+
+      const key = `${sid}__${date}`;
+      let sess = state.sessions.get(key);
+      if (!sess) {
+        sess = { key, sid, date, module: mod, group: grp, phaseUsage: new Set(), students: new Map(), dupes: 0, cache: new Map() };
+        state.sessions.set(key, sess);
+      }
+      if (!sess.module && mod) sess.module = mod;
+      if (!sess.group && grp) sess.group = grp;
+      sess.phaseUsage.add(phase);
+
+      let entry = sess.students.get(studentId);
+      if (!entry) { entry = { phases: new Set(), timestamps: [] }; sess.students.set(studentId, entry); }
+      if (entry.phases.has(phase)) sess.dupes++; else entry.phases.add(phase);
+      if (ts) entry.timestamps.push(ts);
+
+      state.allStudentIds.add(studentId);
+      if (!state.studentIndex.has(studentId)) state.studentIndex.set(studentId, new Set());
+      state.studentIndex.get(studentId).add(key);
+
+      if (mod) {
+        state.allModules.add(mod);
+        if (!state.moduleGroups.has(mod)) state.moduleGroups.set(mod, new Set());
+        if (grp) state.moduleGroups.get(mod).add(grp);
+      }
+    });
+  });
+  const arr = Array.from(state.sessions.values()).sort((a,b) => a.date.localeCompare(b.date) || a.sid.localeCompare(b.sid));
+  state.sessionKeys = arr.map(s => s.key);
+  arr.forEach(s => {
+    if (!state.dateToKeys.has(s.date)) state.dateToKeys.set(s.date, []);
+    state.dateToKeys.get(s.date).push(s.key);
+  });
+}
+
+// ── Analytics ──
+function determineStatus(phases, activePhases) {
+  const has = p => phases.has(p);
+  const active = p => activePhases.has(p);
+  const hasStart = active('start') && has('start');
+  const hasEnd = active('end') && has('end');
+  const missingStart = active('start') && !has('start');
+  const missingEnd = active('end') && !has('end');
+
+  const anyPresent = [...activePhases].some(p => has(p));
+  if (!anyPresent) return 'Absent';
+
+  const breakPhases = ['break1','break2'].filter(p => active(p));
+  const missingBreaks = breakPhases.filter(p => !has(p));
+
+  if (missingStart && anyPresent) return 'Late';
+  if (hasStart && (hasEnd || !active('end'))) {
+    if (missingBreaks.length === 0) return 'Present';
+    return 'Late from break';
+  }
+  if (hasStart && missingEnd) return 'Left Early';
+  return 'Partial';
+}
+
+function buildSessionAnalytics(sess) {
+  const cacheKey = `r${state.rosterVersion}`;
+  if (sess.cache.has(cacheKey)) return sess.cache.get(cacheKey);
+
+  const activePhases = new Set(sess.phaseUsage);
+  const combined = new Set();
+  state.rosterMap.forEach((_, id) => combined.add(id));
+  sess.students.forEach((_, id) => combined.add(id));
+
+  const counts = {};
+  STATUS_ORDER.forEach(s => counts[s] = 0);
+  const rows = [];
+  const missing = [], outOfRoster = [];
+
+  combined.forEach(studentId => {
+    const entry = sess.students.get(studentId);
+    const phases = entry ? entry.phases : new Set();
+    const status = determineStatus(phases, activePhases);
+    counts[status]++;
+    const phaseCols = {};
+    ['start','break1','break2','end'].forEach(p => {
+      if (!activePhases.has(p)) phaseCols[p] = 'na';
+      else phaseCols[p] = phases.has(p) ? 'yes' : 'no';
+    });
+    const lastTs = entry && entry.timestamps.length ? entry.timestamps.sort().slice(-1)[0] : null;
+    const lastSeen = lastTs ? timeFmt.format(new Date(lastTs)) : '—';
+    const name = studentName(studentId);
+    const onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
+    const isU18 = state.under18Set.has(studentId);
+    rows.push({ studentId, name, status, phases: phaseCols, lastSeen, onRoster, isU18 });
+    if (state.rosterMap.size > 0) {
+      if (!state.rosterMap.has(studentId) && entry) outOfRoster.push(studentId);
+      if (state.rosterMap.has(studentId) && !entry) missing.push(studentId);
+    }
+  });
+  rows.sort((a,b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.studentId.localeCompare(b.studentId));
+  const total = rows.length;
+  const presentN = counts['Present'] || 0;
+  const analytics = { rows, counts, total, presentN, pct: total ? Math.round(presentN/total*100) : 0, activePhases, missing, outOfRoster, dupes: sess.dupes };
+  sess.cache.set(cacheKey, analytics);
+  return analytics;
+}
+
+// ── Populate controls ──
+function populateSessionSelectors() {
+  const dates = Array.from(state.dateToKeys.keys()).sort();
+  el.sessionDateSelect.innerHTML = '';
+  if (!dates.length) {
+    el.sessionDateSelect.innerHTML = '<option value="">No dates</option>';
+    el.sessionKeySelect.innerHTML = '<option value="">—</option>';
+    state.sel.date = null; state.sel.sessionKey = null; return;
+  }
+  if (!state.sel.date || !state.dateToKeys.has(state.sel.date)) state.sel.date = dates[dates.length-1];
+  dates.forEach(d => {
+    const o = document.createElement('option');
+    o.value = d; o.textContent = toLocalDate(d);
+    if (d === state.sel.date) o.selected = true;
+    el.sessionDateSelect.appendChild(o);
+  });
+  populateSessionKeySelect(state.sel.date);
+}
+function populateSessionKeySelect(date) {
+  el.sessionKeySelect.innerHTML = '';
+  const keys = state.dateToKeys.get(date) || [];
+  if (!keys.length) { el.sessionKeySelect.innerHTML = '<option value="">—</option>'; state.sel.sessionKey = null; return; }
+  if (!state.sel.sessionKey || !keys.includes(state.sel.sessionKey)) state.sel.sessionKey = keys[0];
+  keys.forEach(k => {
+    const s = state.sessions.get(k);
+    const o = document.createElement('option');
+    o.value = k; o.textContent = readableLabel(s);
+    if (k === state.sel.sessionKey) o.selected = true;
+    el.sessionKeySelect.appendChild(o);
+  });
+}
+function populateGroupSelectors() {
+  el.groupModuleSelect.innerHTML = '';
+  const mods = Array.from(state.allModules).sort();
+  if (!mods.length) { el.groupModuleSelect.innerHTML = '<option value="">No modules</option>'; return; }
+  if (!state.sel.module || !state.allModules.has(state.sel.module)) state.sel.module = mods[0];
+  mods.forEach(m => {
+    const o = document.createElement('option');
+    o.value = m; o.textContent = m;
+    if (m === state.sel.module) o.selected = true;
+    el.groupModuleSelect.appendChild(o);
+  });
+  populateGroupGroupSelect();
+}
+function populateGroupGroupSelect() {
+  el.groupGroupSelect.innerHTML = '<option value="all">All groups</option>';
+  const grps = state.moduleGroups.get(state.sel.module);
+  if (grps) {
+    Array.from(grps).sort().forEach(g => {
+      const o = document.createElement('option');
+      o.value = g; o.textContent = `Group ${g}`;
+      if (g === state.sel.group) o.selected = true;
+      el.groupGroupSelect.appendChild(o);
+    });
+  }
+  if (!state.sel.group) state.sel.group = 'all';
+  const allDates = state.sessionKeys.map(k => state.sessions.get(k)).filter(s => s.module === state.sel.module).map(s => s.date).sort();
+  if (allDates.length) {
+    if (!state.sel.dateFrom) el.groupDateFrom.value = allDates[0];
+    if (!state.sel.dateTo) el.groupDateTo.value = allDates[allDates.length-1];
+  }
+}
+function populateStudentSuggest() {
+  el.studentSuggest.innerHTML = '';
+  Array.from(state.studentIndex.keys()).sort().forEach(id => {
+    const o = document.createElement('option'); o.value = id;
+    el.studentSuggest.appendChild(o);
+  });
+}
+
+// ── Status filter chips ──
+function buildStatusChips(containerId, filterKey) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  STATUS_ORDER.forEach(s => {
+    const chip = document.createElement('label');
+    chip.className = 'status-chip' + (state.filters[filterKey].has(s) ? ' active' : '');
+    const inp = document.createElement('input');
+    inp.type = 'checkbox'; inp.checked = state.filters[filterKey].has(s);
+    inp.addEventListener('change', () => {
+      if (inp.checked) state.filters[filterKey].add(s); else state.filters[filterKey].delete(s);
+      chip.classList.toggle('active', inp.checked);
+      renderView();
+    });
+    chip.appendChild(inp);
+    const span = document.createElement('span');
+    span.textContent = s;
+    chip.appendChild(span);
+    container.appendChild(chip);
+  });
+}
+function syncChips(containerId, filterKey) {
+  const container = document.getElementById(containerId);
+  container.querySelectorAll('.status-chip').forEach(chip => {
+    const inp = chip.querySelector('input');
+    if (!inp) return;
+    const val = chip.querySelector('span').textContent;
+    inp.checked = state.filters[filterKey].has(val);
+    chip.classList.toggle('active', inp.checked);
+  });
+}
+
+// ── Sortable table builder ──
+function buildSortableTable(columns, rows, options = {}) {
+  const wrapper = document.createElement('div');
+  wrapper.className = 'data-table-wrapper';
+  const table = document.createElement('table');
+  table.className = 'data-table';
+  const thead = document.createElement('thead');
+  const headerRow = document.createElement('tr');
+  let sortCol = null, sortDir = 'asc';
+
+  columns.forEach((col, idx) => {
+    const th = document.createElement('th');
+    th.textContent = col.label;
+    const arrow = document.createElement('span');
+    arrow.className = 'sort-arrow';
+    arrow.textContent = ' ↕';
+    th.appendChild(arrow);
+    th.addEventListener('click', () => {
+      if (sortCol === idx) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+      else { sortCol = idx; sortDir = 'asc'; }
+      thead.querySelectorAll('.sort-arrow').forEach(a => { a.textContent = ' ↕'; a.classList.remove('active'); });
+      arrow.textContent = sortDir === 'asc' ? ' ↑' : ' ↓';
+      arrow.classList.add('active');
+      renderBody();
+    });
+    headerRow.appendChild(th);
+  });
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  function renderBody() {
+    tbody.innerHTML = '';
+    let sorted = [...rows];
+    if (sortCol !== null) {
+      sorted.sort((a,b) => {
+        let va = a[columns[sortCol].key], vb = b[columns[sortCol].key];
+        if (typeof va === 'number' && typeof vb === 'number') return sortDir === 'asc' ? va-vb : vb-va;
+        va = String(va||''); vb = String(vb||'');
+        return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
+      });
+    }
+    if (!sorted.length) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.colSpan = columns.length;
+      td.textContent = options.emptyText || 'No data matches the current filters.';
+      td.style.textAlign = 'center'; td.style.padding = '24px'; td.style.color = 'var(--muted)';
+      tr.appendChild(td); tbody.appendChild(tr);
+    } else {
+      sorted.forEach(rowData => {
+        const tr = document.createElement('tr');
+        if (rowData._rowClass) tr.className = rowData._rowClass;
+        columns.forEach(col => {
+          const td = document.createElement('td');
+          if (col.render) col.render(td, rowData);
+          else td.textContent = rowData[col.key] ?? '';
+          tr.appendChild(td);
+        });
+        tbody.appendChild(tr);
+      });
+    }
+    if (options.totalsRow && sorted.length) {
+      const tr = document.createElement('tr');
+      tr.className = 'totals-row';
+      columns.forEach(col => {
+        const td = document.createElement('td');
+        td.textContent = options.totalsRow[col.key] ?? '';
+        tr.appendChild(td);
+      });
+      tbody.appendChild(tr);
+    }
+  }
+  renderBody();
+  table.appendChild(tbody);
+  wrapper.appendChild(table);
+  return wrapper;
+}
+
+// ── Stacked bar chart ──
+function buildStackedBar(counts, total) {
+  const container = document.createElement('div');
+  container.className = 'chart-bar-container';
+  const h3 = document.createElement('h3');
+  h3.textContent = 'Attendance Distribution';
+  container.appendChild(h3);
+  const bar = document.createElement('div');
+  bar.className = 'stacked-bar';
+  STATUS_ORDER.forEach(s => {
+    const n = counts[s] || 0;
+    if (!n) return;
+    const seg = document.createElement('div');
+    seg.className = 'bar-segment';
+    seg.style.width = (n/total*100) + '%';
+    seg.style.background = STATUS_COLORS[s].hex;
+    seg.title = `${s}: ${n} (${Math.round(n/total*100)}%)`;
+    bar.appendChild(seg);
+  });
+  container.appendChild(bar);
+  const legend = document.createElement('div');
+  legend.className = 'bar-legend';
+  STATUS_ORDER.forEach(s => {
+    const n = counts[s] || 0;
+    if (!n) return;
+    const item = document.createElement('div');
+    item.className = 'bar-legend-item';
+    const dot = document.createElement('span');
+    dot.className = 'bar-legend-dot';
+    dot.style.background = STATUS_COLORS[s].hex;
+    item.appendChild(dot);
+    const lbl = document.createElement('span');
+    lbl.textContent = `${s}: ${n}`;
+    item.appendChild(lbl);
+    legend.appendChild(item);
+  });
+  container.appendChild(legend);
+  return container;
+}
+
+// ── Phase cell renderer ──
+function renderPhaseCell(td, value) {
+  if (value === 'yes') { td.textContent = '✔'; td.className = 'phase-yes'; }
+  else if (value === 'no') { td.textContent = '✖'; td.className = 'phase-no'; }
+  else { td.textContent = '—'; td.className = 'phase-na'; }
+}
+
+// ── Email generation ──
+function buildEmailBody(sess, row) {
+  const phrase = EMAIL_PHRASES[row.status] || "had an attendance issue at";
+  const mod = sess.module || sess.sid;
+  const date = toLocalDate(sess.date);
+  const g = greeting(row.studentId);
+  return `${g},\n\nOur records show you ${phrase} the ${mod} session on ${date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk\n\nIf you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.`;
+}
+
+function mailtoLink(sess, row) {
+  const to = `${row.studentId}@${state.emailDomain}`;
+  const subj = `[Attendance] ${sess.module || sess.sid} ${sess.date} — ${row.status}`;
+  const body = buildEmailBody(sess, row);
+  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+}
+
+function emlContent(sess, row) {
+  const to = `${row.studentId}@${state.emailDomain}`;
+  const subj = `[Attendance] ${sess.module || sess.sid} ${sess.date} — ${row.status}`;
+  const body = buildEmailBody(sess, row);
+  return `To: ${to}\r\nSubject: ${subj}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`;
+}
+
+// ── Render views ──
+function renderView() {
+  const vc = el.viewContent;
+  vc.innerHTML = '';
+  if (!state.sessions.size) {
+    el.emptyState.removeAttribute('hidden');
+    vc.setAttribute('hidden', '');
+    el.exportXlsxBtn.disabled = true;
+    el.exportCsvBtn.disabled = true;
+    return;
+  }
+  el.emptyState.setAttribute('hidden', '');
+  vc.removeAttribute('hidden');
+  switch (state.activeView) {
+    case 'session': renderSessionView(vc); break;
+    case 'group': renderGroupView(vc); break;
+    case 'student': renderStudentView(vc); break;
+  }
+}
+
+function renderSessionView(vc) {
+  if (!state.sel.sessionKey || !state.sessions.has(state.sel.sessionKey)) {
+    vc.innerHTML = '<div class="empty-state"><h2>Select a session</h2><p>Choose a date and session from the sidebar.</p></div>';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+  const sess = state.sessions.get(state.sel.sessionKey);
+  const a = buildSessionAnalytics(sess);
+  const filterSet = state.filters.session;
+  const visible = a.rows.filter(r => filterSet.has(r.status));
+
+  const header = document.createElement('div');
+  header.className = 'main-header';
+  const h1 = document.createElement('h1');
+  h1.textContent = readableLabel(sess);
+  header.appendChild(h1);
+  const sub = document.createElement('div');
+  sub.className = 'subtitle';
+  sub.textContent = `${toLocalDate(sess.date)} · ${a.total} students`;
+  header.appendChild(sub);
+  vc.appendChild(header);
+
+  const stats = document.createElement('div');
+  stats.className = 'stats-bar';
+  [[`${a.presentN}`, 'Present', `${a.pct}% attendance`],
+   [`${a.total}`, 'Total Students', `${a.rows.filter(r=>r.status!=='Present').length} flagged`],
+   [`${(a.counts['Late']||0)+(a.counts['Late from break']||0)}`, 'Late / Break Issues', ''],
+   [`${(a.counts['Absent']||0)+(a.counts['Left Early']||0)+(a.counts['Partial']||0)}`, 'At Risk', '']
+  ].forEach(([val, label, meta]) => {
+    const card = document.createElement('div'); card.className = 'stat-card';
+    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
+    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
+    card.appendChild(l); card.appendChild(v);
+    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+    stats.appendChild(card);
+  });
+  vc.appendChild(stats);
+  vc.appendChild(buildStackedBar(a.counts, a.total));
+
+  if (a.missing.length) {
+    const alert = document.createElement('div');
+    alert.className = 'alert-block danger';
+    alert.innerHTML = `<span class="alert-icon">⚠</span><div><strong>${a.missing.length} rostered students missing:</strong> ${a.missing.join(', ')}</div>`;
+    vc.appendChild(alert);
+  }
+  if (a.outOfRoster.length) {
+    const alert = document.createElement('div');
+    alert.className = 'alert-block warning';
+    alert.innerHTML = `<span class="alert-icon">⚠</span><div><strong>${a.outOfRoster.length} not on roster:</strong> ${a.outOfRoster.join(', ')}</div>`;
+    vc.appendChild(alert);
+  }
+  if (a.dupes) {
+    const alert = document.createElement('div');
+    alert.className = 'alert-block info';
+    alert.innerHTML = `<span class="alert-icon">ℹ</span><div>${a.dupes} duplicate check-ins detected.</div>`;
+    vc.appendChild(alert);
+  }
+
+  const cols = [
+    { key: 'studentId', label: 'Student ID' },
+    { key: 'name', label: 'Name', render: (td, r) => { td.textContent = r.name || '—'; } },
+    { key: 'start', label: 'Start', render: (td, r) => renderPhaseCell(td, r.phases.start) },
+    { key: 'break1', label: 'Break 1', render: (td, r) => renderPhaseCell(td, r.phases.break1) },
+    { key: 'break2', label: 'Break 2', render: (td, r) => renderPhaseCell(td, r.phases.break2) },
+    { key: 'end', label: 'End', render: (td, r) => renderPhaseCell(td, r.phases.end) },
+    { key: 'status', label: 'Status', render: (td, r) => { const b = document.createElement('span'); b.className = `status-badge ${statusClass(r.status)}`; b.textContent = r.status; td.appendChild(b); } },
+    { key: 'isU18', label: 'Under 18', render: (td, r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
+    { key: 'lastSeen', label: 'Last Activity' }
+  ];
+  const tableRows = visible.map(r => ({...r, start: r.phases.start, break1: r.phases.break1, break2: r.phases.break2, end: r.phases.end, _rowClass: !r.onRoster ? 'not-on-roster' : ''}));
+  vc.appendChild(buildSortableTable(cols, tableRows));
+
+  state.exportRows = a.rows.map(r => ({ 'Student ID': r.studentId, Name: r.name||'', Start: r.phases.start, 'Break 1': r.phases.break1, 'Break 2': r.phases.break2, End: r.phases.end, Status: r.status, 'Under 18': r.isU18 ? 'YES' : '', 'Last Activity': r.lastSeen }));
+  el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
+
+  const flagged = a.rows.filter(r => r.status !== 'Present');
+  if (flagged.length) {
+    const emailSec = document.createElement('div');
+    emailSec.className = 'email-section';
+    const eh3 = document.createElement('h3');
+    eh3.textContent = `Follow-up emails (${flagged.length} students)`;
+    emailSec.appendChild(eh3);
+    const openAll = document.createElement('button');
+    openAll.className = 'sb-btn primary';
+    openAll.style.marginBottom = '12px';
+    openAll.textContent = 'Open all emails';
+    openAll.addEventListener('click', () => {
+      flagged.forEach((r, i) => {
+        setTimeout(() => window.open(mailtoLink(sess, r), '_blank'), i * 500);
+      });
+    });
+    emailSec.appendChild(openAll);
+    const dlAll = document.createElement('button');
+    dlAll.className = 'sb-btn';
+    dlAll.style.marginBottom = '12px';
+    dlAll.textContent = 'Download all .eml files';
+    dlAll.addEventListener('click', () => {
+      flagged.forEach(r => {
+        const blob = new Blob([emlContent(sess, r)], { type: 'message/rfc822' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url; a.download = `${r.studentId}_${r.status.replace(/\s+/g,'-')}.eml`;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(() => URL.revokeObjectURL(url), 2000);
+      });
+      showToast(`${flagged.length} .eml files downloaded`);
+    });
+    emailSec.appendChild(dlAll);
+    const list = document.createElement('div');
+    list.className = 'email-list';
+    flagged.forEach(r => {
+      const row = document.createElement('div');
+      row.className = 'email-row';
+      const info = document.createElement('span');
+      info.className = 'student-info';
+      info.textContent = `${r.studentId}${r.name ? ' — '+r.name : ''} (${r.status})`;
+      row.appendChild(info);
+      const link = document.createElement('a');
+      link.href = mailtoLink(sess, r);
+      link.textContent = 'Send email';
+      row.appendChild(link);
+      list.appendChild(row);
+    });
+    emailSec.appendChild(list);
+    vc.appendChild(emailSec);
+  }
+}
+
+function renderGroupView(vc) {
+  const mod = state.sel.module;
+  if (!mod) {
+    vc.innerHTML = '<div class="empty-state"><h2>Select a module</h2><p>Choose a module from the sidebar.</p></div>';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+  const grp = el.groupGroupSelect.value;
+  const dateFrom = el.groupDateFrom.value;
+  const dateTo = el.groupDateTo.value;
+
+  const relevantSessions = state.sessionKeys
+    .map(k => state.sessions.get(k))
+    .filter(s => {
+      if (s.module !== mod) return false;
+      if (grp !== 'all' && s.group !== grp) return false;
+      if (dateFrom && s.date < dateFrom) return false;
+      if (dateTo && s.date > dateTo) return false;
+      return true;
     });
 
-    const STATUS_ORDER = ['Present', 'Late', 'Late from break', 'Left Early', 'Partial', 'Absent'];
-    const VALID_PHASES = new Set(['start', 'break1', 'break2', 'end']);
-    const dateFormatter = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-    const timeFormatter = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
-    const percentFormatter = new Intl.NumberFormat(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 1 });
+  if (!relevantSessions.length) {
+    vc.innerHTML = '<div class="empty-state"><h2>No sessions found</h2><p>No sessions match the selected module, group, and date range.</p></div>';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
 
-    const elements = {
-      attendanceUpload: document.getElementById('attendanceUpload'),
-      rosterUpload: document.getElementById('rosterUpload'),
-      clearRosterBtn: document.getElementById('clearRosterBtn'),
-      reloadServerBtn: document.getElementById('reloadServerBtn'),
-      clearDataBtn: document.getElementById('clearDataBtn'),
-      emailDomainInput: document.getElementById('emailDomainInput'),
-      rosterSummary: document.getElementById('rosterSummary'),
-      datasetStats: document.getElementById('datasetStats'),
-      dataMessages: document.getElementById('dataMessages'),
-      tabButtons: Array.from(document.querySelectorAll('.tab-strip button[data-mode]')),
-      modeContainers: Array.from(document.querySelectorAll('.mode-container')),
-      sessionDateSelect: document.getElementById('sessionDateSelect'),
-      sessionKeySelect: document.getElementById('sessionKeySelect'),
-      sessionStatusFilter: document.getElementById('sessionStatusFilter'),
-      sessionRosterTag: document.getElementById('sessionRosterTag'),
-      exportSessionBtn: document.getElementById('exportSessionBtn'),
-      multiSessionSelect: document.getElementById('multiSessionSelect'),
-      multiStatusFilter: document.getElementById('multiStatusFilter'),
-      multiSelectionTag: document.getElementById('multiSelectionTag'),
-      exportSummaryBtn: document.getElementById('exportSummaryBtn'),
-      studentSearch: document.getElementById('studentSearch'),
-      studentSuggestions: document.getElementById('studentSuggestions'),
-      studentDateRangeSelect: document.getElementById('studentDateRangeSelect'),
-      studentSessionsTag: document.getElementById('studentSessionsTag'),
-      exportStudentBtn: document.getElementById('exportStudentBtn'),
-      sessionResults: document.getElementById('sessionResults'),
-      multiResults: document.getElementById('multiResults'),
-      studentResults: document.getElementById('studentResults'),
-      statusActionButtons: Array.from(document.querySelectorAll('.status-actions button[data-status-action]'))
-    };
+  const allStudents = new Set();
+  state.rosterMap.forEach((_, id) => allStudents.add(id));
+  relevantSessions.forEach(s => s.students.forEach((_, id) => allStudents.add(id)));
 
-    const state = {
-      selectedMode: MODE.SESSION,
-      filters: {
-        [MODE.SESSION]: new Set(STATUS_ORDER),
-        [MODE.MULTI]: new Set(STATUS_ORDER)
-      },
-      rosterSet: new Set(),
-      rosterVersion: 0,
-      sessionsByKey: new Map(),
-      sessionKeysSorted: [],
-      dateToSessionKeys: new Map(),
-      studentIndex: new Map(),
-      allStudentIds: new Set(),
-      datasetSources: new Set(),
-      selectedDate: null,
-      selectedSessionKey: null,
-      selectedMultiSessionKeys: new Set(),
-      selectedStudentId: '',
-      studentDateRange: '30d',
-      sessionExportRows: [],
-      multiExportRows: [],
-      studentExportRows: [],
-      ingestionWarnings: [],
-      parseErrors: [],
-      emailDomain: elements.emailDomainInput.value.trim() || 'rave.ac.uk'
-    };
+  const totalSessions = relevantSessions.length;
+  const studentRows = [];
 
-    function normalizePhase(value) {
-      const raw = (value || '').toString().trim().toLowerCase();
-      if (raw === 'break' || raw === 'break 1' || raw === 'break1') return 'break1';
-      if (raw === 'break 2' || raw === 'break2') return 'break2';
-      if (raw === 'start' || raw === 'end') return raw;
-      return raw;
+  allStudents.forEach(studentId => {
+    let attended = 0, missed = 0, leftEarly = 0, late = 0;
+    relevantSessions.forEach(sess => {
+      const a = buildSessionAnalytics(sess);
+      const row = a.rows.find(r => r.studentId === studentId);
+      const status = row ? row.status : 'Absent';
+      if (status === 'Present') attended++;
+      else if (status === 'Absent') missed++;
+      else if (status === 'Left Early') leftEarly++;
+      else if (status === 'Late') late++;
+      else if (status === 'Late from break') attended++;
+      else if (status === 'Partial') missed++;
+    });
+    const pct = totalSessions ? Math.round(attended / totalSessions * 100) : 0;
+    const onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
+    const isU18 = state.under18Set.has(studentId);
+    const name = studentName(studentId);
+    let sessGroup = '';
+    if (grp === 'all') {
+      const sessWithStudent = relevantSessions.find(s => s.students.has(studentId));
+      sessGroup = sessWithStudent ? sessWithStudent.group : '';
     }
-
-    function sanitizeId(id) {
-      return (id || '').toString().replace(/[^0-9]/g, '').trim();
-    }
-
-    function extractDate(ts) {
-      if (!ts) return '';
-      const isoMatch = ts.match(/\\d{4}-\\d{2}-\\d{2}/);
-      if (isoMatch) return isoMatch[0];
-      const dateCandidate = new Date(ts);
-      if (!Number.isNaN(dateCandidate.getTime())) {
-        return [
-          String(dateCandidate.getFullYear()).padStart(4, '0'),
-          String(dateCandidate.getMonth() + 1).padStart(2, '0'),
-          String(dateCandidate.getDate()).padStart(2, '0')
-        ].join('-');
-      }
-      return '';
-    }
-
-    function toLocalDate(dateStr) {
-      if (!dateStr) return '';
-      const [y, m, d] = dateStr.split('-').map(Number);
-      const date = new Date(y, (m || 1) - 1, d || 1);
-      return dateFormatter.format(date);
-    }
-
-    function readableModuleGroup(session) {
-      const module = session.module ? session.module.toUpperCase() : '';
-      const group = session.group ? `Group ${session.group}` : '';
-      if (module && group) return `${module} — ${group}`;
-      if (module) return module;
-      if (group) return group;
-      return session.sid;
-    }
-
-    function statusClass(status) {
-      return `status-${status.toLowerCase().replace(/\\s+/g, '-')}`;
-    }
-
-    function buildStatCard(label, value, meta) {
-      const card = document.createElement('div');
-      card.className = 'stat-card';
-      const labelEl = document.createElement('div');
-      labelEl.className = 'label';
-      labelEl.textContent = label;
-      const valueEl = document.createElement('div');
-      valueEl.className = 'value';
-      valueEl.textContent = value;
-      card.appendChild(labelEl);
-      card.appendChild(valueEl);
-      if (meta) {
-        const metaEl = document.createElement('div');
-        metaEl.className = 'meta';
-        metaEl.textContent = meta;
-        card.appendChild(metaEl);
-      }
-      return card;
-    }
-
-    function getStatusFilter(mode) {
-      return state.filters[mode] || new Set();
-    }
-
-    function setupStatusFilters() {
-      [
-        { mode: MODE.SESSION, container: elements.sessionStatusFilter },
-        { mode: MODE.MULTI, container: elements.multiStatusFilter }
-      ].forEach(({ mode, container }) => {
-        container.innerHTML = '';
-        STATUS_ORDER.forEach(status => {
-          const id = `${mode}-status-${status.replace(/\\s+/g, '-')}`;
-          const label = document.createElement('label');
-          label.className = 'status-chip';
-          label.htmlFor = id;
-          const input = document.createElement('input');
-          input.type = 'checkbox';
-          input.id = id;
-          input.value = status;
-          input.dataset.mode = mode;
-          input.checked = getStatusFilter(mode).has(status);
-          input.addEventListener('change', handleStatusToggle);
-          label.appendChild(input);
-          const span = document.createElement('span');
-          span.textContent = status;
-          label.appendChild(span);
-          if (input.checked) label.classList.add('active');
-          container.appendChild(label);
-        });
-      });
-    }
-
-    function syncStatusFilterUI(mode) {
-      const container = mode === MODE.SESSION ? elements.sessionStatusFilter : elements.multiStatusFilter;
-      container.querySelectorAll('.status-chip').forEach(chip => {
-        const input = chip.querySelector('input');
-        if (!input) return;
-        const checked = getStatusFilter(mode).has(input.value);
-        input.checked = checked;
-        chip.classList.toggle('active', checked);
-      });
-    }
-
-    function handleStatusToggle(event) {
-      const { value, checked, dataset } = event.target;
-      const mode = dataset.mode;
-      if (!value || !mode || !state.filters[mode]) return;
-      if (checked) {
-        state.filters[mode].add(value);
-      } else {
-        state.filters[mode].delete(value);
-      }
-      syncStatusFilterUI(mode);
-      renderCurrentMode();
-    }
-
-    function handleStatusAction(event) {
-      const { mode, statusAction } = event.currentTarget.dataset;
-      if (!mode || !state.filters[mode]) return;
-      if (statusAction === 'all') {
-        STATUS_ORDER.forEach(status => state.filters[mode].add(status));
-      } else if (statusAction === 'none') {
-        state.filters[mode].clear();
-      }
-      syncStatusFilterUI(mode);
-      renderCurrentMode();
-    }
-
-    function setMode(mode) {
-      if (!Object.values(MODE).includes(mode)) return;
-      state.selectedMode = mode;
-      elements.tabButtons.forEach(btn => {
-        const isActive = btn.dataset.mode === mode;
-        btn.classList.toggle('active', isActive);
-        btn.setAttribute('aria-selected', String(isActive));
-      });
-      elements.modeContainers.forEach(container => {
-        const isActive = container.dataset.mode === mode;
-        container.classList.toggle('active', isActive);
-        container.setAttribute('aria-hidden', String(!isActive));
-      });
-      renderCurrentMode();
-    }
-
-    function parseCsvText(text, sourceLabel) {
-      if (typeof Papa === 'undefined') {
-        throw new Error('PapaParse library is not available.');
-      }
-      const result = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
-      const rows = Array.isArray(result.data) ? result.data : [];
-      const errors = result.errors?.map(err => `${sourceLabel}: row ${err.row + 1} — ${err.message}`) || [];
-      return { rows, errors };
-    }
-
-    function ingestAttendanceRows(rowSets) {
-      state.sessionsByKey.clear();
-      state.dateToSessionKeys.clear();
-      state.studentIndex.clear();
-      state.sessionKeysSorted = [];
-      state.ingestionWarnings = [];
-      state.parseErrors = [];
-      state.datasetSources.clear();
-      state.allStudentIds.clear();
-
-      const moduleRe = /^[A-Z]{3}\\d{5}$/i;
-      const groupRe = /group\\s*(\\w+)/i;
-
-      rowSets.forEach(({ rows, sourceLabel }) => {
-        state.datasetSources.add(sourceLabel);
-        rows.forEach((row, index) => {
-          const rawValues = Object.values(row || {});
-          if (!rawValues.some(v => (v || '').toString().trim().length)) return;
-
-          const sid = (row.sid || row.SID || row.session_id || '').toString().trim();
-          if (!sid) {
-            state.ingestionWarnings.push(`${sourceLabel}: row ${index + 2} skipped — missing session identifier.`);
-            return;
-          }
-
-          const rawPhase = normalizePhase(row.phase || row.Phase || row.ph);
-          if (!VALID_PHASES.has(rawPhase)) {
-            state.ingestionWarnings.push(`${sourceLabel}: ${sid} row ${index + 2} skipped — unrecognised phase "${row.phase}".`);
-            return;
-          }
-
-          const studentId = sanitizeId(row.student_id || row.Student_ID || row.studentId || row.StudentId);
-          if (!studentId) {
-            state.ingestionWarnings.push(`${sourceLabel}: ${sid} row ${index + 2} skipped — missing student ID.`);
-            return;
-          }
-
-          const ts = row.ts_utc || row.timestamp || row.ts || '';
-          const date = extractDate(ts);
-          if (!date) {
-            state.ingestionWarnings.push(`${sourceLabel}: ${sid} row ${index + 2} skipped — invalid timestamp.`);
-            return;
-          }
-
-          let moduleCode = (row.module || row.Module || '').toString().trim();
-          if (!moduleCode && moduleRe.test(sid)) {
-            moduleCode = sid.slice(0, 8).toUpperCase();
-          }
-
-          let group = (row.group || row.Group || '').toString().trim();
-          if (group) {
-            const groupMatch = group.match(groupRe);
-            if (groupMatch) {
-              group = groupMatch[1];
-            }
-          } else if (row['group code']) {
-            group = row['group code'].toString().trim();
-          }
-
-          const sessionKey = `${sid}__${date}`;
-          let session = state.sessionsByKey.get(sessionKey);
-          if (!session) {
-            session = {
-              key: sessionKey,
-              sid,
-              date,
-              module: moduleCode,
-              group,
-              phaseUsage: new Set(),
-              phasesByStudent: new Map(),
-              duplicateCount: 0,
-              sources: new Set(),
-              cache: new Map()
-            };
-            state.sessionsByKey.set(sessionKey, session);
-          }
-          if (!session.module && moduleCode) session.module = moduleCode;
-          if (!session.group && group) session.group = group;
-          session.phaseUsage.add(rawPhase);
-          session.sources.add(sourceLabel);
-
-          let studentEntry = session.phasesByStudent.get(studentId);
-          if (!studentEntry) {
-            studentEntry = { phases: new Set(), timestamps: [], rawRows: [] };
-            session.phasesByStudent.set(studentId, studentEntry);
-          }
-          if (studentEntry.phases.has(rawPhase)) {
-            session.duplicateCount += 1;
-          } else {
-            studentEntry.phases.add(rawPhase);
-          }
-          if (ts) studentEntry.timestamps.push(ts);
-          studentEntry.rawRows.push(row);
-
-          state.allStudentIds.add(studentId);
-          if (!state.studentIndex.has(studentId)) {
-            state.studentIndex.set(studentId, new Set());
-          }
-          state.studentIndex.get(studentId).add(sessionKey);
-        });
-      });
-
-      const sessions = Array.from(state.sessionsByKey.values());
-      sessions.sort((a, b) => a.date.localeCompare(b.date) || a.sid.localeCompare(b.sid));
-      state.sessionKeysSorted = sessions.map(session => session.key);
-
-      sessions.forEach(session => {
-        if (!state.dateToSessionKeys.has(session.date)) {
-          state.dateToSessionKeys.set(session.date, []);
-        }
-        state.dateToSessionKeys.get(session.date).push(session.key);
-      });
-    }
-
-    function populateSessionSelectors() {
-      const dates = Array.from(state.dateToSessionKeys.keys()).sort();
-      elements.sessionDateSelect.innerHTML = '';
-      if (!dates.length) {
-        elements.sessionDateSelect.innerHTML = '<option value="">No dates loaded</option>';
-        elements.sessionKeySelect.innerHTML = '<option value="">No sessions available</option>';
-        state.selectedDate = null;
-        state.selectedSessionKey = null;
-        return;
-      }
-      if (!state.selectedDate || !state.dateToSessionKeys.has(state.selectedDate)) {
-        state.selectedDate = dates[dates.length - 1];
-      }
-      dates.forEach(date => {
-        const option = document.createElement('option');
-        option.value = date;
-        option.textContent = toLocalDate(date);
-        if (date === state.selectedDate) option.selected = true;
-        elements.sessionDateSelect.appendChild(option);
-      });
-      populateSessionKeySelect(state.selectedDate);
-    }
-
-    function populateSessionKeySelect(date) {
-      elements.sessionKeySelect.innerHTML = '';
-      const sessionKeys = state.dateToSessionKeys.get(date) || [];
-      if (!sessionKeys.length) {
-        elements.sessionKeySelect.innerHTML = '<option value="">No sessions on this date</option>';
-        state.selectedSessionKey = null;
-        return;
-      }
-      if (!state.selectedSessionKey || !sessionKeys.includes(state.selectedSessionKey)) {
-        state.selectedSessionKey = sessionKeys[0];
-      }
-      sessionKeys.forEach(key => {
-        const session = state.sessionsByKey.get(key);
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = readableModuleGroup(session);
-        if (key === state.selectedSessionKey) option.selected = true;
-        elements.sessionKeySelect.appendChild(option);
-      });
-    }
-
-    function populateMultiSessionSelect() {
-      elements.multiSessionSelect.innerHTML = '';
-      if (!state.sessionKeysSorted.length) {
-        elements.multiSessionSelect.innerHTML = '<option value="">No sessions loaded</option>';
-        state.selectedMultiSessionKeys.clear();
-        elements.multiSelectionTag.textContent = '0 sessions selected';
-        return;
-      }
-      if (!state.selectedMultiSessionKeys.size) {
-        state.selectedMultiSessionKeys = new Set(state.sessionKeysSorted.slice(-3));
-      }
-      state.sessionKeysSorted.forEach(key => {
-        const session = state.sessionsByKey.get(key);
-        const option = document.createElement('option');
-        option.value = key;
-        option.textContent = `${toLocalDate(session.date)} · ${readableModuleGroup(session)}`;
-        option.selected = state.selectedMultiSessionKeys.has(key);
-        elements.multiSessionSelect.appendChild(option);
-      });
-      elements.multiSelectionTag.textContent = `${state.selectedMultiSessionKeys.size} session${state.selectedMultiSessionKeys.size === 1 ? '' : 's'} selected`;
-    }
-
-    function populateStudentSuggestions() {
-      const studentIds = Array.from(state.studentIndex.keys()).sort();
-      elements.studentSuggestions.innerHTML = '';
-      studentIds.forEach(id => {
-        const option = document.createElement('option');
-        option.value = id;
-        elements.studentSuggestions.appendChild(option);
-      });
-      if (state.selectedStudentId && !state.studentIndex.has(state.selectedStudentId)) {
-        state.selectedStudentId = '';
-      }
-      elements.studentSearch.value = state.selectedStudentId;
-    }
-
-    function updateRosterSummary() {
-      if (state.rosterSet.size) {
-        elements.rosterSummary.textContent = `${state.rosterSet.size} rostered IDs`;
-        elements.rosterSummary.className = 'tag neutral';
-        elements.sessionRosterTag.textContent = `${state.rosterSet.size} in roster`;
-      } else {
-        elements.rosterSummary.textContent = 'No roster loaded';
-        elements.rosterSummary.className = 'tag neutral';
-        elements.sessionRosterTag.textContent = 'Roster not loaded';
-      }
-    }
-
-    function clearSessionCaches() {
-      state.sessionsByKey.forEach(session => {
-        if (session.cache) session.cache.clear();
-      });
-    }
-
-    function buildSessionAnalytics(session) {
-      const rosterVersionKey = `roster-${state.rosterVersion}`;
-      if (session.cache && session.cache.has(rosterVersionKey)) {
-        return session.cache.get(rosterVersionKey);
-      }
-      const break1Used = session.phaseUsage.has('break1');
-      const break2Used = session.phaseUsage.has('break2');
-      const rosterHasEntries = state.rosterSet.size > 0;
-
-      const combinedStudentIds = new Set();
-      if (rosterHasEntries) {
-        state.rosterSet.forEach(id => combinedStudentIds.add(id));
-      }
-      session.phasesByStudent.forEach((_, id) => combinedStudentIds.add(id));
-
-      const counts = STATUS_ORDER.reduce((acc, status) => {
-        acc[status] = 0;
-        return acc;
-      }, {});
-      const rows = [];
-      const missingFromRoster = [];
-      const outOfRoster = [];
-
-      combinedStudentIds.forEach(studentId => {
-        const studentEntry = session.phasesByStudent.get(studentId);
-        const phases = studentEntry ? studentEntry.phases : new Set();
-        const status = determineStatus(phases, break1Used, break2Used);
-        counts[status] += 1;
-        const startPhase = phases.has('start') ? 'Present' : 'Absent';
-        const break1Phase = break1Used ? (phases.has('break1') ? 'Present' : 'Absent') : '—';
-        const break2Phase = break2Used ? (phases.has('break2') ? 'Present' : 'Absent') : '—';
-        const endPhase = phases.has('end') ? 'Present' : 'Absent';
-        const lastSeen = studentEntry && studentEntry.timestamps.length
-          ? timeFormatter.format(new Date(studentEntry.timestamps.sort().slice(-1)[0]))
-          : '—';
-
-        rows.push({
-          studentId,
-          status,
-          phases,
-          startPhase,
-          break1Phase,
-          break2Phase,
-          endPhase,
-          lastSeen
-        });
-
-        if (rosterHasEntries) {
-          if (!state.rosterSet.has(studentId)) {
-            outOfRoster.push(studentId);
-          } else if (!studentEntry || !studentEntry.phases.size) {
-            missingFromRoster.push(studentId);
-          }
-        }
-      });
-
-      rows.sort((a, b) => {
-        const statusDiff = STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status);
-        if (statusDiff !== 0) return statusDiff;
-        return a.studentId.localeCompare(b.studentId);
-      });
-
-      const totalStudents = rows.length;
-      const presentCount = counts['Present'] || 0;
-      const analytics = {
-        rows,
-        counts,
-        totals: {
-          totalStudents,
-          presentCount,
-          presentPercentage: totalStudents ? (presentCount / totalStudents) * 100 : 0
-        },
-        break1Used,
-        break2Used,
-        missingFromRoster,
-        outOfRoster,
-        duplicateCount: session.duplicateCount
-      };
-
-      session.cache.set(rosterVersionKey, analytics);
-      return analytics;
-    }
-
-    function determineStatus(phases, expectsBreak1, expectsBreak2) {
-      const hasStart = phases.has('start');
-      const hasBreak1 = phases.has('break1');
-      const hasBreak2 = phases.has('break2');
-      const hasEnd = phases.has('end');
-
-      if (!hasStart && (hasBreak1 || hasBreak2 || hasEnd)) return 'Late';
-      if (hasStart && hasEnd) {
-        const missingBreak1 = expectsBreak1 && !hasBreak1;
-        const missingBreak2 = expectsBreak2 && !hasBreak2;
-        if (!missingBreak1 && !missingBreak2) return 'Present';
-        return 'Late from break';
-      }
-      if (hasStart && !hasEnd) return 'Left Early';
-      if (hasStart || hasBreak1 || hasBreak2 || hasEnd) return 'Partial';
-      return 'Absent';
-    }
-
-    function renderDataMessages() {
-      elements.dataMessages.innerHTML = '';
-      if (state.parseErrors.length) {
-        const danger = document.createElement('div');
-        danger.className = 'message danger';
-        danger.innerHTML = state.parseErrors.slice(0, 6).map(msg => `<div>${msg}</div>`).join('');
-        if (state.parseErrors.length > 6) {
-          danger.innerHTML += `<div>…and ${state.parseErrors.length - 6} more issues.</div>`;
-        }
-        elements.dataMessages.appendChild(danger);
-      } else if (state.ingestionWarnings.length) {
-        const warning = document.createElement('div');
-        warning.className = 'message warning';
-        warning.innerHTML = state.ingestionWarnings.slice(0, 6).map(msg => `<div>${msg}</div>`).join('');
-        if (state.ingestionWarnings.length > 6) {
-          warning.innerHTML += `<div>…and ${state.ingestionWarnings.length - 6} more warnings.</div>`;
-        }
-        elements.dataMessages.appendChild(warning);
-      }
-    }
-
-    function updateDatasetStats() {
-      elements.datasetStats.innerHTML = '';
-      const totalSessions = state.sessionsByKey.size;
-      const totalDates = state.dateToSessionKeys.size;
-      const totalStudents = state.allStudentIds.size;
-      const rosterCount = state.rosterSet.size;
-
-      const dateValues = Array.from(state.dateToSessionKeys.keys()).sort();
-      const dateRange = dateValues.length
-        ? `${toLocalDate(dateValues[0])} → ${toLocalDate(dateValues[dateValues.length - 1])}`
-        : '—';
-
-      const sourceCount = state.datasetSources.size;
-
-      elements.datasetStats.appendChild(buildStatCard('Sessions', `${totalSessions}`, `${totalDates} teaching days`));
-      elements.datasetStats.appendChild(buildStatCard('Unique students', `${totalStudents}`, rosterCount ? `${rosterCount} rostered` : 'No roster loaded'));
-      elements.datasetStats.appendChild(buildStatCard('Date span', dateRange, sourceCount ? `${sourceCount} source file${sourceCount === 1 ? '' : 's'}` : 'No files loaded'));
-    }
-
-    function createMessageCard(text, variant = 'info') {
-      const div = document.createElement('div');
-      div.className = 'result-card';
-      const message = document.createElement('div');
-      message.className = `message${variant === 'warning' ? ' warning' : variant === 'danger' ? ' danger' : ''}`;
-      message.textContent = text;
-      div.appendChild(message);
-      return div;
-    }
-
-    function renderSessionMode() {
-      elements.sessionResults.innerHTML = '';
-      if (!state.sessionsByKey.size) {
-        elements.sessionResults.appendChild(createMessageCard('Load attendance CSVs to get started.'));
-        elements.exportSessionBtn.disabled = true;
-        return;
-      }
-      if (!state.selectedSessionKey || !state.sessionsByKey.has(state.selectedSessionKey)) {
-        elements.sessionResults.appendChild(createMessageCard('Choose a date and session to display attendance.'));
-        elements.exportSessionBtn.disabled = true;
-        return;
-      }
-
-      const session = state.sessionsByKey.get(state.selectedSessionKey);
-      const analytics = buildSessionAnalytics(session);
-      state.sessionExportRows = analytics.rows;
-
-      const filterSet = getStatusFilter(MODE.SESSION);
-      const visibleRows = analytics.rows.filter(row => filterSet.has(row.status));
-      const focusCount = visibleRows.length;
-
-      const card = document.createElement('div');
-      card.className = 'result-card';
-
-      const title = document.createElement('h2');
-      title.textContent = `${session.sid} · ${toLocalDate(session.date)}`;
-      card.appendChild(title);
-
-      const subtitle = document.createElement('div');
-      subtitle.className = 'tag';
-      subtitle.textContent = `${readableModuleGroup(session)} · ${analytics.rows.length} students`;
-      card.appendChild(subtitle);
-
-      const summary = document.createElement('div');
-      summary.className = 'summary-grid';
-      summary.appendChild(buildStatCard('Present', `${analytics.counts['Present']}`, `${percentFormatter.format(analytics.totals.presentPercentage)}%`));
-      summary.appendChild(buildStatCard('In focus', `${focusCount}`, `${filterSet.size} statuses`));
-      summary.appendChild(buildStatCard('Late / break issues', `${analytics.counts['Late']} + ${analytics.counts['Late from break']}`, 'Late · late from break'));
-      summary.appendChild(buildStatCard('At risk', `${analytics.counts['Absent'] + analytics.counts['Partial'] + analytics.counts['Left Early']}`, 'Absent · partial · left early'));
-      card.appendChild(summary);
-
-      if (analytics.missingFromRoster.length) {
-        const missingBlock = document.createElement('div');
-        missingBlock.className = 'notice-block';
-        missingBlock.innerHTML = `<strong>${analytics.missingFromRoster.length} rostered students missing:</strong> ${analytics.missingFromRoster.join(', ')}`;
-        card.appendChild(missingBlock);
-        elements.sessionRosterTag.className = 'tag negative';
-        elements.sessionRosterTag.textContent = `${analytics.missingFromRoster.length} missing from roster`;
-      } else {
-        elements.sessionRosterTag.className = 'tag neutral';
-        elements.sessionRosterTag.textContent = state.rosterSet.size ? `${state.rosterSet.size} in roster` : 'Roster not loaded';
-      }
-      if (analytics.outOfRoster.length) {
-        const extraBlock = document.createElement('div');
-        extraBlock.className = 'notice-block warning';
-        extraBlock.innerHTML = `<strong>${analytics.outOfRoster.length} not in roster:</strong> ${analytics.outOfRoster.join(', ')}`;
-        card.appendChild(extraBlock);
-      }
-      if (analytics.duplicateCount) {
-        const duplicateBlock = document.createElement('div');
-        duplicateBlock.className = 'notice-block warning';
-        duplicateBlock.textContent = `${analytics.duplicateCount} duplicate check-ins (same student/phase) detected.`;
-        card.appendChild(duplicateBlock);
-      }
-
-      const table = document.createElement('table');
-      table.innerHTML = '<thead><tr><th>Student ID</th><th>Start</th><th>Break 1</th><th>Break 2</th><th>End</th><th>Status</th><th>Last activity</th></tr></thead>';
-      const tbody = document.createElement('tbody');
-      if (!visibleRows.length) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 7;
-        td.textContent = 'No students match the selected statuses.';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-      } else {
-        visibleRows.forEach(row => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${row.studentId}</td>
-            <td>${row.startPhase === 'Present' ? '✔' : '—'}</td>
-            <td>${row.break1Phase === 'Present' ? '✔' : (row.break1Phase === '—' ? '—' : '✖')}</td>
-            <td>${row.break2Phase === 'Present' ? '✔' : (row.break2Phase === '—' ? '—' : '✖')}</td>
-            <td>${row.endPhase === 'Present' ? '✔' : '—'}</td>
-            <td class="${statusClass(row.status)}">${row.status}</td>
-            <td>${row.lastSeen}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-      table.appendChild(tbody);
-      card.appendChild(table);
-
-      const flaggedRows = analytics.rows.filter(row => row.status !== 'Present');
-      if (flaggedRows.length) {
-        const followUpTitle = document.createElement('div');
-        followUpTitle.textContent = 'Follow-up email drafts';
-        followUpTitle.style.fontWeight = '600';
-        card.appendChild(followUpTitle);
-        const links = document.createElement('div');
-        links.className = 'email-links';
-        flaggedRows.forEach(row => {
-          const eml = generateEmailDraft(session, row);
-          const blob = new Blob([eml], { type: 'text/plain' });
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `${row.studentId}_${session.sid}_${row.status.replace(/\\s+/g, '-')}.eml`;
-          link.textContent = `Draft for ${row.studentId} (${row.status})`;
-          link.addEventListener('click', () => {
-            setTimeout(() => URL.revokeObjectURL(url), 2000);
-          });
-          links.appendChild(link);
-        });
-        card.appendChild(links);
-      }
-
-      elements.sessionResults.appendChild(card);
-      elements.exportSessionBtn.disabled = !analytics.rows.length;
-    }
-
-    function renderMultiMode() {
-      elements.multiResults.innerHTML = '';
-      if (!state.sessionsByKey.size) {
-        elements.multiResults.appendChild(createMessageCard('Load attendance CSVs to compare multiple sessions.'));
-        elements.exportSummaryBtn.disabled = true;
-        elements.multiSelectionTag.textContent = '0 sessions selected';
-        return;
-      }
-      const selectedKeys = Array.from(state.selectedMultiSessionKeys).filter(key => state.sessionsByKey.has(key));
-      if (!selectedKeys.length) {
-        elements.multiResults.appendChild(createMessageCard('Select one or more sessions to compare.'));
-        elements.exportSummaryBtn.disabled = true;
-        elements.multiSelectionTag.textContent = '0 sessions selected';
-        return;
-      }
-      elements.multiSelectionTag.textContent = `${selectedKeys.length} session${selectedKeys.length === 1 ? '' : 's'} selected`;
-
-      const filterSet = getStatusFilter(MODE.MULTI);
-      const rows = selectedKeys.map(key => {
-        const session = state.sessionsByKey.get(key);
-        const analytics = buildSessionAnalytics(session);
-        const focusCount = analytics.rows.filter(row => filterSet.has(row.status)).length;
-        return { session, analytics, focusCount };
-      }).sort((a, b) => a.session.date.localeCompare(b.session.date));
-
-      const card = document.createElement('div');
-      card.className = 'result-card';
-
-      const title = document.createElement('h2');
-      title.textContent = `Summary across ${rows.length} session${rows.length === 1 ? '' : 's'}`;
-      card.appendChild(title);
-
-      const focusTag = document.createElement('div');
-      focusTag.className = 'tag neutral';
-      focusTag.textContent = `Statuses in focus: ${Array.from(filterSet).join(', ') || 'None'}`;
-      card.appendChild(focusTag);
-
-      const table = document.createElement('table');
-      table.innerHTML = `
-        <thead>
-          <tr>
-            <th>Session</th>
-            <th>Date</th>
-            <th>Total</th>
-            <th>Present</th>
-            <th>Late</th>
-            <th>Late (break)</th>
-            <th>Left early</th>
-            <th>Partial</th>
-            <th>Absent</th>
-            <th>Focus total</th>
-            <th>Roster gaps</th>
-            <th>Out-of-roster</th>
-            <th>Duplicates</th>
-          </tr>
-        </thead>`;
-      const tbody = document.createElement('tbody');
-
-      const totals = {
-        students: 0,
-        present: 0,
-        late: 0,
-        lateBreak: 0,
-        leftEarly: 0,
-        partial: 0,
-        absent: 0,
-        focus: 0,
-        rosterMissing: 0,
-        outOfRoster: 0,
-        duplicates: 0
-      };
-
-      state.multiExportRows = [];
-
-      rows.forEach(({ session, analytics, focusCount }) => {
-        totals.students += analytics.totals.totalStudents;
-        totals.present += analytics.counts['Present'];
-        totals.late += analytics.counts['Late'];
-        totals.lateBreak += analytics.counts['Late from break'];
-        totals.leftEarly += analytics.counts['Left Early'];
-        totals.partial += analytics.counts['Partial'];
-        totals.absent += analytics.counts['Absent'];
-        totals.focus += focusCount;
-        totals.rosterMissing += analytics.missingFromRoster.length;
-        totals.outOfRoster += analytics.outOfRoster.length;
-        totals.duplicates += analytics.duplicateCount;
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${readableModuleGroup(session)}</td>
-          <td>${toLocalDate(session.date)}</td>
-          <td>${analytics.totals.totalStudents}</td>
-          <td>${analytics.counts['Present']}</td>
-          <td>${analytics.counts['Late']}</td>
-          <td>${analytics.counts['Late from break']}</td>
-          <td>${analytics.counts['Left Early']}</td>
-          <td>${analytics.counts['Partial']}</td>
-          <td>${analytics.counts['Absent']}</td>
-          <td>${focusCount}</td>
-          <td>${analytics.missingFromRoster.length}</td>
-          <td>${analytics.outOfRoster.length}</td>
-          <td>${analytics.duplicateCount}</td>
-        `;
-        tbody.appendChild(tr);
-
-        state.multiExportRows.push({
-          Session: readableModuleGroup(session),
-          Date: session.date,
-          Total: analytics.totals.totalStudents,
-          Present: analytics.counts['Present'],
-          Late: analytics.counts['Late'],
-          LateFromBreak: analytics.counts['Late from break'],
-          LeftEarly: analytics.counts['Left Early'],
-          Partial: analytics.counts['Partial'],
-          Absent: analytics.counts['Absent'],
-          FocusTotal: focusCount,
-          RosterMissing: analytics.missingFromRoster.length,
-          OutOfRoster: analytics.outOfRoster.length,
-          Duplicates: analytics.duplicateCount
-        });
-      });
-
-      const totalRow = document.createElement('tr');
-      totalRow.innerHTML = `
-        <td><strong>Total</strong></td>
-        <td>—</td>
-        <td><strong>${totals.students}</strong></td>
-        <td><strong>${totals.present}</strong></td>
-        <td><strong>${totals.late}</strong></td>
-        <td><strong>${totals.lateBreak}</strong></td>
-        <td><strong>${totals.leftEarly}</strong></td>
-        <td><strong>${totals.partial}</strong></td>
-        <td><strong>${totals.absent}</strong></td>
-        <td><strong>${totals.focus}</strong></td>
-        <td><strong>${totals.rosterMissing}</strong></td>
-        <td><strong>${totals.outOfRoster}</strong></td>
-        <td><strong>${totals.duplicates}</strong></td>
-      `;
-      tbody.appendChild(totalRow);
-
-      table.appendChild(tbody);
-      card.appendChild(table);
-      elements.multiResults.appendChild(card);
-      elements.exportSummaryBtn.disabled = !state.multiExportRows.length;
-    }
-
-    function renderStudentMode() {
-      elements.studentResults.innerHTML = '';
-      if (!state.sessionsByKey.size) {
-        elements.studentResults.appendChild(createMessageCard('Load attendance CSVs to explore student history.'));
-        elements.exportStudentBtn.disabled = true;
-        elements.studentSessionsTag.textContent = 'Student not selected';
-        return;
-      }
-      const studentId = sanitizeId(state.selectedStudentId);
-      if (!studentId) {
-        elements.studentResults.appendChild(createMessageCard('Enter or select a student ID to review their sessions.'));
-        elements.exportStudentBtn.disabled = true;
-        elements.studentSessionsTag.textContent = 'Student not selected';
-        return;
-      }
-      const sessionKeys = state.studentIndex.get(studentId);
-      if (!sessionKeys || !sessionKeys.size) {
-        elements.studentResults.appendChild(createMessageCard(`No attendance records found for ${studentId}.`, 'warning'));
-        elements.exportStudentBtn.disabled = true;
-        elements.studentSessionsTag.textContent = 'No sessions for this student';
-        return;
-      }
-
-      const allRows = Array.from(sessionKeys).map(key => {
-        const session = state.sessionsByKey.get(key);
-        if (!session) return null;
-        const analytics = buildSessionAnalytics(session);
-        const row = analytics.rows.find(entry => entry.studentId === studentId);
-        if (!row) return null;
-        return { session, analytics, row };
-      }).filter(Boolean).sort((a, b) => a.session.date.localeCompare(b.session.date));
-
-      const filteredRows = applyStudentDateFilter(allRows, state.studentDateRange);
-      state.studentExportRows = filteredRows.map(item => ({
-        StudentID: studentId,
-        Date: item.session.date,
-        Session: item.session.sid,
-        Module: readableModuleGroup(item.session),
-        Start: item.row.startPhase,
-        Break1: item.row.break1Phase,
-        Break2: item.row.break2Phase,
-        End: item.row.endPhase,
-        Status: item.row.status,
-        LastActivity: item.row.lastSeen
-      }));
-
-      elements.studentSessionsTag.textContent = `${filteredRows.length} session${filteredRows.length === 1 ? '' : 's'} in view`;
-
-      const card = document.createElement('div');
-      card.className = 'result-card';
-
-      const title = document.createElement('h2');
-      title.textContent = `Student ${studentId}`;
-      card.appendChild(title);
-
-      const summary = document.createElement('div');
-      summary.className = 'summary-grid';
-      const statusTotals = STATUS_ORDER.reduce((acc, status) => {
-        acc[status] = 0;
-        return acc;
-      }, {});
-      filteredRows.forEach(item => {
-        statusTotals[item.row.status] += 1;
-      });
-      const presentCount = statusTotals['Present'] || 0;
-      const totalSessions = filteredRows.length;
-      const attendanceRate = totalSessions ? (presentCount / totalSessions) * 100 : 0;
-      const riskCount = statusTotals['Absent'] + statusTotals['Partial'] + statusTotals['Left Early'];
-      summary.appendChild(buildStatCard('Sessions', `${totalSessions}`, `${state.studentDateRange === 'all' ? 'All time' : state.studentDateRange}`));
-      summary.appendChild(buildStatCard('Present', `${presentCount}`, `${percentFormatter.format(attendanceRate)}% rate`));
-      summary.appendChild(buildStatCard('Late / break issues', `${statusTotals['Late']} + ${statusTotals['Late from break']}`, 'Late · late from break'));
-      summary.appendChild(buildStatCard('At risk flags', `${riskCount}`, 'Absent · partial · left early'));
-      card.appendChild(summary);
-
-      const table = document.createElement('table');
-      table.innerHTML = '<thead><tr><th>Date</th><th>Session</th><th>Start</th><th>Break 1</th><th>Break 2</th><th>End</th><th>Status</th><th>Last activity</th></tr></thead>';
-      const tbody = document.createElement('tbody');
-      if (!filteredRows.length) {
-        const tr = document.createElement('tr');
-        const td = document.createElement('td');
-        td.colSpan = 8;
-        td.textContent = 'No sessions fall inside the selected date window.';
-        tr.appendChild(td);
-        tbody.appendChild(tr);
-      } else {
-        filteredRows.forEach(item => {
-          const tr = document.createElement('tr');
-          tr.innerHTML = `
-            <td>${toLocalDate(item.session.date)}</td>
-            <td>${readableModuleGroup(item.session)}</td>
-            <td>${item.row.startPhase}</td>
-            <td>${item.row.break1Phase}</td>
-            <td>${item.row.break2Phase}</td>
-            <td>${item.row.endPhase}</td>
-            <td class="${statusClass(item.row.status)}">${item.row.status}</td>
-            <td>${item.row.lastSeen}</td>
-          `;
-          tbody.appendChild(tr);
-        });
-      }
-      table.appendChild(tbody);
-      card.appendChild(table);
-
-      if (totalSessions && !presentCount) {
-        const alert = document.createElement('div');
-        alert.className = 'notice-block';
-        alert.textContent = 'This student has zero fully present sessions in the selected window.';
-        card.appendChild(alert);
-      }
-
-      elements.studentResults.appendChild(card);
-      elements.exportStudentBtn.disabled = !filteredRows.length;
-    }
-
-    function applyStudentDateFilter(rows, range) {
-      if (range === 'all') return rows;
-      const now = new Date();
-      if (range === '30d' || range === '90d') {
-        const windowDays = range === '30d' ? 30 : 90;
-        const threshold = new Date(now);
-        threshold.setDate(now.getDate() - windowDays);
-        return rows.filter(item => {
-          const [y, m, d] = item.session.date.split('-').map(Number);
-          const date = new Date(y, (m || 1) - 1, d || 1);
-          return date >= threshold;
-        });
-      }
-      if (range === 'last10') {
-        return rows.slice(-10);
-      }
-      return rows;
-    }
-
-    function generateEmailDraft(session, row) {
-      const lb = '\\r\\n';
-      const to = `${row.studentId}@${state.emailDomain}`;
-      const subject = `[Attendance Alert] ${session.sid} ${session.date}`;
-      const body = [
-        'Dear Student,',
-        '',
-        `Our records for session ${session.sid} on ${toLocalDate(session.date)} indicate:`,
-        `- Start: ${row.startPhase}`,
-        session.phaseUsage?.has?.('break1') ? `- Break 1: ${row.break1Phase}` : null,
-        session.phaseUsage?.has?.('break2') ? `- Break 2: ${row.break2Phase}` : null,
-        `- End: ${row.endPhase}`,
-        '',
-        'Attendance is monitored and may affect academic progress and visa compliance.',
-        '',
-        'Regards,',
-        'Ravensbourne University London'
-      ].filter(Boolean).join(lb);
-
-      return [
-        `To: ${to}`,
-        `Subject: ${subject}`,
-        'Content-Type: text/plain; charset=utf-8',
-        '',
-        body
-      ].join(lb);
-    }
-
-    function exportSessionToExcel() {
-      if (!state.sessionExportRows.length || typeof XLSX === 'undefined') return;
-      const worksheet = XLSX.utils.json_to_sheet(state.sessionExportRows.map(row => ({
-        'Student ID': row.studentId,
-        'Status': row.status,
-        'Start': row.startPhase,
-        'Break 1': row.break1Phase,
-        'Break 2': row.break2Phase,
-        'End': row.endPhase,
-        'Last activity': row.lastSeen
-      })));
-      const workbook = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(workbook, worksheet, 'Session');
-      const session = state.sessionsByKey.get(state.selectedSessionKey);
-      const filename = `${session ? session.sid : 'session'}_${session ? session.date : Date.now()}.xlsx`;
-      XLSX.writeFile(workbook, filename);
-    }
-
-    function exportSummaryCsv() {
-      if (!state.multiExportRows.length) return;
-      const header = Object.keys(state.multiExportRows[0]);
-      const lines = [header.join(',')];
-      state.multiExportRows.forEach(row => {
-        const line = header.map(key => row[key]).join(',');
-        lines.push(line);
-      });
-      triggerDownload(lines.join('\\n'), 'session_summary.csv');
-    }
-
-    function exportStudentCsv() {
-      if (!state.studentExportRows.length) return;
-      const header = Object.keys(state.studentExportRows[0]);
-      const lines = [header.join(',')];
-      state.studentExportRows.forEach(row => {
-        const line = header.map(key => row[key]).join(',');
-        lines.push(line);
-      });
-      triggerDownload(lines.join('\\n'), `student_${state.selectedStudentId || 'report'}.csv`);
-    }
-
-    function triggerDownload(content, filename) {
-      const blob = new Blob([content], { type: 'text/csv' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      setTimeout(() => URL.revokeObjectURL(url), 2000);
-    }
-
-    async function loadAttendanceFromServer() {
-      try {
-        const response = await fetch('/api/csv/current');
-        if (!response.ok) throw new Error('Attendance CSV not found on server.');
-        const text = await response.text();
-        applyAttendanceData([text], 'Server CSV');
-      } catch (err) {
-        state.parseErrors = [err.message];
-        renderAll();
-      }
-    }
-
-    function applyAttendanceData(texts, sourceLabel = 'Uploaded CSV') {
-      const parsedSets = [];
-      const parseErrors = [];
-      texts.forEach((text, idx) => {
-        const label = texts.length > 1 ? `${sourceLabel} ${idx + 1}` : sourceLabel;
-        try {
-          const { rows, errors } = parseCsvText(text, label);
-          parsedSets.push({ rows, sourceLabel: label });
-          if (errors.length) parseErrors.push(...errors);
-        } catch (err) {
-          parseErrors.push(`${label}: ${err.message}`);
-        }
-      });
-
-      state.parseErrors = parseErrors;
-      ingestAttendanceRows(parsedSets);
-      populateSessionSelectors();
-      populateMultiSessionSelect();
-      populateStudentSuggestions();
-      updateRosterSummary();
-      renderAll();
-    }
-
-    function clearDataset() {
-      state.sessionsByKey.clear();
-      state.dateToSessionKeys.clear();
-      state.sessionKeysSorted = [];
-      state.studentIndex.clear();
-      state.allStudentIds.clear();
-      state.datasetSources.clear();
-      state.selectedDate = null;
-      state.selectedSessionKey = null;
-      state.selectedMultiSessionKeys.clear();
-      state.selectedStudentId = '';
-      state.sessionExportRows = [];
-      state.multiExportRows = [];
-      state.studentExportRows = [];
-      state.ingestionWarnings = [];
-      state.parseErrors = [];
-      populateSessionSelectors();
-      populateMultiSessionSelect();
-      populateStudentSuggestions();
-      renderAll();
-    }
-
-    function renderCurrentMode() {
-      switch (state.selectedMode) {
-        case MODE.SESSION:
-          renderSessionMode();
-          break;
-        case MODE.MULTI:
-          renderMultiMode();
-          break;
-        case MODE.STUDENT:
-          renderStudentMode();
-          break;
-        default:
-          break;
-      }
-    }
-
-    function renderAll() {
-      renderDataMessages();
-      updateDatasetStats();
-      renderCurrentMode();
-    }
-
-    function handleAttendanceUpload(event) {
-      const files = Array.from(event.target.files || []);
-      if (!files.length) return;
-      Promise.all(files.map(file => file.text()))
-        .then(texts => applyAttendanceData(texts, 'Upload'))
-        .catch(err => {
-          state.parseErrors = [err.message];
-          renderAll();
-        });
-    }
-
-    function handleRosterUpload(event) {
-      const file = event.target.files?.[0];
-      if (!file) return;
-      file.text().then(text => {
-        const lines = text.split(/\\r?\\n/).map(line => sanitizeId(line));
-        const ids = lines.filter(Boolean);
-        state.rosterSet = new Set(ids);
-        state.rosterVersion += 1;
-        clearSessionCaches();
-        updateRosterSummary();
-        renderCurrentMode();
-        updateDatasetStats();
-      }).catch(err => {
-        state.parseErrors = [`Roster: ${err.message}`];
-        renderAll();
-      });
-    }
-
-    function clearRoster() {
-      state.rosterSet.clear();
-      state.rosterVersion += 1;
-      clearSessionCaches();
-      updateRosterSummary();
-      renderCurrentMode();
-      updateDatasetStats();
-    }
-
-    function handleSessionDateChange(event) {
-      state.selectedDate = event.target.value;
-      populateSessionKeySelect(state.selectedDate);
-      renderSessionMode();
-    }
-
-    function handleSessionKeyChange(event) {
-      state.selectedSessionKey = event.target.value;
-      renderSessionMode();
-    }
-
-    function handleMultiSessionChange(event) {
-      const options = Array.from(event.target.options || []);
-      state.selectedMultiSessionKeys = new Set(options.filter(opt => opt.selected).map(opt => opt.value));
-      elements.multiSelectionTag.textContent = `${state.selectedMultiSessionKeys.size} session${state.selectedMultiSessionKeys.size === 1 ? '' : 's'} selected`;
-      renderMultiMode();
-    }
-
-    function handleStudentSearch(event) {
-      state.selectedStudentId = sanitizeId(event.target.value);
-      renderStudentMode();
-    }
-
-    function handleStudentDateRangeChange(event) {
-      state.studentDateRange = event.target.value;
-      renderStudentMode();
-    }
-
-    function handleEmailDomainChange(event) {
-      const value = event.target.value.trim();
-      if (value) {
-        state.emailDomain = value.replace(/^@/, '');
-      }
-    }
-
-    elements.tabButtons.forEach(button => button.addEventListener('click', () => setMode(button.dataset.mode)));
-    elements.attendanceUpload.addEventListener('change', handleAttendanceUpload);
-    elements.reloadServerBtn.addEventListener('click', loadAttendanceFromServer);
-    elements.clearDataBtn.addEventListener('click', clearDataset);
-    elements.rosterUpload.addEventListener('change', handleRosterUpload);
-    elements.clearRosterBtn.addEventListener('click', clearRoster);
-    elements.sessionDateSelect.addEventListener('change', handleSessionDateChange);
-    elements.sessionKeySelect.addEventListener('change', handleSessionKeyChange);
-    elements.multiSessionSelect.addEventListener('change', handleMultiSessionChange);
-    elements.studentSearch.addEventListener('change', handleStudentSearch);
-    elements.studentSearch.addEventListener('blur', handleStudentSearch);
-    elements.studentDateRangeSelect.addEventListener('change', handleStudentDateRangeChange);
-    elements.emailDomainInput.addEventListener('input', handleEmailDomainChange);
-    elements.exportSessionBtn.addEventListener('click', exportSessionToExcel);
-    elements.exportSummaryBtn.addEventListener('click', exportSummaryCsv);
-    elements.exportStudentBtn.addEventListener('click', exportStudentCsv);
-    elements.statusActionButtons.forEach(button => button.addEventListener('click', handleStatusAction));
-
-    setupStatusFilters();
-    updateRosterSummary();
-    updateDatasetStats();
-    renderAll();
-  </script>
+    let rowClass = '';
+    if (pct < 50) rowClass = 'row-red';
+    else if (pct < 80) rowClass = 'row-amber';
+    studentRows.push({ studentId, name, group: sessGroup, totalSessions, attended, missed, leftEarly, late, pct, onRoster, isU18, _rowClass: (onRoster ? '' : 'not-on-roster') + (rowClass ? ' ' + rowClass : '') });
+  });
+
+  const filterSet = state.filters.group;
+  const filteredRows = studentRows.filter(r => {
+    if (r.pct >= 80 && filterSet.has('Present')) return true;
+    if (r.pct >= 50 && r.pct < 80 && (filterSet.has('Late') || filterSet.has('Late from break'))) return true;
+    if (r.pct < 50 && (filterSet.has('Absent') || filterSet.has('Left Early') || filterSet.has('Partial'))) return true;
+    if (filterSet.size === STATUS_ORDER.length) return true;
+    return false;
+  });
+
+  const header = document.createElement('div');
+  header.className = 'main-header';
+  const h1 = document.createElement('h1');
+  h1.textContent = `${mod}${grp !== 'all' ? ' — Group '+grp : ' — All Groups'}`;
+  header.appendChild(h1);
+  const sub = document.createElement('div');
+  sub.className = 'subtitle';
+  sub.textContent = `${totalSessions} sessions · ${studentRows.length} students · ${dateFrom ? toLocalDate(dateFrom) : '—'} to ${dateTo ? toLocalDate(dateTo) : '—'}`;
+  header.appendChild(sub);
+  vc.appendChild(header);
+
+  const avgPct = studentRows.length ? Math.round(studentRows.reduce((s,r)=>s+r.pct,0)/studentRows.length) : 0;
+  const stats = document.createElement('div');
+  stats.className = 'stats-bar';
+  [[`${totalSessions}`, 'Sessions', ''], [`${studentRows.length}`, 'Students', ''], [`${avgPct}%`, 'Avg Attendance', ''], [`${studentRows.filter(r=>r.pct<50).length}`, 'Critical (<50%)', '']].forEach(([val,label,meta]) => {
+    const card = document.createElement('div'); card.className = 'stat-card';
+    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
+    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
+    card.appendChild(l); card.appendChild(v);
+    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+    stats.appendChild(card);
+  });
+  vc.appendChild(stats);
+
+  const cols = [
+    { key: 'studentId', label: 'Student ID' },
+    { key: 'name', label: 'Name', render: (td,r) => { td.textContent = r.name || '—'; } }
+  ];
+  if (grp === 'all') cols.push({ key: 'group', label: 'Group' });
+  cols.push(
+    { key: 'totalSessions', label: 'Total' },
+    { key: 'attended', label: 'Attended' },
+    { key: 'missed', label: 'Missed' },
+    { key: 'leftEarly', label: 'Left Early' },
+    { key: 'late', label: 'Sig. Late' },
+    { key: 'pct', label: 'Attendance %', render: (td, r) => {
+      td.textContent = r.pct + '%';
+      td.style.fontWeight = '700';
+      if (r.pct >= 80) td.style.color = 'var(--green)';
+      else if (r.pct >= 50) td.style.color = 'var(--amber)';
+      else td.style.color = 'var(--red)';
+    }},
+    { key: 'isU18', label: 'Under 18', render: (td,r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
+    { key: 'onRoster', label: 'Roster', render: (td, r) => { if (!r.onRoster && state.rosterMap.size > 0) { const b = document.createElement('span'); b.className = 'not-on-roster-badge'; b.textContent = 'NOT ON ROSTER'; td.appendChild(b); } } }
+  );
+
+  const totalsRow = {
+    studentId: 'Totals', name: '', group: '', totalSessions: '', attended: Math.round(filteredRows.reduce((s,r)=>s+r.attended,0)/Math.max(filteredRows.length,1)),
+    missed: '', leftEarly: '', late: '', pct: avgPct + '%', isU18: '', onRoster: ''
+  };
+  vc.appendChild(buildSortableTable(cols, filteredRows, { totalsRow }));
+
+  state.exportRows = studentRows.map(r => ({
+    'Student ID': r.studentId, Name: r.name||'', ...(grp==='all'?{Group:r.group}:{}),
+    'Total Sessions': r.totalSessions, Attended: r.attended, Missed: r.missed,
+    'Left Early': r.leftEarly, 'Significantly Late': r.late, 'Attendance %': r.pct,
+    'Under 18': r.isU18 ? 'YES' : '', 'On Roster': r.onRoster ? 'Yes' : 'No'
+  }));
+  el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
+}
+
+function renderStudentView(vc) {
+  const sid = sanitizeId(state.sel.studentId);
+  if (!sid) {
+    vc.innerHTML = '<div class="empty-state"><h2>Enter a student ID</h2><p>Search for a student using the sidebar.</p></div>';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+  const keys = state.studentIndex.get(sid);
+  if (!keys || !keys.size) {
+    vc.innerHTML = `<div class="empty-state"><h2>No records for ${sid}</h2><p>This student has no attendance records in the loaded data.</p></div>`;
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+
+  let items = Array.from(keys).map(k => {
+    const sess = state.sessions.get(k);
+    if (!sess) return null;
+    const a = buildSessionAnalytics(sess);
+    const row = a.rows.find(r => r.studentId === sid);
+    return row ? { sess, row, a } : null;
+  }).filter(Boolean).sort((a,b) => a.sess.date.localeCompare(b.sess.date));
+
+  const range = state.sel.studentRange;
+  if (range === '30d' || range === '90d') {
+    const days = range === '30d' ? 30 : 90;
+    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
+    items = items.filter(it => { const [y,m,d] = it.sess.date.split('-').map(Number); return new Date(y,(m||1)-1,d||1) >= cutoff; });
+  } else if (range === 'last10') {
+    items = items.slice(-10);
+  }
+
+  const name = studentName(sid);
+  const header = document.createElement('div');
+  header.className = 'main-header';
+  const h1 = document.createElement('h1');
+  h1.textContent = `Student ${sid}${name ? ' — ' + name : ''}`;
+  header.appendChild(h1);
+  const sub = document.createElement('div');
+  sub.className = 'subtitle';
+  sub.textContent = `${items.length} sessions in view`;
+  header.appendChild(sub);
+  vc.appendChild(header);
+
+  const statusCounts = {};
+  STATUS_ORDER.forEach(s => statusCounts[s] = 0);
+  items.forEach(it => statusCounts[it.row.status]++);
+  const presentN = statusCounts['Present'] || 0;
+  const totalN = items.length;
+  const pct = totalN ? Math.round(presentN / totalN * 100) : 0;
+
+  const stats = document.createElement('div');
+  stats.className = 'stats-bar';
+  [[`${totalN}`, 'Sessions', ''], [`${presentN}`, 'Present', `${pct}%`],
+   [`${statusCounts['Late']||0}`, 'Late', ''], [`${(statusCounts['Absent']||0)+(statusCounts['Left Early']||0)}`, 'At Risk', '']
+  ].forEach(([val,label,meta]) => {
+    const card = document.createElement('div'); card.className = 'stat-card';
+    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
+    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
+    card.appendChild(l); card.appendChild(v);
+    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+    stats.appendChild(card);
+  });
+  vc.appendChild(stats);
+
+  if (items.length) {
+    const sparkWrap = document.createElement('div');
+    sparkWrap.className = 'chart-bar-container';
+    const sh3 = document.createElement('h3');
+    sh3.textContent = 'Attendance Trend';
+    sparkWrap.appendChild(sh3);
+    const spark = document.createElement('div');
+    spark.className = 'sparkline-container';
+    items.forEach(it => {
+      const bar = document.createElement('div');
+      bar.className = 'sparkline-bar';
+      bar.style.background = STATUS_COLORS[it.row.status]?.hex || '#94a3b8';
+      bar.style.height = it.row.status === 'Present' ? '100%' : it.row.status === 'Late' || it.row.status === 'Late from break' ? '65%' : it.row.status === 'Left Early' ? '45%' : '25%';
+      bar.title = `${it.sess.date}: ${it.row.status}`;
+      spark.appendChild(bar);
+    });
+    sparkWrap.appendChild(spark);
+    vc.appendChild(sparkWrap);
+  }
+
+  if (totalN && !presentN) {
+    const alert = document.createElement('div');
+    alert.className = 'alert-block danger';
+    alert.innerHTML = '<span class="alert-icon">⚠</span><div>This student has zero fully present sessions in the selected window.</div>';
+    vc.appendChild(alert);
+  }
+
+  const cols = [
+    { key: 'date', label: 'Date' },
+    { key: 'session', label: 'Session' },
+    { key: 'start', label: 'Start', render: (td, r) => renderPhaseCell(td, r.start) },
+    { key: 'break1', label: 'Break 1', render: (td, r) => renderPhaseCell(td, r.break1) },
+    { key: 'break2', label: 'Break 2', render: (td, r) => renderPhaseCell(td, r.break2) },
+    { key: 'end', label: 'End', render: (td, r) => renderPhaseCell(td, r.end) },
+    { key: 'status', label: 'Status', render: (td, r) => { const b = document.createElement('span'); b.className = `status-badge ${statusClass(r.status)}`; b.textContent = r.status; td.appendChild(b); } },
+    { key: 'isU18', label: 'Under 18', render: (td, r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } }
+  ];
+  const tableRows = items.map(it => ({
+    date: toLocalDate(it.sess.date), session: readableLabel(it.sess),
+    start: it.row.phases.start, break1: it.row.phases.break1, break2: it.row.phases.break2, end: it.row.phases.end,
+    status: it.row.status, isU18: state.under18Set.has(sid)
+  }));
+  vc.appendChild(buildSortableTable(cols, tableRows));
+
+  el.studentTag.textContent = `${items.length} sessions`;
+  state.exportRows = tableRows.map(r => ({ Date: r.date, Session: r.session, Start: r.start, 'Break 1': r.break1, 'Break 2': r.break2, End: r.end, Status: r.status, 'Under 18': r.isU18 ? 'YES' : '' }));
+  el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
+}
+
+// ── Export ──
+function exportXlsx() {
+  if (!state.exportRows.length || typeof XLSX === 'undefined') return;
+  const ws = XLSX.utils.json_to_sheet(state.exportRows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
+  XLSX.writeFile(wb, `attendance_${state.activeView}_${Date.now()}.xlsx`);
+  showToast('XLSX exported');
+}
+function exportCsv() {
+  if (!state.exportRows.length) return;
+  const headers = Object.keys(state.exportRows[0]);
+  const lines = [headers.map(csvEscape).join(',')];
+  state.exportRows.forEach(r => lines.push(headers.map(h => csvEscape(r[h])).join(',')));
+  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url; a.download = `attendance_${state.activeView}_${Date.now()}.csv`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  showToast('CSV exported');
+}
+
+// ── Data loading ──
+async function loadFromServer() {
+  try {
+    const resp = await fetch('/api/csv/current');
+    if (!resp.ok) throw new Error('CSV not found on server');
+    const text = await resp.text();
+    applyData([text], 'Server CSV');
+    showToast('Loaded from server');
+  } catch (err) {
+    state.errors = [err.message];
+    renderView();
+    showToast('Failed to load from server');
+  }
+}
+function applyData(texts, label) {
+  const sets = [];
+  const errs = [];
+  texts.forEach((t, i) => {
+    const lb = texts.length > 1 ? `${label} ${i+1}` : label;
+    try { const { rows, errors } = parseCsv(t, lb); sets.push({ rows, label: lb }); if (errors.length) errs.push(...errors); }
+    catch (e) { errs.push(`${lb}: ${e.message}`); }
+  });
+  state.errors = errs;
+  ingestRows(sets);
+  populateSessionSelectors();
+  populateGroupSelectors();
+  populateStudentSuggest();
+  updateDataInfo();
+  renderView();
+}
+function clearData() {
+  state.sessions.clear(); state.dateToKeys.clear(); state.sessionKeys = [];
+  state.studentIndex.clear(); state.allStudentIds.clear(); state.allModules.clear();
+  state.moduleGroups.clear(); state.sources.clear(); state.warnings = []; state.errors = [];
+  state.sel.date = null; state.sel.sessionKey = null; state.sel.module = null;
+  state.sel.studentId = ''; state.exportRows = [];
+  populateSessionSelectors(); populateGroupSelectors(); populateStudentSuggest();
+  updateDataInfo(); renderView();
+  showToast('Data cleared');
+}
+function updateDataInfo() {
+  el.loadedFilesInfo.textContent = state.sources.size ? `${state.sessions.size} sessions · ${state.allStudentIds.size} students` : '';
+  el.rosterInfo.textContent = state.rosterMap.size ? `${state.rosterMap.size} students on roster` : '';
+}
+
+function handleRosterUpload(text) {
+  const lines = text.split(/\r?\n/);
+  state.rosterMap.clear();
+  if (lines.length > 1 && lines[0].includes(',')) {
+    const parsed = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+    (parsed.data || []).forEach(row => {
+      const id = sanitizeId(row.student_id || row.StudentId || row.studentId || row.Student_ID || row.ID || row.id || Object.values(row)[0]);
+      if (!id) return;
+      const name = row.name || row.Name || row.student_name || row.StudentName || '';
+      state.rosterMap.set(id, { name: name.trim() });
+    });
+  } else {
+    lines.forEach(line => {
+      const id = sanitizeId(line);
+      if (id) state.rosterMap.set(id, { name: '' });
+    });
+  }
+  state.rosterVersion++;
+  state.sessions.forEach(s => s.cache.clear());
+  updateDataInfo();
+  renderView();
+  showToast(`Roster loaded: ${state.rosterMap.size} students`);
+}
+
+// ── View switching ──
+function switchView(view) {
+  state.activeView = view;
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.view-controls').forEach(c => { c.hidden = c.dataset.for !== view; });
+  renderView();
+}
+
+// ── Event wiring ──
+document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
+  btn.addEventListener('click', () => switchView(btn.dataset.view));
+});
+
+el.attendanceDropZone.addEventListener('click', () => el.attendanceFileInput.click());
+el.attendanceDropZone.addEventListener('dragover', e => { e.preventDefault(); el.attendanceDropZone.classList.add('drag-over'); });
+el.attendanceDropZone.addEventListener('dragleave', () => el.attendanceDropZone.classList.remove('drag-over'));
+el.attendanceDropZone.addEventListener('drop', e => {
+  e.preventDefault(); el.attendanceDropZone.classList.remove('drag-over');
+  const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
+  if (files.length) Promise.all(files.map(f => f.text())).then(texts => applyData(texts, 'Upload'));
+});
+el.attendanceFileInput.addEventListener('change', e => {
+  const files = Array.from(e.target.files || []);
+  if (files.length) Promise.all(files.map(f => f.text())).then(texts => applyData(texts, 'Upload'));
+});
+
+el.rosterDropZone.addEventListener('click', () => el.rosterFileInput.click());
+el.rosterDropZone.addEventListener('dragover', e => { e.preventDefault(); el.rosterDropZone.classList.add('drag-over'); });
+el.rosterDropZone.addEventListener('dragleave', () => el.rosterDropZone.classList.remove('drag-over'));
+el.rosterDropZone.addEventListener('drop', e => {
+  e.preventDefault(); el.rosterDropZone.classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file) file.text().then(handleRosterUpload);
+});
+el.rosterFileInput.addEventListener('change', e => {
+  const file = e.target.files?.[0];
+  if (file) file.text().then(handleRosterUpload);
+});
+
+el.reloadServerBtn.addEventListener('click', loadFromServer);
+el.clearDataBtn.addEventListener('click', clearData);
+el.clearRosterBtn.addEventListener('click', () => {
+  state.rosterMap.clear(); state.rosterVersion++;
+  state.sessions.forEach(s => s.cache.clear());
+  updateDataInfo(); renderView(); showToast('Roster cleared');
+});
+
+el.sessionDateSelect.addEventListener('change', e => {
+  state.sel.date = e.target.value;
+  populateSessionKeySelect(state.sel.date);
+  renderView();
+});
+el.sessionKeySelect.addEventListener('change', e => { state.sel.sessionKey = e.target.value; renderView(); });
+el.groupModuleSelect.addEventListener('change', e => { state.sel.module = e.target.value; populateGroupGroupSelect(); renderView(); });
+el.groupGroupSelect.addEventListener('change', () => renderView());
+el.groupDateFrom.addEventListener('change', () => renderView());
+el.groupDateTo.addEventListener('change', () => renderView());
+
+el.studentSearchInput.addEventListener('input', e => { state.sel.studentId = e.target.value; renderView(); });
+el.studentRangeSelect.addEventListener('change', e => { state.sel.studentRange = e.target.value; renderView(); });
+el.emailDomainInput.addEventListener('input', e => {
+  const v = e.target.value.trim().replace(/^@/, '');
+  state.emailDomain = v || 'rave.ac.uk';
+});
+
+el.exportXlsxBtn.addEventListener('click', exportXlsx);
+el.exportCsvBtn.addEventListener('click', exportCsv);
+
+document.querySelectorAll('.chip-actions button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const target = btn.dataset.target;
+    if (btn.dataset.action === 'all') STATUS_ORDER.forEach(s => state.filters[target].add(s));
+    else state.filters[target].clear();
+    syncChips(target === 'session' ? 'sessionStatusChips' : 'groupStatusChips', target);
+    renderView();
+  });
+});
+
+// ── Init ──
+buildStatusChips('sessionStatusChips', 'session');
+buildStatusChips('groupStatusChips', 'group');
+updateDataInfo();
+renderView();
+
+</script>
 </body>
 </html>
