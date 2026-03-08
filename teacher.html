@@ -455,6 +455,10 @@
           <label for="groupInput">Group</label>
           <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
         </div>
+        <div class="form-group" id="intakeGroup" hidden>
+          <label for="intakeSelect">Intake</label>
+          <select id="intakeSelect" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;background:#fff;color:#0f172a;cursor:pointer"></select>
+        </div>
         <div class="form-group">
   <label for="phase">Phase</label>
           <div class="dropdown" id="phaseDropdown">
@@ -504,6 +508,8 @@
     const moduleInput = document.getElementById('moduleInput');
     const moduleOptions = document.getElementById('moduleOptions');
     const groupInput = document.getElementById('groupInput');
+    const intakeGroup = document.getElementById('intakeGroup');
+    const intakeSelect = document.getElementById('intakeSelect');
     const phaseDropdown = document.getElementById('phaseDropdown');
     const phaseBtn = phaseDropdown.querySelector('.dropdown-btn');
     const phaseList = phaseDropdown.querySelector('.dropdown-list');
@@ -561,6 +567,8 @@
     }
 
     let cachedModules = [];
+    let intakesConfig = {};
+    let selectedIntake = '';
 
     function renderModuleOptions(filterValue = '') {
       if (!comboOpen) return;
@@ -581,6 +589,7 @@
         option.addEventListener('click', () => {
           moduleInput.value = mod;
           closeModuleOptions();
+          updateIntakeSelector(mod);
           groupInput.focus();
         });
         moduleOptions.appendChild(option);
@@ -599,14 +608,43 @@
       try {
         const resp = await fetch('/api/modules', { cache: 'no-store' });
         if (!resp.ok) return;
-      const data = await resp.json();
+        const data = await resp.json();
         if (!data || !Array.isArray(data.modules)) return;
         cachedModules = data.modules.map(mod => mod.toUpperCase());
         if (comboOpen) renderModuleOptions(moduleInput.value || '');
-    } catch (err) {
+      } catch (err) {
         console.warn('Failed to load module suggestions', err);
       }
     }
+
+    async function fetchIntakesConfig() {
+      try {
+        const resp = await fetch('/api/intakes', { cache: 'no-store' });
+        if (!resp.ok) return;
+        intakesConfig = await resp.json();
+      } catch (err) {
+        console.warn('Failed to load intakes config', err);
+      }
+    }
+
+    function updateIntakeSelector(moduleCode) {
+      const intakes = intakesConfig[moduleCode] || [];
+      if (intakes.length <= 1) {
+        intakeGroup.hidden = true;
+        selectedIntake = intakes[0] || '';
+        return;
+      }
+      intakeGroup.hidden = false;
+      intakeSelect.innerHTML = '';
+      intakes.forEach(ik => {
+        const o = document.createElement('option');
+        o.value = ik; o.textContent = ik;
+        intakeSelect.appendChild(o);
+      });
+      selectedIntake = intakes[0];
+    }
+
+    intakeSelect.addEventListener('change', () => { selectedIntake = intakeSelect.value; });
 
     async function fetchChallenge() {
       if (!activeSession) return;
@@ -638,8 +676,9 @@
       clearQr(verificationQrEl);
     }
 
-    function buildSessionId(moduleCode, groupNumber) {
-      return `${moduleCode} Group ${groupNumber}`;
+    function buildSessionId(moduleCode, groupNumber, intake) {
+      const base = `${moduleCode} Group ${groupNumber}`;
+      return intake ? `${base} ${intake}` : base;
     }
 
     function validateModule(moduleCode) {
@@ -665,12 +704,13 @@
         groupInput.focus();
       return;
     }
-      const sid = buildSessionId(moduleCode, groupNumber);
-      const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber };
+      const intake = selectedIntake;
+      const sid = buildSessionId(moduleCode, groupNumber, intake);
+      const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber, i: intake };
       const frag = encodePayload(sessionPayload);
       const url = `${origin}/student#${frag}`;
       renderSessionQr(url);
-      activeSession = { sid, phase, module: moduleCode, group: groupNumber };
+      activeSession = { sid, phase, module: moduleCode, group: groupNumber, intake };
       startBtn.disabled = true;
       stopBtn.disabled = false;
       clearTimers();
@@ -692,6 +732,7 @@
         comboOpen = true;
       }
       renderModuleOptions(value);
+      updateIntakeSelector(value);
     });
 
     moduleInput.addEventListener('focus', () => {
@@ -732,6 +773,7 @@
     });
 
     fetchModuleSuggestions();
+    fetchIntakesConfig();
   })();
   </script>
 </body>

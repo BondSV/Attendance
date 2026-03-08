@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Generate Mock Attendance Data</title>
+<style>
+  body { font-family: system-ui; max-width: 700px; margin: 60px auto; padding: 20px; }
+  h1 { font-size: 22px; }
+  .info { background: #f0f4ff; border: 1px solid #c7d2fe; border-radius: 10px; padding: 16px; margin: 16px 0; font-size: 14px; line-height: 1.7; }
+  button { background: #2563eb; color: #fff; border: none; padding: 14px 28px; border-radius: 10px; font-size: 15px; font-weight: 700; cursor: pointer; margin: 8px 8px 8px 0; }
+  button:hover { background: #1d4ed8; }
+  .log { background: #1e293b; color: #94a3b8; padding: 16px; border-radius: 10px; font-family: monospace; font-size: 12px; max-height: 300px; overflow-y: auto; margin-top: 16px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>Mock Data Generator</h1>
+<div class="info">
+  <strong>Modules & Intakes:</strong><br>
+  BSM24105 (Ops &amp; PM) — 5 groups, intakes: Sep24, Nov24<br>
+  BSM24201 (People Management) — 2 groups, intake: Jan25<br>
+  PRM25703 (Principles of PM) — 1 group, intake: Sep24<br><br>
+  <strong>Schedule:</strong> 12 weekly sessions per group starting 15 Sep 2025<br>
+  <strong>Output:</strong> attendance CSV (with intake column), roster CSV (with module/group/intake), intakes.json
+</div>
+<button id="genBtn">Generate &amp; Download All Files</button>
+<div class="log" id="log"></div>
+
+<script>
+function log(msg) { document.getElementById('log').textContent += msg + '\n'; }
+
+const FIRST_NAMES = ['Oliver','Amelia','Noah','Isla','George','Olivia','Leo','Ava','Arthur','Mia','Muhammad','Lily','Oscar','Freya','Harry','Emily','Jack','Sophia','Charlie','Grace','Henry','Poppy','Thomas','Ella','Freddie','Evie','Alfie','Rosie','Theo','Florence','William','Willow','Jacob','Ivy','James','Phoebe','Edward','Isabella','Lucas','Ruby','Alexander','Sienna','Daniel','Daisy','Samuel','Alice','Ethan','Matilda','Joseph','Harper','Benjamin','Elsie','Max','Luna','Sebastian','Jessica','Archie','Eva','Isaac','Aria','Joshua','Ellie','Logan','Emilia','Dylan','Layla','Harrison','Maya','Finley','Lola','Teddy','Hannah','Adam','Chloe','Jude','Maisie','Toby','Sophie','David','Zara','Reuben','Ayla','Liam','Thea','Elijah','Hallie','Nathan','Esme','Ryan','Violet','Aaron','Imogen','Matthew','Molly','Caleb','Eleanor','Connor','Scarlett','Lewis','Jasmine','Luke','Penelope','Louie','Millie','Kai','Amber','Rory','Abigail','Hugo','Darcy','Felix','Lottie','Zachary','Leah','Jaxon','Maria','Blake','Bethany','Owen','Orla','Tyler','Martha','Jake','Heidi','Aiden','Annabelle','Gabriel','Sara','Jamie','Nora','Rupert','Bonnie','Elliot','Iris','Cameron','Nancy','Reggie','Robyn','Frankie','Summer','Riley','Clara','Rowan','Gracie','Jackson','Holly','Stanley','Harriet','Ellis','Aurora'];
+const LAST_NAMES = ['Smith','Jones','Williams','Brown','Taylor','Davies','Wilson','Evans','Thomas','Johnson','Roberts','Walker','Wright','Robinson','Thompson','White','Hughes','Edwards','Green','Hall','Lewis','Harris','Clarke','Patel','Jackson','Wood','Turner','Martin','Cooper','Hill','Ward','Morris','Moore','Clark','Lee','King','Baker','Harrison','Morgan','Allen','James','Scott','Phillips','Watson','Davis','Parker','Price','Bennett','Young','Griffiths','Mitchell','Kelly','Cook','Carter','Richardson','Bailey','Collins','Shaw','Murphy','Miller','Cox','Richards','Khan','Marshall','Anderson','Simpson','Ellis','Adams','Singh','Begum','Wilkinson','Foster','Chapman','Powell','Webb','Rogers','Gray','Mason','Ali','Hunt','Palmer','Owen','Mills'];
+
+function rng(seed) { let s = seed; return function() { s = (s * 1664525 + 1013904223) & 0x7fffffff; return s / 0x7fffffff; }; }
+function pick(arr, r) { return arr[Math.floor(r() * arr.length)]; }
+function randInt(min, max, r) { return Math.floor(r() * (max - min + 1)) + min; }
+function addDays(date, days) { const d = new Date(date); d.setDate(d.getDate() + days); return d; }
+function isoDate(d) { return d.toISOString().slice(0, 10); }
+function isoTs(date, hour, min) { const d = new Date(date); d.setUTCHours(hour, min, Math.floor(Math.random() * 60), 0); return d.toISOString(); }
+
+document.getElementById('genBtn').addEventListener('click', () => {
+  const rand = rng(42);
+  log('Generating students...');
+
+  const dayMap = [
+    { mod: 'BSM24105', grp: '1', intake: 'Sep24', dayOff: 0, startHour: 9 },
+    { mod: 'BSM24105', grp: '2', intake: 'Sep24', dayOff: 0, startHour: 14 },
+    { mod: 'BSM24105', grp: '3', intake: 'Sep24', dayOff: 1, startHour: 9 },
+    { mod: 'BSM24105', grp: '4', intake: 'Nov24', dayOff: 2, startHour: 9 },
+    { mod: 'BSM24105', grp: '5', intake: 'Nov24', dayOff: 3, startHour: 9 },
+    { mod: 'BSM24201', grp: '1', intake: 'Jan25', dayOff: 1, startHour: 14 },
+    { mod: 'BSM24201', grp: '2', intake: 'Jan25', dayOff: 2, startHour: 14 },
+    { mod: 'PRM25703', grp: '1', intake: 'Sep24', dayOff: 4, startHour: 10 },
+  ];
+
+  const allStudents = new Map();
+  const groupAssignments = [];
+  let nextId = 90010001;
+
+  dayMap.forEach(dm => {
+    const count = randInt(42, 58, rand);
+    const students = [];
+    for (let s = 0; s < count; s++) {
+      const id = String(nextId++);
+      const first = pick(FIRST_NAMES, rand);
+      const last = pick(LAST_NAMES, rand);
+      allStudents.set(id, { name: first + ' ' + last, assignments: [] });
+      students.push(id);
+    }
+    students.forEach(id => {
+      allStudents.get(id).assignments.push({ module: dm.mod, group: dm.grp, intake: dm.intake });
+    });
+    groupAssignments.push({ ...dm, students });
+    log(`  ${dm.mod} Group ${dm.grp} (${dm.intake}): ${students.length} students`);
+  });
+
+  log(`Total unique students: ${allStudents.size}`);
+
+  const profiles = new Map();
+  allStudents.forEach((_, id) => {
+    const r = rand();
+    if (r < 0.55) profiles.set(id, 'good');
+    else if (r < 0.75) profiles.set(id, 'ok');
+    else if (r < 0.90) profiles.set(id, 'poor');
+    else profiles.set(id, 'critical');
+  });
+
+  log('\nGenerating attendance rows...');
+  const baseDate = new Date(2025, 8, 15);
+  const attendanceRows = ['ts_utc,module,group,intake,sid,phase,student_id,ip,ua_short'];
+  let totalRows = 0;
+
+  for (const dm of dayMap) {
+    const ga = groupAssignments.find(g => g.mod === dm.mod && g.grp === dm.grp && g.intake === dm.intake);
+    if (!ga) continue;
+    for (let week = 0; week < 12; week++) {
+      const sessionDate = addDays(baseDate, week * 7 + dm.dayOff);
+      const dateStr = isoDate(sessionDate);
+      const sid = `${dm.mod} Group ${dm.grp} ${dm.intake}`;
+      const hasBreak2 = rand() < 0.6;
+      const sessionPhases = ['start', 'break1'];
+      if (hasBreak2) sessionPhases.push('break2');
+      sessionPhases.push('end');
+
+      for (const studentId of ga.students) {
+        const profile = profiles.get(studentId) || 'good';
+        let attendsProb;
+        switch (profile) { case 'good': attendsProb = 0.95; break; case 'ok': attendsProb = 0.82; break; case 'poor': attendsProb = 0.60; break; case 'critical': attendsProb = 0.35; break; }
+        if (rand() >= attendsProb) continue;
+        const studentPhases = [];
+        for (const phase of sessionPhases) {
+          if (phase === 'start') { const p = profile === 'good' ? 0.05 : profile === 'ok' ? 0.12 : profile === 'poor' ? 0.25 : 0.40; if (rand() >= p) studentPhases.push('start'); }
+          else if (phase === 'end') { const p = profile === 'good' ? 0.03 : profile === 'ok' ? 0.08 : profile === 'poor' ? 0.18 : 0.30; if (rand() >= p) studentPhases.push('end'); }
+          else { const p = profile === 'good' ? 0.04 : profile === 'ok' ? 0.10 : 0.20; if (rand() >= p) studentPhases.push(phase); }
+        }
+        if (!studentPhases.length) continue;
+        for (const phase of studentPhases) {
+          let hour = dm.startHour, min = 0;
+          if (phase === 'start') min = randInt(0, 8, rand);
+          else if (phase === 'break1') { hour += 1; min = randInt(30, 40, rand); }
+          else if (phase === 'break2') { hour += 2; min = randInt(45, 55, rand); }
+          else if (phase === 'end') { hour += 3; min = randInt(0, 10, rand); }
+          const ts = isoTs(sessionDate, hour, min);
+          attendanceRows.push(`${ts},${dm.mod},Group ${dm.grp},${dm.intake},${sid},${phase},${studentId},,Mozilla/5.0`);
+          totalRows++;
+        }
+      }
+    }
+    log(`  ${dm.mod} Group ${dm.grp} (${dm.intake}): done`);
+  }
+  log(`Total attendance rows: ${totalRows}`);
+
+  log('\nGenerating roster...');
+  const rosterRows = ['student_id,name,module,group,intake'];
+  let rosterEntries = 0;
+  allStudents.forEach((info, id) => {
+    info.assignments.forEach(a => {
+      rosterRows.push(`${id},${info.name},${a.module},${a.group},${a.intake}`);
+      rosterEntries++;
+    });
+  });
+  log(`Roster entries: ${rosterEntries}`);
+
+  const intakesJson = JSON.stringify({ "BSM24105": ["Sep24", "Nov24"], "BSM24201": ["Jan25"], "PRM25703": ["Sep24"] }, null, 2);
+
+  function download(content, filename, type) {
+    type = type || 'text/csv';
+    const blob = new Blob([content], { type });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a'); a.href = url; a.download = filename;
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  }
+
+  download(attendanceRows.join('\n'), 'attendance_2025-26.csv');
+  setTimeout(() => {
+    download(rosterRows.join('\n'), 'mock_roster.csv');
+    setTimeout(() => {
+      download(intakesJson, 'intakes.json', 'application/json');
+      log('\n✓ All three files downloaded!');
+      log('Place attendance_2025-26.csv and intakes.json in the data/ folder.');
+      log('Upload mock_roster.csv via the roster upload in the Analysis app.');
+    }, 500);
+  }, 500);
+});
+</script>
+</body>
+</html>

@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const { issueVerification, consumeVerification, acquireDeviceLock, peekDeviceLock } = require('./memoryState');
-const { appendCsvRow, CSV_PATH } = require('./csvWriter');
+const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, CSV_DIR } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } = require('./manualOverrides');
@@ -12,6 +12,9 @@ const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } 
 const PORT = process.env.PORT || 8080;
 const ANOMALY_LOG_PATH = process.env.ANOMALY_LOG_PATH || null;
 const PUBLIC_DIR = path.join(__dirname, '..', 'public');
+const INTAKES_PATH = path.join(CSV_DIR, 'intakes.json');
+const ROSTER_PATH = path.join(CSV_DIR, 'roster.csv');
+const UNDER18_PATH = path.join(CSV_DIR, 'under18.csv');
 
 const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || 'RaveCheck2026';
 const MANUAL_OVERRIDE_PASSWORD_BUFFER = MANUAL_OVERRIDE_PASSWORD ? Buffer.from(MANUAL_OVERRIDE_PASSWORD, 'utf8') : null;
@@ -21,28 +24,28 @@ const OVERRIDE_MAX_ATTEMPTS = 5;
 const OVERRIDE_WINDOW_MS = 15 * 60 * 1000;
 const overrideAttempts = new Map();
 
-function checkOverrideRateLimit(ip) {
+function checkOverrideRateLimit(key) {
   const now = Date.now();
-  const entry = overrideAttempts.get(ip);
+  const entry = overrideAttempts.get(key);
   if (!entry || (now - entry.windowStart) > OVERRIDE_WINDOW_MS) {
-    overrideAttempts.set(ip, { windowStart: now, failures: 0 });
+    overrideAttempts.set(key, { windowStart: now, failures: 0 });
     return true;
   }
   return entry.failures < OVERRIDE_MAX_ATTEMPTS;
 }
 
-function recordOverrideFailure(ip) {
+function recordOverrideFailure(key) {
   const now = Date.now();
-  const entry = overrideAttempts.get(ip);
+  const entry = overrideAttempts.get(key);
   if (!entry || (now - entry.windowStart) > OVERRIDE_WINDOW_MS) {
-    overrideAttempts.set(ip, { windowStart: now, failures: 1 });
+    overrideAttempts.set(key, { windowStart: now, failures: 1 });
   } else {
     entry.failures += 1;
   }
 }
 
-function resetOverrideFailures(ip) {
-  overrideAttempts.delete(ip);
+function resetOverrideFailures(key) {
+  overrideAttempts.delete(key);
 }
 
 function verifyManualOverridePassword(candidate) {
@@ -85,7 +88,7 @@ function logAnomaly(obj) {
   const msg = `[ANOMALY] ${new Date().toISOString()} ${JSON.stringify(obj)}`;
   console.warn(msg);
   if (ANOMALY_LOG_PATH) {
-    try { fs.appendFileSync(ANOMALY_LOG_PATH, msg + '\n'); } catch (e) {}
+    try { fs.appendFileSync(ANOMALY_LOG_PATH, msg + '\n'); } catch {}
   }
 }
 
@@ -114,26 +117,33 @@ function buildDeviceKey({ sid, phase, deviceId, req }) {
   const normalizedPhase = (phase || '').toString().trim().toLowerCase();
   if (normalizedSid) parts.push(`sid:${normalizedSid}`);
   if (normalizedPhase) parts.push(`phase:${normalizedPhase}`);
-
   const stableDeviceId = (deviceId || '').toString().trim();
   if (stableDeviceId) parts.push(`device:${stableDeviceId}`);
-
   const clientIp = getClientIp(req);
   if (clientIp) parts.push(`ip:${clientIp}`);
-
   const userAgent = (req.headers['user-agent'] || '').toString().trim();
   if (userAgent) {
     const truncatedUa = userAgent.length > 160 ? userAgent.slice(0, 160) : userAgent;
     parts.push(`ua:${truncatedUa}`);
   }
-
   return parts.join('|') || 'anon-device';
 }
 
-function readModuleListFromCsv() {
-  if (!fs.existsSync(CSV_PATH)) return [];
+function readIntakesConfig() {
   try {
-    const text = fs.readFileSync(CSV_PATH, 'utf8');
+    if (!fs.existsSync(INTAKES_PATH)) return {};
+    const raw = fs.readFileSync(INTAKES_PATH, 'utf8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+function readModuleListFromCsv() {
+  const csvPath = currentCsvPath();
+  if (!fs.existsSync(csvPath)) return [];
+  try {
+    const text = fs.readFileSync(csvPath, 'utf8');
     if (!text) return [];
     const lines = text.split(/\r?\n/);
     if (!lines.length) return [];
@@ -229,6 +239,17 @@ function serveStatic(req, res) {
       return false;
     }
   }
+  if (pathname === 'admin' || pathname === 'admin/' || pathname === 'admin.html') {
+    const filePath = path.join(__dirname, '..', 'admin.html');
+    try {
+      const data = fs.readFileSync(filePath);
+      res.writeHead(200, { 'Content-Type': 'text/html', 'Cache-Control': 'no-store' });
+      res.end(data);
+      return true;
+    } catch {
+      return false;
+    }
+  }
   return false;
 }
 
@@ -240,6 +261,35 @@ const server = http.createServer(async (req, res) => {
     if (pathname === '/api/modules' && req.method === 'GET') {
       const modules = readModuleListFromCsv();
       return sendJson(res, { modules });
+    }
+
+    if (pathname === '/api/intakes' && req.method === 'GET') {
+      const config = readIntakesConfig();
+      return sendJson(res, config);
+    }
+
+    if (pathname === '/api/attendance/years' && req.method === 'GET') {
+      const years = listAvailableYears();
+      const current = getAcademicYear().label;
+      return sendJson(res, { years, current });
+    }
+
+    if (pathname === '/api/attendance' && req.method === 'GET') {
+      const yearParam = parsed.searchParams.get('year') || getAcademicYear().label;
+      const yearRe = /^\d{4}-\d{2}$/;
+      if (!yearRe.test(yearParam)) return sendJson(res, { error: 'Invalid year format' }, 400);
+      const csvPath = csvPathForYear(yearParam);
+      if (!fs.existsSync(csvPath)) {
+        return sendJson(res, { error: 'No data for this academic year' }, 404);
+      }
+      const headers = {
+        'Content-Type': 'text/csv',
+        'Cache-Control': 'no-store'
+      };
+      if (process.env.ALLOW_CORS_ALL === '1') headers['Access-Control-Allow-Origin'] = '*';
+      res.writeHead(200, headers);
+      fs.createReadStream(csvPath).pipe(res);
+      return;
     }
 
     if (pathname === '/api/challenge' && req.method === 'GET') {
@@ -349,7 +399,7 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/checkin' && req.method === 'POST') {
       const body = await parseRequestBody(req);
-      const { sid, phase: rawPhase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw } = body;
+      const { sid, phase: rawPhase, student_id, verification_id, page_session_id, device_id, module: moduleCodeRaw, group: groupRaw, intake: intakeRaw } = body;
       const phase = normalizePhaseInput(rawPhase);
       const sidRe = /^[A-Za-z0-9 _\-:.,]{3,80}$/;
       if (!sid || !sidRe.test(sid)) return sendJson(res, { error: 'Invalid sid' }, 400);
@@ -358,6 +408,7 @@ const server = http.createServer(async (req, res) => {
       if (!verification_id) return sendJson(res, { error: 'Verification required' }, 400);
       const moduleCode = (moduleCodeRaw || '').toString().trim().toUpperCase();
       const groupCode = (groupRaw || '').toString().trim();
+      const intake = (intakeRaw || '').toString().trim();
       const moduleRe = /^[A-Z]{3}\d{5}$/;
       const groupRe = /^[0-9]$/;
       if (!moduleRe.test(moduleCode)) return sendJson(res, { error: 'Invalid module code' }, 400);
@@ -379,7 +430,7 @@ const server = http.createServer(async (req, res) => {
       }
       const tsUtc = new Date().toISOString();
       const ua = req.headers['user-agent'] || '';
-      await appendCsvRow([tsUtc, moduleCode, `Group ${groupCode}`, sid, phase, student_id, '', ua]);
+      await appendCsvRow([tsUtc, moduleCode, `Group ${groupCode}`, intake, sid, phase, student_id, '', ua]);
       if (manualOverrideMeta) {
         logManualOverrideUsage({
           ...manualOverrideMeta,
@@ -391,17 +442,96 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/csv/current' && req.method === 'GET') {
-      if (!fs.existsSync(CSV_PATH)) {
+      const csvPath = currentCsvPath();
+      if (!fs.existsSync(csvPath)) {
         return sendJson(res, { error: 'CSV not found' }, 404);
       }
       const headers = {
         'Content-Type': 'text/csv',
-        'Content-Disposition': `attachment; filename="${path.basename(CSV_PATH)}"`
+        'Content-Disposition': `attachment; filename="${path.basename(csvPath)}"`
       };
       if (process.env.ALLOW_CORS_ALL === '1') headers['Access-Control-Allow-Origin'] = '*';
       res.writeHead(200, headers);
-      fs.createReadStream(CSV_PATH).pipe(res);
+      fs.createReadStream(csvPath).pipe(res);
       return;
+    }
+
+    if (pathname === '/api/intakes' && req.method === 'PUT') {
+      const body = await parseRequestBody(req);
+      if (!body || typeof body !== 'object') return sendJson(res, { error: 'Invalid payload' }, 400);
+      try {
+        fs.writeFileSync(INTAKES_PATH, JSON.stringify(body, null, 2), 'utf8');
+        return sendJson(res, { ok: true });
+      } catch (err) {
+        console.error('Failed to write intakes', err);
+        return sendJson(res, { error: 'Failed to save' }, 500);
+      }
+    }
+
+    if (pathname === '/api/roster' && req.method === 'GET') {
+      if (!fs.existsSync(ROSTER_PATH)) return sendJson(res, { error: 'No roster' }, 404);
+      res.writeHead(200, { 'Content-Type': 'text/csv', 'Cache-Control': 'no-store' });
+      fs.createReadStream(ROSTER_PATH).pipe(res);
+      return;
+    }
+
+    if (pathname === '/api/roster' && req.method === 'POST') {
+      return new Promise((resolve) => {
+        let body = '';
+        req.on('data', (chunk) => { body += chunk; if (body.length > 5e6) { req.connection.destroy(); resolve(); } });
+        req.on('end', () => {
+          try {
+            fs.writeFileSync(ROSTER_PATH, body, 'utf8');
+            sendJson(res, { ok: true, bytes: Buffer.byteLength(body) });
+          } catch (err) {
+            console.error('Failed to write roster', err);
+            sendJson(res, { error: 'Failed to save roster' }, 500);
+          }
+          resolve();
+        });
+      });
+    }
+
+    if (pathname === '/api/roster' && req.method === 'DELETE') {
+      try {
+        if (fs.existsSync(ROSTER_PATH)) fs.unlinkSync(ROSTER_PATH);
+        return sendJson(res, { ok: true });
+      } catch (err) {
+        return sendJson(res, { error: 'Failed to delete' }, 500);
+      }
+    }
+
+    if (pathname === '/api/under18' && req.method === 'GET') {
+      if (!fs.existsSync(UNDER18_PATH)) return sendJson(res, { error: 'No under-18 list' }, 404);
+      res.writeHead(200, { 'Content-Type': 'text/csv', 'Cache-Control': 'no-store' });
+      fs.createReadStream(UNDER18_PATH).pipe(res);
+      return;
+    }
+
+    if (pathname === '/api/under18' && req.method === 'POST') {
+      return new Promise((resolve) => {
+        let body = '';
+        req.on('data', (chunk) => { body += chunk; if (body.length > 2e6) { req.connection.destroy(); resolve(); } });
+        req.on('end', () => {
+          try {
+            fs.writeFileSync(UNDER18_PATH, body, 'utf8');
+            sendJson(res, { ok: true, bytes: Buffer.byteLength(body) });
+          } catch (err) {
+            console.error('Failed to write under-18 list', err);
+            sendJson(res, { error: 'Failed to save' }, 500);
+          }
+          resolve();
+        });
+      });
+    }
+
+    if (pathname === '/api/under18' && req.method === 'DELETE') {
+      try {
+        if (fs.existsSync(UNDER18_PATH)) fs.unlinkSync(UNDER18_PATH);
+        return sendJson(res, { ok: true });
+      } catch (err) {
+        return sendJson(res, { error: 'Failed to delete' }, 500);
+      }
     }
 
     if (pathname === '/health') {

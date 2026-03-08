@@ -39,325 +39,96 @@
     body { display: flex; min-height: 100vh; background: var(--bg); color: var(--text); }
     :where([hidden]) { display: none !important; }
 
-    /* ── Sidebar ── */
     .sidebar {
-      width: 280px;
-      min-width: 280px;
-      background: var(--sidebar-bg);
-      color: var(--sidebar-text);
-      display: flex;
-      flex-direction: column;
-      height: 100vh;
-      position: sticky;
-      top: 0;
-      overflow-y: auto;
-      z-index: 100;
+      width: 280px; min-width: 280px; background: var(--sidebar-bg); color: var(--sidebar-text);
+      display: flex; flex-direction: column; height: 100vh; position: sticky; top: 0; overflow-y: auto; z-index: 100;
     }
-    .sidebar-brand {
-      padding: 20px 18px 16px;
-      font-size: 15px;
-      font-weight: 700;
-      color: var(--sidebar-heading);
-      letter-spacing: 0.3px;
-      border-bottom: 1px solid rgba(255,255,255,0.08);
-    }
-    .sidebar-section {
-      padding: 14px 14px 6px;
-      border-bottom: 1px solid rgba(255,255,255,0.06);
-    }
+    .sidebar-brand { padding: 20px 18px 16px; font-size: 15px; font-weight: 700; color: var(--sidebar-heading); letter-spacing: 0.3px; border-bottom: 1px solid rgba(255,255,255,0.08); }
+    .sidebar-section { padding: 14px 14px 6px; border-bottom: 1px solid rgba(255,255,255,0.06); }
     .sidebar-section:last-child { border-bottom: none; }
-    .sidebar-label {
-      font-size: 10px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: rgba(255,255,255,0.4);
-      margin-bottom: 8px;
-    }
+    .sidebar-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.4); margin-bottom: 8px; }
     .nav-btn {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      width: 100%;
-      border: none;
-      background: transparent;
-      color: var(--sidebar-text);
-      padding: 10px 12px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s;
-      text-align: left;
-      margin-bottom: 2px;
+      display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: transparent;
+      color: var(--sidebar-text); padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: background 0.15s; text-align: left; margin-bottom: 2px;
     }
     .nav-btn:hover { background: var(--sidebar-hover); }
     .nav-btn.active { background: var(--sidebar-active); color: #fff; }
     .nav-btn .nav-icon { font-size: 16px; width: 22px; text-align: center; }
 
     .sb-control { margin-bottom: 10px; }
-    .sb-control label {
-      display: block;
-      font-size: 11px;
-      font-weight: 600;
-      color: rgba(255,255,255,0.55);
-      margin-bottom: 4px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
+    .sb-control label { display: block; font-size: 11px; font-weight: 600; color: rgba(255,255,255,0.55); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
+    .sb-control select, .sb-control input[type="text"], .sb-control input[type="search"], .sb-control input[type="date"] {
+      width: 100%; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 8px; padding: 8px 10px; color: #fff; font-size: 13px;
     }
-    .sb-control select,
-    .sb-control input[type="text"],
-    .sb-control input[type="search"],
-    .sb-control input[type="date"] {
-      width: 100%;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 8px;
-      padding: 8px 10px;
-      color: #fff;
-      font-size: 13px;
-    }
-    .sb-control select:focus,
-    .sb-control input:focus {
-      outline: none;
-      border-color: rgba(96,165,250,0.7);
-      box-shadow: 0 0 0 3px rgba(96,165,250,0.15);
-    }
+    .sb-control select:focus, .sb-control input:focus { outline: none; border-color: rgba(96,165,250,0.7); box-shadow: 0 0 0 3px rgba(96,165,250,0.15); }
     .sb-control select option { background: #1e293b; color: #fff; }
     .sb-control input::placeholder { color: rgba(255,255,255,0.35); }
 
     .sb-btn {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      width: 100%;
-      border: 1px solid rgba(255,255,255,0.15);
-      background: rgba(255,255,255,0.06);
-      color: var(--sidebar-text);
-      padding: 9px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: background 0.15s, border-color 0.15s;
-      margin-bottom: 6px;
+      display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%;
+      border: 1px solid rgba(255,255,255,0.15); background: rgba(255,255,255,0.06); color: var(--sidebar-text);
+      padding: 9px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+      transition: background 0.15s, border-color 0.15s; margin-bottom: 6px;
     }
     .sb-btn:hover { background: rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.25); }
     .sb-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .sb-btn.primary { background: var(--sidebar-active); border-color: var(--sidebar-active); color: #fff; }
-    .sb-btn.primary:hover { background: #2563eb; }
     .sb-btn.export { background: rgba(22,163,74,0.15); border-color: rgba(22,163,74,0.3); color: #4ade80; }
     .sb-btn.export:hover { background: rgba(22,163,74,0.25); }
 
-    .sb-info {
-      font-size: 11px;
-      color: rgba(255,255,255,0.4);
-      padding: 4px 0;
-    }
-    .sb-tag {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      background: rgba(255,255,255,0.08);
-      color: rgba(255,255,255,0.6);
-      margin-bottom: 4px;
-    }
-    .sb-disabled-note {
-      font-size: 10px;
-      color: rgba(255,255,255,0.3);
-      font-style: italic;
-      margin-top: 2px;
-    }
-    .sb-file-input { display: none; }
-    .sb-drop-zone {
-      border: 2px dashed rgba(255,255,255,0.15);
-      border-radius: 10px;
-      padding: 14px;
-      text-align: center;
-      font-size: 12px;
-      color: rgba(255,255,255,0.4);
-      cursor: pointer;
-      transition: border-color 0.2s, background 0.2s;
-      margin-bottom: 6px;
-    }
-    .sb-drop-zone:hover,
-    .sb-drop-zone.drag-over {
-      border-color: rgba(96,165,250,0.5);
-      background: rgba(96,165,250,0.06);
-      color: rgba(255,255,255,0.6);
-    }
-    .sb-loaded-files {
-      font-size: 11px;
-      color: rgba(255,255,255,0.5);
-      margin-bottom: 6px;
-    }
+    .sb-info { font-size: 11px; color: rgba(255,255,255,0.4); padding: 4px 0; }
+    .sb-tag { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.6); margin-bottom: 4px; }
 
-    .status-chips {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 4px;
-      margin-bottom: 6px;
-    }
+    .status-chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 6px; }
     .status-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 4px 8px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      border: 1px solid rgba(255,255,255,0.1);
-      background: rgba(255,255,255,0.04);
-      color: rgba(255,255,255,0.5);
-      transition: all 0.15s;
+      display: inline-flex; align-items: center; gap: 4px; padding: 4px 8px; border-radius: 6px;
+      font-size: 11px; font-weight: 600; cursor: pointer; border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.5); transition: all 0.15s;
     }
     .status-chip input { display: none; }
     .status-chip.active { border-color: rgba(96,165,250,0.5); background: rgba(96,165,250,0.15); color: #93c5fd; }
     .chip-actions { display: flex; gap: 4px; margin-bottom: 8px; }
-    .chip-actions button {
-      background: none;
-      border: none;
-      color: rgba(255,255,255,0.35);
-      font-size: 11px;
-      cursor: pointer;
-      text-decoration: underline;
-    }
+    .chip-actions button { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 11px; cursor: pointer; text-decoration: underline; }
     .chip-actions button:hover { color: rgba(255,255,255,0.6); }
 
-    /* ── Main pane ── */
-    .main {
-      flex: 1;
-      min-width: 0;
-      padding: clamp(20px, 3vw, 36px);
-      overflow-y: auto;
+    .sb-admin-link {
+      display: flex; align-items: center; gap: 8px; padding: 10px 14px; margin: 8px 14px 14px;
+      border-radius: 8px; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08);
+      color: rgba(255,255,255,0.45); font-size: 12px; font-weight: 600; text-decoration: none; transition: all 0.15s;
     }
-    .main-header {
-      margin-bottom: 24px;
-    }
-    .main-header h1 {
-      font-size: clamp(22px, 3vw, 30px);
-      font-weight: 800;
-      letter-spacing: -0.4px;
-      margin-bottom: 4px;
-    }
-    .main-header .subtitle {
-      font-size: 14px;
-      color: var(--text-secondary);
-    }
+    .sb-admin-link:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.7); }
 
-    .stats-bar {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-      gap: 12px;
-      margin-bottom: 20px;
-    }
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 14px 16px;
-    }
-    .stat-card .stat-label {
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      margin-bottom: 4px;
-    }
-    .stat-card .stat-value {
-      font-size: 22px;
-      font-weight: 800;
-      color: var(--text);
-    }
-    .stat-card .stat-meta {
-      font-size: 12px;
-      color: var(--text-secondary);
-      margin-top: 2px;
-    }
+    .main { flex: 1; min-width: 0; padding: clamp(20px, 3vw, 36px); overflow-y: auto; }
+    .main-header { margin-bottom: 24px; }
+    .main-header h1 { font-size: clamp(22px, 3vw, 30px); font-weight: 800; letter-spacing: -0.4px; margin-bottom: 4px; }
+    .main-header .subtitle { font-size: 14px; color: var(--text-secondary); }
 
-    .chart-bar-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .chart-bar-container h3 {
-      font-size: 13px;
-      font-weight: 700;
-      color: var(--text-secondary);
-      margin-bottom: 10px;
-    }
-    .stacked-bar {
-      display: flex;
-      height: 28px;
-      border-radius: 8px;
-      overflow: hidden;
-      background: var(--surface-alt);
-    }
-    .stacked-bar .bar-segment {
-      height: 100%;
-      transition: width 0.3s;
-      position: relative;
-    }
-    .bar-legend {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 12px;
-      margin-top: 10px;
-    }
-    .bar-legend-item {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      font-size: 12px;
-      color: var(--text-secondary);
-    }
-    .bar-legend-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 3px;
-    }
+    .stats-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 20px; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 14px 16px; }
+    .stat-card .stat-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
+    .stat-card .stat-value { font-size: 22px; font-weight: 800; color: var(--text); }
+    .stat-card .stat-meta { font-size: 12px; color: var(--text-secondary); margin-top: 2px; }
 
-    .data-table-wrapper {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      overflow: hidden;
-      margin-bottom: 20px;
-    }
-    .data-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13px;
-    }
+    .chart-bar-container { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+    .chart-bar-container h3 { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; }
+    .stacked-bar { display: flex; height: 28px; border-radius: 8px; overflow: hidden; background: var(--surface-alt); }
+    .stacked-bar .bar-segment { height: 100%; transition: width 0.3s; }
+    .bar-legend { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+    .bar-legend-item { display: flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-secondary); }
+    .bar-legend-dot { width: 10px; height: 10px; border-radius: 3px; }
+
+    .data-table-wrapper { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; margin-bottom: 20px; }
+    .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
     .data-table thead { background: var(--surface-alt); }
     .data-table th {
-      padding: 10px 14px;
-      text-align: left;
-      font-size: 11px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      color: var(--muted);
-      cursor: pointer;
-      user-select: none;
-      white-space: nowrap;
-      border-bottom: 1px solid var(--border);
+      padding: 10px 14px; text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 0.5px; color: var(--muted); cursor: pointer; user-select: none; white-space: nowrap; border-bottom: 1px solid var(--border);
     }
     .data-table th:hover { color: var(--text); }
     .data-table th .sort-arrow { font-size: 10px; margin-left: 3px; opacity: 0.4; }
     .data-table th .sort-arrow.active { opacity: 1; color: var(--primary); }
-    .data-table td {
-      padding: 10px 14px;
-      border-bottom: 1px solid var(--border);
-      vertical-align: middle;
-    }
+    .data-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); vertical-align: middle; }
     .data-table tbody tr:hover { background: rgba(37,99,235,0.03); }
     .data-table tbody tr:last-child td { border-bottom: none; }
     .data-table .totals-row td { font-weight: 700; background: var(--surface-alt); border-top: 2px solid var(--border-strong); }
@@ -366,14 +137,7 @@
     .phase-no { color: var(--red); font-weight: 700; }
     .phase-na { color: var(--muted); }
 
-    .status-badge {
-      display: inline-block;
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      white-space: nowrap;
-    }
+    .status-badge { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 12px; font-weight: 700; white-space: nowrap; }
     .status-present { background: var(--green-soft); color: var(--green); }
     .status-late { background: var(--amber-soft); color: var(--amber); }
     .status-late-from-break { background: var(--orange-soft); color: var(--orange); }
@@ -383,112 +147,48 @@
 
     .u18-flag { color: var(--red); font-weight: 800; font-size: 12px; }
     .not-on-roster { background: rgba(249,115,22,0.08); }
-    .not-on-roster-badge {
-      display: inline-block;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-size: 10px;
-      font-weight: 700;
-      background: rgba(249,115,22,0.15);
-      color: var(--orange);
-    }
+    .not-on-roster-badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; background: rgba(249,115,22,0.15); color: var(--orange); }
 
-    .row-green { }
-    .row-amber td:first-child { border-left: 3px solid var(--amber); }
-    .row-red td:first-child { border-left: 3px solid var(--red); }
-
-    .alert-block {
-      border-radius: 12px;
-      padding: 12px 16px;
-      font-size: 13px;
-      margin-bottom: 16px;
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-    }
+    .alert-block { border-radius: 12px; padding: 12px 16px; font-size: 13px; margin-bottom: 16px; display: flex; align-items: flex-start; gap: 10px; }
     .alert-block.danger { background: var(--red-soft); color: var(--red); border: 1px solid rgba(220,38,38,0.15); }
     .alert-block.warning { background: var(--amber-soft); color: var(--amber); border: 1px solid rgba(217,119,6,0.15); }
     .alert-block.info { background: var(--primary-soft); color: var(--primary); border: 1px solid rgba(37,99,235,0.12); }
     .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
 
-    .email-section {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 16px;
-      margin-bottom: 20px;
-    }
-    .email-section h3 {
-      font-size: 14px;
-      font-weight: 700;
-      margin-bottom: 10px;
-    }
+    .email-section { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+    .email-section h3 { font-size: 14px; font-weight: 700; margin-bottom: 10px; }
     .email-list { display: grid; gap: 6px; }
-    .email-row {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: var(--surface-alt);
-      font-size: 13px;
-    }
+    .email-row { display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: var(--surface-alt); font-size: 13px; }
     .email-row .student-info { flex: 1; }
-    .email-row a {
-      color: var(--primary);
-      text-decoration: none;
-      font-weight: 600;
-      font-size: 12px;
-    }
+    .email-row a { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; }
     .email-row a:hover { text-decoration: underline; }
 
-    .empty-state {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      min-height: 300px;
-      text-align: center;
-      color: var(--muted);
-    }
+    .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 300px; text-align: center; color: var(--muted); }
     .empty-state .empty-icon { font-size: 48px; margin-bottom: 16px; opacity: 0.4; }
     .empty-state h2 { font-size: 18px; font-weight: 700; color: var(--text-secondary); margin-bottom: 8px; }
     .empty-state p { font-size: 14px; max-width: 400px; }
 
-    .toast-container {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      z-index: 9999;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-    .toast {
-      background: var(--sidebar-bg);
-      color: #fff;
-      padding: 10px 16px;
-      border-radius: 10px;
-      font-size: 13px;
-      font-weight: 600;
-      box-shadow: 0 8px 20px rgba(0,0,0,0.2);
-      animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards;
-    }
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast { background: var(--sidebar-bg); color: #fff; padding: 10px 16px; border-radius: 10px; font-size: 13px; font-weight: 600; box-shadow: 0 8px 20px rgba(0,0,0,0.2); animation: toastIn 0.3s ease, toastOut 0.3s ease 2.5s forwards; }
     @keyframes toastIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
     @keyframes toastOut { from { opacity: 1; } to { opacity: 0; transform: translateY(-10px); } }
 
     .sparkline-container { display: flex; align-items: end; gap: 2px; height: 30px; }
     .sparkline-bar { width: 6px; border-radius: 2px 2px 0 0; min-height: 3px; }
 
+    .loading-spinner { text-align: center; padding: 40px; color: var(--muted); font-size: 14px; }
+
+    .u18-report-section { background: var(--red-soft); border: 1px solid rgba(220,38,38,0.15); border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+    .u18-report-section h3 { font-size: 14px; font-weight: 700; color: var(--red); margin-bottom: 10px; }
+
+    .period-radio-group { display: flex; flex-direction: column; gap: 4px; margin-bottom: 8px; }
+    .period-radio { display: flex; align-items: center; gap: 6px; font-size: 12px; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px 0; }
+    .period-radio input[type="radio"] { accent-color: #3b82f6; }
+    .period-radio.active { color: #93c5fd; }
+
     @media (max-width: 900px) {
       body { flex-direction: column; }
-      .sidebar {
-        width: 100%;
-        min-width: 100%;
-        height: auto;
-        position: relative;
-        max-height: 50vh;
-      }
+      .sidebar { width: 100%; min-width: 100%; height: auto; position: relative; max-height: 50vh; }
       .main { padding: 16px; }
     }
   </style>
@@ -500,95 +200,103 @@
 
   <div class="sidebar-section">
     <div class="sidebar-label">Views</div>
-    <button class="nav-btn active" data-view="session" type="button">
-      <span class="nav-icon">📋</span> Session View
-    </button>
-    <button class="nav-btn" data-view="group" type="button">
-      <span class="nav-icon">👥</span> Group Performance
-    </button>
-    <button class="nav-btn" data-view="student" type="button">
-      <span class="nav-icon">🎓</span> Student Profile
-    </button>
+    <button class="nav-btn active" data-view="session" type="button"><span class="nav-icon">📋</span> Session View</button>
+    <button class="nav-btn" data-view="group" type="button"><span class="nav-icon">👥</span> Group Performance</button>
+    <button class="nav-btn" data-view="student" type="button"><span class="nav-icon">🎓</span> Student Profile</button>
   </div>
 
-  <div class="sidebar-section">
-    <div class="sidebar-label">Data</div>
-    <div class="sb-drop-zone" id="attendanceDropZone">Drop attendance CSV here or click to upload</div>
-    <input type="file" class="sb-file-input" id="attendanceFileInput" accept=".csv" multiple>
-    <div class="sb-loaded-files" id="loadedFilesInfo"></div>
-    <button class="sb-btn" id="reloadServerBtn" type="button">Reload from server</button>
-    <button class="sb-btn" id="clearDataBtn" type="button">Clear data</button>
-    <div class="sb-drop-zone" id="rosterDropZone" style="margin-top:8px">Drop roster CSV here or click</div>
-    <input type="file" class="sb-file-input" id="rosterFileInput" accept=".csv,.txt">
-    <div class="sb-loaded-files" id="rosterInfo"></div>
-    <button class="sb-btn" id="clearRosterBtn" type="button">Clear roster</button>
+  <!-- Shared: Academic Year -->
+  <div class="sidebar-section" id="yearSection">
+    <div class="sidebar-label">Academic Year</div>
+    <div class="sb-control">
+      <select id="yearSelect"></select>
+    </div>
+    <div class="sb-info" id="dataInfo"></div>
   </div>
 
-  <!-- Session view controls -->
-  <div class="sidebar-section view-controls" data-for="session" id="sessionControls">
-    <div class="sidebar-label">Session Selection</div>
+  <!-- Session & Group filters (shared structure, different for student) -->
+  <div class="sidebar-section" id="orgFilters">
+    <div class="sidebar-label">Filters</div>
     <div class="sb-control">
-      <label for="sessionDateSelect">Date</label>
-      <select id="sessionDateSelect"></select>
+      <label for="moduleSelect">Module</label>
+      <select id="moduleSelect"><option value="">— Select module —</option></select>
     </div>
     <div class="sb-control">
-      <label for="sessionKeySelect">Session</label>
-      <select id="sessionKeySelect"></select>
+      <label for="intakeFilterSelect">Intake</label>
+      <select id="intakeFilterSelect"><option value="">— All intakes —</option></select>
     </div>
-    <div class="sidebar-label" style="margin-top:8px">Status Filter</div>
-    <div class="status-chips" id="sessionStatusChips"></div>
-    <div class="chip-actions"><button type="button" data-action="all" data-target="session">All</button><button type="button" data-action="none" data-target="session">None</button></div>
+    <div class="sb-control" id="groupFilterWrap">
+      <label for="groupFilterSelect">Group</label>
+      <select id="groupFilterSelect"><option value="">— Select group —</option></select>
+    </div>
   </div>
 
-  <!-- Group performance controls -->
-  <div class="sidebar-section view-controls" data-for="group" id="groupControls" hidden>
-    <div class="sidebar-label">Module & Group</div>
-    <div class="sb-control">
-      <label for="groupModuleSelect">Module</label>
-      <select id="groupModuleSelect"></select>
-    </div>
-    <div class="sb-control">
-      <label for="groupGroupSelect">Group</label>
-      <select id="groupGroupSelect"></select>
-    </div>
-    <div class="sb-control">
-      <label for="groupDateFrom">From</label>
-      <input type="date" id="groupDateFrom">
-    </div>
-    <div class="sb-control">
-      <label for="groupDateTo">To</label>
-      <input type="date" id="groupDateTo">
-    </div>
-    <div class="sb-control" style="opacity:0.4;pointer-events:none">
-      <label>Semester</label>
-      <select disabled><option>Coming soon</option></select>
-      <div class="sb-disabled-note">Configurable via admin panel</div>
-    </div>
-    <div class="sb-control" style="opacity:0.4;pointer-events:none">
-      <label>Year</label>
-      <select disabled><option>Coming soon</option></select>
-    </div>
-    <div class="sidebar-label" style="margin-top:8px">Status Filter</div>
-    <div class="status-chips" id="groupStatusChips"></div>
-    <div class="chip-actions"><button type="button" data-action="all" data-target="group">All</button><button type="button" data-action="none" data-target="group">None</button></div>
-  </div>
-
-  <!-- Student profile controls -->
-  <div class="sidebar-section view-controls" data-for="student" id="studentControls" hidden>
+  <!-- Student Profile: primary filter -->
+  <div class="sidebar-section" id="studentPrimarySection" hidden>
     <div class="sidebar-label">Student</div>
     <div class="sb-control">
       <label for="studentSearchInput">Student ID</label>
       <input type="search" id="studentSearchInput" placeholder="e.g. 90012345" list="studentSuggest" autocomplete="off">
     </div>
     <div class="sb-tag" id="studentTag">Not selected</div>
-    <div class="sb-control" style="margin-top:8px">
-      <label for="studentRangeSelect">Date range</label>
-      <select id="studentRangeSelect">
-        <option value="30d">Last 30 days</option>
-        <option value="90d">Last 90 days</option>
-        <option value="last10">Last 10 sessions</option>
-        <option value="all" selected>All sessions</option>
-      </select>
+    <div class="sb-control" style="margin-top:10px">
+      <label for="studentYearSelect">Year (optional)</label>
+      <select id="studentYearSelect"><option value="">All years</option></select>
+    </div>
+    <div class="sb-control">
+      <label for="studentModuleSelect">Module (optional)</label>
+      <select id="studentModuleSelect"><option value="">All modules</option></select>
+    </div>
+  </div>
+
+  <!-- Session view: date picker -->
+  <div class="sidebar-section view-controls" data-for="session" id="sessionControls">
+    <div class="sidebar-label">Session Date</div>
+    <div class="sb-control">
+      <select id="sessionDateSelect"></select>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px">Status Filter</div>
+    <div class="status-chips" id="sessionStatusChips"></div>
+    <div class="chip-actions"><button type="button" data-action="all" data-target="session">All</button><button type="button" data-action="none" data-target="session">None</button></div>
+  </div>
+
+  <!-- Group view: period picker -->
+  <div class="sidebar-section view-controls" data-for="group" id="groupControls" hidden>
+    <div class="sidebar-label">Analysis Period</div>
+    <div class="period-radio-group" id="groupPeriodRadios">
+      <label class="period-radio active"><input type="radio" name="groupPeriod" value="all" checked> All sessions</label>
+      <label class="period-radio"><input type="radio" name="groupPeriod" value="custom"> Custom date range</label>
+    </div>
+    <div id="groupCustomDates" hidden>
+      <div class="sb-control">
+        <label for="groupDateFrom">From</label>
+        <input type="date" id="groupDateFrom">
+      </div>
+      <div class="sb-control">
+        <label for="groupDateTo">To</label>
+        <input type="date" id="groupDateTo">
+      </div>
+    </div>
+    <div class="sidebar-label" style="margin-top:8px">Under-18 Filter</div>
+    <label class="period-radio" style="margin-bottom:6px"><input type="checkbox" id="groupU18Only" style="accent-color:#3b82f6"> Show only under-18</label>
+  </div>
+
+  <!-- Student view: period picker -->
+  <div class="sidebar-section view-controls" data-for="student" id="studentPeriodControls" hidden>
+    <div class="sidebar-label">Analysis Period</div>
+    <div class="period-radio-group" id="studentPeriodRadios">
+      <label class="period-radio active"><input type="radio" name="studentPeriod" value="all" checked> All sessions</label>
+      <label class="period-radio"><input type="radio" name="studentPeriod" value="custom"> Custom date range</label>
+    </div>
+    <div id="studentCustomDates" hidden>
+      <div class="sb-control">
+        <label for="studentDateFrom">From</label>
+        <input type="date" id="studentDateFrom">
+      </div>
+      <div class="sb-control">
+        <label for="studentDateTo">To</label>
+        <input type="date" id="studentDateTo">
+      </div>
     </div>
   </div>
 
@@ -599,12 +307,10 @@
   </div>
 
   <div class="sidebar-section">
-    <div class="sidebar-label">Settings</div>
-    <div class="sb-control">
-      <label for="emailDomainInput">Email domain</label>
-      <input type="text" id="emailDomainInput" value="rave.ac.uk" placeholder="rave.ac.uk">
-    </div>
+    <div class="sb-info" id="rosterInfo"></div>
   </div>
+
+  <a class="sb-admin-link" href="/admin">⚙ Admin Panel</a>
 </aside>
 
 <datalist id="studentSuggest"></datalist>
@@ -612,8 +318,8 @@
 <main class="main" id="mainPane">
   <div class="empty-state" id="emptyState">
     <div class="empty-icon">📊</div>
-    <h2>No data loaded</h2>
-    <p>Upload an attendance CSV using the sidebar, or click "Reload from server" to load the latest data.</p>
+    <h2>Loading attendance data...</h2>
+    <p>Please wait while data is fetched from the server.</p>
   </div>
   <div id="viewContent" hidden></div>
 </main>
@@ -622,11 +328,13 @@
 
 <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-<script type="module">
+<script>
+(function() {
+'use strict';
 
-const STATUS_ORDER = ['Present', 'Late', 'Late from break', 'Left Early', 'Partial', 'Absent'];
-const VALID_PHASES = new Set(['start', 'break1', 'break2', 'end']);
-const STATUS_COLORS = {
+var STATUS_ORDER = ['Present', 'Late', 'Late from break', 'Left Early', 'Partial', 'Absent'];
+var VALID_PHASES = new Set(['start', 'break1', 'break2', 'end']);
+var STATUS_COLORS = {
   'Present': { bg: 'var(--green-soft)', fg: 'var(--green)', hex: '#16a34a' },
   'Late': { bg: 'var(--amber-soft)', fg: 'var(--amber)', hex: '#d97706' },
   'Late from break': { bg: 'var(--orange-soft)', fg: 'var(--orange)', hex: '#ea580c' },
@@ -634,77 +342,48 @@ const STATUS_COLORS = {
   'Partial': { bg: 'var(--slate-soft)', fg: 'var(--slate)', hex: '#64748b' },
   'Absent': { bg: 'var(--red-soft)', fg: 'var(--red)', hex: '#dc2626' }
 };
+var EMAIL_PHRASES = { 'Absent': "haven't attended", 'Late': 'were late for', 'Late from break': 'missed a break check-in during', 'Left Early': 'left early from', 'Partial': 'had incomplete attendance for' };
+var dateFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
+var timeFmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
-const EMAIL_PHRASES = {
-  'Absent': "haven't attended",
-  'Late': 'were late for',
-  'Late from break': 'missed a break check-in during',
-  'Left Early': 'left early from',
-  'Partial': 'had incomplete attendance for'
-};
-
-const dateFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
-const timeFmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
-
-// ── State ──
-const state = {
+var state = {
   activeView: 'session',
-  sessions: new Map(),
-  sessionKeys: [],
-  dateToKeys: new Map(),
-  studentIndex: new Map(),
-  allStudentIds: new Set(),
-  allModules: new Set(),
-  moduleGroups: new Map(),
-  rosterMap: new Map(),
-  rosterVersion: 0,
+  sessions: new Map(), sessionKeys: [], dateToKeys: new Map(),
+  studentIndex: new Map(), allStudentIds: new Set(),
+  allModules: new Set(), moduleIntakes: new Map(), moduleIntakeGroups: new Map(),
+  modGroupStudents: new Map(),
+  rosterMap: new Map(), rosterModGroup: new Map(), rosterVersion: 0,
   under18Set: new Set(),
-  sources: new Set(),
-  warnings: [],
-  errors: [],
   emailDomain: 'rave.ac.uk',
-  filters: { session: new Set(STATUS_ORDER), group: new Set(STATUS_ORDER) },
-  sel: { date: null, sessionKey: null, module: null, group: null, dateFrom: '', dateTo: '', studentId: '', studentRange: 'all' },
-  exportRows: []
+  emailTemplate: '',
+  u18ReportEmail: 'studentattendance@rave.ac.uk',
+  filters: { session: new Set(STATUS_ORDER) },
+  sel: { year: '', module: '', intake: '', group: '', sessionDate: null, studentId: '', studentYear: '', studentModule: '' },
+  exportRows: [],
+  availableYears: []
 };
 
-// ── DOM refs ──
-const $ = id => document.getElementById(id);
-const el = {
-  sidebar: $('sidebar'),
-  mainPane: $('mainPane'),
-  emptyState: $('emptyState'),
-  viewContent: $('viewContent'),
-  toastContainer: $('toastContainer'),
-  attendanceDropZone: $('attendanceDropZone'),
-  attendanceFileInput: $('attendanceFileInput'),
-  loadedFilesInfo: $('loadedFilesInfo'),
-  reloadServerBtn: $('reloadServerBtn'),
-  clearDataBtn: $('clearDataBtn'),
-  rosterDropZone: $('rosterDropZone'),
-  rosterFileInput: $('rosterFileInput'),
+var $ = function(id) { return document.getElementById(id); };
+var el = {
+  emptyState: $('emptyState'), viewContent: $('viewContent'), toastContainer: $('toastContainer'),
+  yearSelect: $('yearSelect'), dataInfo: $('dataInfo'),
+  orgFilters: $('orgFilters'), studentPrimarySection: $('studentPrimarySection'),
+  moduleSelect: $('moduleSelect'), intakeFilterSelect: $('intakeFilterSelect'),
+  groupFilterSelect: $('groupFilterSelect'), groupFilterWrap: $('groupFilterWrap'),
+  sessionDateSelect: $('sessionDateSelect'), sessionStatusChips: $('sessionStatusChips'),
+  groupDateFrom: $('groupDateFrom'), groupDateTo: $('groupDateTo'),
+  groupCustomDates: $('groupCustomDates'), groupU18Only: $('groupU18Only'),
+  studentSearchInput: $('studentSearchInput'), studentTag: $('studentTag'), studentSuggest: $('studentSuggest'),
+  studentYearSelect: $('studentYearSelect'), studentModuleSelect: $('studentModuleSelect'),
+  studentDateFrom: $('studentDateFrom'), studentDateTo: $('studentDateTo'),
+  studentCustomDates: $('studentCustomDates'),
   rosterInfo: $('rosterInfo'),
-  clearRosterBtn: $('clearRosterBtn'),
-  sessionDateSelect: $('sessionDateSelect'),
-  sessionKeySelect: $('sessionKeySelect'),
-  sessionStatusChips: $('sessionStatusChips'),
-  groupModuleSelect: $('groupModuleSelect'),
-  groupGroupSelect: $('groupGroupSelect'),
-  groupDateFrom: $('groupDateFrom'),
-  groupDateTo: $('groupDateTo'),
-  groupStatusChips: $('groupStatusChips'),
-  studentSearchInput: $('studentSearchInput'),
-  studentTag: $('studentTag'),
-  studentRangeSelect: $('studentRangeSelect'),
-  studentSuggest: $('studentSuggest'),
-  exportXlsxBtn: $('exportXlsxBtn'),
-  exportCsvBtn: $('exportCsvBtn'),
-  emailDomainInput: $('emailDomainInput')
+  exportXlsxBtn: $('exportXlsxBtn'), exportCsvBtn: $('exportCsvBtn')
 };
 
 // ── Helpers ──
 function normalizePhase(v) {
-  const raw = (v || '').toString().trim().toLowerCase();
+  var raw = (v || '').toString().trim().toLowerCase();
   if (raw === 'break' || raw === 'break 1' || raw === 'break1') return 'break1';
   if (raw === 'break 2' || raw === 'break2') return 'break2';
   if (raw === 'start' || raw === 'end') return raw;
@@ -713,106 +392,90 @@ function normalizePhase(v) {
 function sanitizeId(v) { return (v || '').toString().replace(/[^0-9]/g, '').trim(); }
 function extractDate(ts) {
   if (!ts) return '';
-  const m = ts.match(/\d{4}-\d{2}-\d{2}/);
+  var m = ts.match(/\d{4}-\d{2}-\d{2}/);
   if (m) return m[0];
-  const d = new Date(ts);
+  var d = new Date(ts);
   if (!isNaN(d.getTime())) return d.toISOString().slice(0, 10);
   return '';
 }
 function toLocalDate(ds) {
   if (!ds) return '';
-  const [y, m, d] = ds.split('-').map(Number);
-  return dateFmt.format(new Date(y, (m||1)-1, d||1));
+  var parts = ds.split('-').map(Number);
+  return dateFmt.format(new Date(parts[0], (parts[1]||1)-1, parts[2]||1));
 }
 function readableLabel(s) {
-  const mod = s.module ? s.module.toUpperCase() : '';
-  const grp = s.group ? `Group ${s.group}` : '';
-  if (mod && grp) return `${mod} — ${grp}`;
-  return mod || grp || s.sid;
+  var mod = s.module ? s.module.toUpperCase() : '';
+  var grp = s.group ? 'Group ' + s.group : '';
+  var ik = s.intake || '';
+  var parts = [mod, grp, ik].filter(Boolean);
+  return parts.join(' — ') || s.sid;
 }
 function statusClass(s) { return 'status-' + s.toLowerCase().replace(/\s+/g, '-'); }
-function csvEscape(v) {
-  const s = String(v);
-  if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"';
-  return s;
-}
-function showToast(msg) {
-  const t = document.createElement('div');
-  t.className = 'toast';
-  t.textContent = msg;
-  el.toastContainer.appendChild(t);
-  setTimeout(() => t.remove(), 3000);
-}
-function studentName(id) {
-  const r = state.rosterMap.get(id);
-  return r && r.name ? r.name : null;
-}
-function greeting(id) {
-  const name = studentName(id);
-  return name ? `Dear ${name}` : `Dear Student (${id})`;
-}
+function csvEscape(v) { var s = String(v); if (s.includes(',') || s.includes('"') || s.includes('\n')) return '"' + s.replace(/"/g, '""') + '"'; return s; }
+function showToast(msg) { var t = document.createElement('div'); t.className = 'toast'; t.textContent = msg; el.toastContainer.appendChild(t); setTimeout(function() { t.remove(); }, 3000); }
+function studentName(id) { var r = state.rosterMap.get(id); return r && r.name ? r.name : null; }
+function greeting(id) { var n = studentName(id); return n ? 'Dear ' + n : 'Dear Student (' + id + ')'; }
 
-// ── CSV Ingestion ──
-function parseCsv(text, label) {
-  const result = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
-  return { rows: result.data || [], errors: (result.errors || []).map(e => `${label}: row ${e.row+1} — ${e.message}`) };
-}
+// ── Ingestion ──
+function parseCsv(text) { return Papa.parse(text, { header: true, skipEmptyLines: 'greedy' }); }
 
-function ingestRows(rowSets) {
+function ingestRows(rows) {
   state.sessions.clear(); state.dateToKeys.clear(); state.studentIndex.clear();
-  state.sessionKeys = []; state.warnings = []; state.errors = []; state.sources.clear();
-  state.allStudentIds.clear(); state.allModules.clear(); state.moduleGroups.clear();
-  const moduleRe = /^[A-Z]{3}\d{5}$/i;
-  const groupRe = /group\s*(\w+)/i;
-  rowSets.forEach(({rows, label}) => {
-    state.sources.add(label);
-    rows.forEach((row, i) => {
-      const vals = Object.values(row || {});
-      if (!vals.some(v => (v||'').toString().trim())) return;
-      const sid = (row.sid || row.SID || row.session_id || '').toString().trim();
-      if (!sid) { state.warnings.push(`${label}: row ${i+2} skipped — no session ID.`); return; }
-      const phase = normalizePhase(row.phase || row.Phase || row.ph);
-      if (!VALID_PHASES.has(phase)) { state.warnings.push(`${label}: row ${i+2} skipped — unknown phase.`); return; }
-      const studentId = sanitizeId(row.student_id || row.Student_ID || row.studentId || row.StudentId);
-      if (!studentId) { state.warnings.push(`${label}: row ${i+2} skipped — no student ID.`); return; }
-      const ts = row.ts_utc || row.timestamp || row.ts || '';
-      const date = extractDate(ts);
-      if (!date) { state.warnings.push(`${label}: row ${i+2} skipped — bad timestamp.`); return; }
-      let mod = (row.module || row.Module || '').toString().trim().toUpperCase();
-      if (!mod && moduleRe.test(sid)) mod = sid.slice(0, 8).toUpperCase();
-      let grp = (row.group || row.Group || '').toString().trim();
-      if (grp) { const gm = grp.match(groupRe); if (gm) grp = gm[1]; }
-      else if (row['group code']) grp = row['group code'].toString().trim();
+  state.sessionKeys = []; state.allStudentIds.clear(); state.allModules.clear();
+  state.moduleIntakes.clear(); state.moduleIntakeGroups.clear(); state.modGroupStudents.clear();
+  var groupRe = /group\s*(\w+)/i;
+  rows.forEach(function(row) {
+    var vals = Object.values(row || {});
+    if (!vals.some(function(v) { return (v||'').toString().trim(); })) return;
+    var sid = (row.sid || row.SID || row.session_id || '').toString().trim();
+    if (!sid) return;
+    var phase = normalizePhase(row.phase || row.Phase || row.ph);
+    if (!VALID_PHASES.has(phase)) return;
+    var studentId = sanitizeId(row.student_id || row.Student_ID || row.studentId || row.StudentId);
+    if (!studentId) return;
+    var ts = row.ts_utc || row.timestamp || row.ts || '';
+    var date = extractDate(ts);
+    if (!date) return;
+    var mod = (row.module || row.Module || '').toString().trim().toUpperCase();
+    var grp = (row.group || row.Group || '').toString().trim();
+    if (grp) { var gm = grp.match(groupRe); if (gm) grp = gm[1]; }
+    var intake = (row.intake || row.Intake || '').toString().trim();
 
-      const key = `${sid}__${date}`;
-      let sess = state.sessions.get(key);
-      if (!sess) {
-        sess = { key, sid, date, module: mod, group: grp, phaseUsage: new Set(), students: new Map(), dupes: 0, cache: new Map() };
-        state.sessions.set(key, sess);
-      }
-      if (!sess.module && mod) sess.module = mod;
-      if (!sess.group && grp) sess.group = grp;
-      sess.phaseUsage.add(phase);
+    var key = sid + '__' + intake + '__' + date;
+    var sess = state.sessions.get(key);
+    if (!sess) {
+      sess = { key: key, sid: sid, date: date, module: mod, group: grp, intake: intake, phaseUsage: new Set(), students: new Map(), dupes: 0, cache: new Map() };
+      state.sessions.set(key, sess);
+    }
+    if (!sess.module && mod) sess.module = mod;
+    if (!sess.group && grp) sess.group = grp;
+    if (!sess.intake && intake) sess.intake = intake;
+    sess.phaseUsage.add(phase);
 
-      let entry = sess.students.get(studentId);
-      if (!entry) { entry = { phases: new Set(), timestamps: [] }; sess.students.set(studentId, entry); }
-      if (entry.phases.has(phase)) sess.dupes++; else entry.phases.add(phase);
-      if (ts) entry.timestamps.push(ts);
+    var entry = sess.students.get(studentId);
+    if (!entry) { entry = { phases: new Set(), timestamps: [] }; sess.students.set(studentId, entry); }
+    if (entry.phases.has(phase)) sess.dupes++; else entry.phases.add(phase);
+    if (ts) entry.timestamps.push(ts);
 
-      state.allStudentIds.add(studentId);
-      if (!state.studentIndex.has(studentId)) state.studentIndex.set(studentId, new Set());
-      state.studentIndex.get(studentId).add(key);
+    state.allStudentIds.add(studentId);
+    if (!state.studentIndex.has(studentId)) state.studentIndex.set(studentId, new Set());
+    state.studentIndex.get(studentId).add(key);
 
-      if (mod) {
-        state.allModules.add(mod);
-        if (!state.moduleGroups.has(mod)) state.moduleGroups.set(mod, new Set());
-        if (grp) state.moduleGroups.get(mod).add(grp);
-      }
-    });
+    if (mod) {
+      state.allModules.add(mod);
+      if (!state.moduleIntakes.has(mod)) state.moduleIntakes.set(mod, new Set());
+      if (intake) state.moduleIntakes.get(mod).add(intake);
+      var miKey = mod + '__' + intake;
+      if (!state.moduleIntakeGroups.has(miKey)) state.moduleIntakeGroups.set(miKey, new Set());
+      if (grp) state.moduleIntakeGroups.get(miKey).add(grp);
+      var mgKey = mod + '__' + grp + '__' + intake;
+      if (!state.modGroupStudents.has(mgKey)) state.modGroupStudents.set(mgKey, new Set());
+      state.modGroupStudents.get(mgKey).add(studentId);
+    }
   });
-  const arr = Array.from(state.sessions.values()).sort((a,b) => a.date.localeCompare(b.date) || a.sid.localeCompare(b.sid));
-  state.sessionKeys = arr.map(s => s.key);
-  arr.forEach(s => {
+  var arr = Array.from(state.sessions.values()).sort(function(a,b) { return a.date.localeCompare(b.date) || a.sid.localeCompare(b.sid); });
+  state.sessionKeys = arr.map(function(s) { return s.key; });
+  arr.forEach(function(s) {
     if (!state.dateToKeys.has(s.date)) state.dateToKeys.set(s.date, []);
     state.dateToKeys.get(s.date).push(s.key);
   });
@@ -820,21 +483,19 @@ function ingestRows(rowSets) {
 
 // ── Analytics ──
 function determineStatus(phases, activePhases) {
-  const has = p => phases.has(p);
-  const active = p => activePhases.has(p);
-  const hasStart = active('start') && has('start');
-  const hasEnd = active('end') && has('end');
-  const missingStart = active('start') && !has('start');
-  const missingEnd = active('end') && !has('end');
-
-  const anyPresent = [...activePhases].some(p => has(p));
+  var hasP = function(p) { return phases.has(p); };
+  var active = function(p) { return activePhases.has(p); };
+  var anyPresent = false;
+  activePhases.forEach(function(p) { if (hasP(p)) anyPresent = true; });
   if (!anyPresent) return 'Absent';
-
-  const breakPhases = ['break1','break2'].filter(p => active(p));
-  const missingBreaks = breakPhases.filter(p => !has(p));
-
+  var missingStart = active('start') && !hasP('start');
+  var hasStart = active('start') && hasP('start');
+  var hasEnd = active('end') && hasP('end');
+  var missingEnd = active('end') && !hasP('end');
   if (missingStart && anyPresent) return 'Late';
   if (hasStart && (hasEnd || !active('end'))) {
+    var breakPhases = ['break1','break2'].filter(function(p) { return active(p); });
+    var missingBreaks = breakPhases.filter(function(p) { return !hasP(p); });
     if (missingBreaks.length === 0) return 'Present';
     return 'Late from break';
   }
@@ -842,313 +503,359 @@ function determineStatus(phases, activePhases) {
   return 'Partial';
 }
 
+function rosterForModGroup(mod, grp, intake) {
+  if (!state.rosterMap.size) return new Set();
+  if (state.rosterModGroup.size) {
+    var scoped = new Set();
+    state.rosterModGroup.forEach(function(mg, id) {
+      if (mg.module === mod && (mg.group === grp || !mg.group) && (mg.intake === intake || !mg.intake)) scoped.add(id);
+    });
+    if (scoped.size) return scoped;
+  }
+  var mgKey = mod + '__' + grp + '__' + intake;
+  var checkedIn = state.modGroupStudents.get(mgKey);
+  if (checkedIn) {
+    var scoped = new Set();
+    state.rosterMap.forEach(function(_, id) { if (checkedIn.has(id)) scoped.add(id); });
+    return scoped;
+  }
+  return new Set();
+}
+
 function buildSessionAnalytics(sess) {
-  const cacheKey = `r${state.rosterVersion}`;
+  var cacheKey = 'r' + state.rosterVersion;
   if (sess.cache.has(cacheKey)) return sess.cache.get(cacheKey);
+  var activePhases = new Set(sess.phaseUsage);
+  var scopedRoster = rosterForModGroup(sess.module, sess.group, sess.intake);
+  var combined = new Set();
+  var mgKey = sess.module + '__' + sess.group + '__' + sess.intake;
+  var mgs = state.modGroupStudents.get(mgKey);
+  if (mgs) mgs.forEach(function(id) { combined.add(id); });
+  scopedRoster.forEach(function(id) { combined.add(id); });
+  sess.students.forEach(function(_, id) { combined.add(id); });
 
-  const activePhases = new Set(sess.phaseUsage);
-  const combined = new Set();
-  state.rosterMap.forEach((_, id) => combined.add(id));
-  sess.students.forEach((_, id) => combined.add(id));
-
-  const counts = {};
-  STATUS_ORDER.forEach(s => counts[s] = 0);
-  const rows = [];
-  const missing = [], outOfRoster = [];
-
-  combined.forEach(studentId => {
-    const entry = sess.students.get(studentId);
-    const phases = entry ? entry.phases : new Set();
-    const status = determineStatus(phases, activePhases);
+  var counts = {}; STATUS_ORDER.forEach(function(s) { counts[s] = 0; });
+  var rows = [], missing = [], outOfRoster = [];
+  combined.forEach(function(studentId) {
+    var entry = sess.students.get(studentId);
+    var phases = entry ? entry.phases : new Set();
+    var status = determineStatus(phases, activePhases);
     counts[status]++;
-    const phaseCols = {};
-    ['start','break1','break2','end'].forEach(p => {
+    var phaseCols = {};
+    ['start','break1','break2','end'].forEach(function(p) {
       if (!activePhases.has(p)) phaseCols[p] = 'na';
       else phaseCols[p] = phases.has(p) ? 'yes' : 'no';
     });
-    const lastTs = entry && entry.timestamps.length ? entry.timestamps.sort().slice(-1)[0] : null;
-    const lastSeen = lastTs ? timeFmt.format(new Date(lastTs)) : '—';
-    const name = studentName(studentId);
-    const onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
-    const isU18 = state.under18Set.has(studentId);
-    rows.push({ studentId, name, status, phases: phaseCols, lastSeen, onRoster, isU18 });
+    var lastTs = entry && entry.timestamps.length ? entry.timestamps.sort().slice(-1)[0] : null;
+    var lastSeen = lastTs ? timeFmt.format(new Date(lastTs)) : '—';
+    var name = studentName(studentId);
+    var onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
+    var isU18 = state.under18Set.has(studentId);
+    rows.push({ studentId: studentId, name: name, status: status, phases: phaseCols, lastSeen: lastSeen, onRoster: onRoster, isU18: isU18 });
     if (state.rosterMap.size > 0) {
       if (!state.rosterMap.has(studentId) && entry) outOfRoster.push(studentId);
-      if (state.rosterMap.has(studentId) && !entry) missing.push(studentId);
+      if (scopedRoster.has(studentId) && !entry) missing.push(studentId);
     }
   });
-  rows.sort((a,b) => STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.studentId.localeCompare(b.studentId));
-  const total = rows.length;
-  const presentN = counts['Present'] || 0;
-  const analytics = { rows, counts, total, presentN, pct: total ? Math.round(presentN/total*100) : 0, activePhases, missing, outOfRoster, dupes: sess.dupes };
+  rows.sort(function(a,b) { return STATUS_ORDER.indexOf(a.status) - STATUS_ORDER.indexOf(b.status) || a.studentId.localeCompare(b.studentId); });
+  var total = rows.length;
+  var presentN = counts['Present'] || 0;
+  var analytics = { rows: rows, counts: counts, total: total, presentN: presentN, pct: total ? Math.round(presentN/total*100) : 0, activePhases: activePhases, missing: missing, outOfRoster: outOfRoster, dupes: sess.dupes };
   sess.cache.set(cacheKey, analytics);
   return analytics;
 }
 
-// ── Populate controls ──
-function populateSessionSelectors() {
-  const dates = Array.from(state.dateToKeys.keys()).sort();
-  el.sessionDateSelect.innerHTML = '';
-  if (!dates.length) {
-    el.sessionDateSelect.innerHTML = '<option value="">No dates</option>';
-    el.sessionKeySelect.innerHTML = '<option value="">—</option>';
-    state.sel.date = null; state.sel.sessionKey = null; return;
-  }
-  if (!state.sel.date || !state.dateToKeys.has(state.sel.date)) state.sel.date = dates[dates.length-1];
-  dates.forEach(d => {
-    const o = document.createElement('option');
-    o.value = d; o.textContent = toLocalDate(d);
-    if (d === state.sel.date) o.selected = true;
-    el.sessionDateSelect.appendChild(o);
-  });
-  populateSessionKeySelect(state.sel.date);
-}
-function populateSessionKeySelect(date) {
-  el.sessionKeySelect.innerHTML = '';
-  const keys = state.dateToKeys.get(date) || [];
-  if (!keys.length) { el.sessionKeySelect.innerHTML = '<option value="">—</option>'; state.sel.sessionKey = null; return; }
-  if (!state.sel.sessionKey || !keys.includes(state.sel.sessionKey)) state.sel.sessionKey = keys[0];
-  keys.forEach(k => {
-    const s = state.sessions.get(k);
-    const o = document.createElement('option');
-    o.value = k; o.textContent = readableLabel(s);
-    if (k === state.sel.sessionKey) o.selected = true;
-    el.sessionKeySelect.appendChild(o);
-  });
-}
-function populateGroupSelectors() {
-  el.groupModuleSelect.innerHTML = '';
-  const mods = Array.from(state.allModules).sort();
-  if (!mods.length) { el.groupModuleSelect.innerHTML = '<option value="">No modules</option>'; return; }
-  if (!state.sel.module || !state.allModules.has(state.sel.module)) state.sel.module = mods[0];
-  mods.forEach(m => {
-    const o = document.createElement('option');
-    o.value = m; o.textContent = m;
+// ── Populate cascade (Session & Group views) ──
+function populateModuleSelect() {
+  el.moduleSelect.innerHTML = '<option value="">— Select module —</option>';
+  Array.from(state.allModules).sort().forEach(function(m) {
+    var o = document.createElement('option'); o.value = m; o.textContent = m;
     if (m === state.sel.module) o.selected = true;
-    el.groupModuleSelect.appendChild(o);
+    el.moduleSelect.appendChild(o);
   });
-  populateGroupGroupSelect();
 }
-function populateGroupGroupSelect() {
-  el.groupGroupSelect.innerHTML = '<option value="all">All groups</option>';
-  const grps = state.moduleGroups.get(state.sel.module);
-  if (grps) {
-    Array.from(grps).sort().forEach(g => {
-      const o = document.createElement('option');
-      o.value = g; o.textContent = `Group ${g}`;
-      if (g === state.sel.group) o.selected = true;
-      el.groupGroupSelect.appendChild(o);
+
+function populateIntakeSelect() {
+  el.intakeFilterSelect.innerHTML = '<option value="">— All intakes —</option>';
+  var mod = state.sel.module;
+  if (!mod) return;
+  var intakes = state.moduleIntakes.get(mod);
+  if (!intakes) return;
+  Array.from(intakes).sort().forEach(function(ik) {
+    var o = document.createElement('option'); o.value = ik; o.textContent = ik;
+    if (ik === state.sel.intake) o.selected = true;
+    el.intakeFilterSelect.appendChild(o);
+  });
+}
+
+function populateGroupSelect() {
+  var isSession = state.activeView === 'session';
+  if (isSession) {
+    el.groupFilterSelect.innerHTML = '<option value="">— Select group —</option>';
+  } else {
+    el.groupFilterSelect.innerHTML = '<option value="all">All groups</option>';
+  }
+  var mod = state.sel.module; var intake = state.sel.intake;
+  if (!mod) return;
+  var groups = new Set();
+  if (intake) {
+    var miKey = mod + '__' + intake;
+    var g = state.moduleIntakeGroups.get(miKey);
+    if (g) g.forEach(function(v) { groups.add(v); });
+  } else {
+    var intakes = state.moduleIntakes.get(mod);
+    if (intakes) intakes.forEach(function(ik) {
+      var miKey = mod + '__' + ik;
+      var g = state.moduleIntakeGroups.get(miKey);
+      if (g) g.forEach(function(v) { groups.add(v); });
     });
   }
-  if (!state.sel.group) state.sel.group = 'all';
-  const allDates = state.sessionKeys.map(k => state.sessions.get(k)).filter(s => s.module === state.sel.module).map(s => s.date).sort();
-  if (allDates.length) {
-    if (!state.sel.dateFrom) el.groupDateFrom.value = allDates[0];
-    if (!state.sel.dateTo) el.groupDateTo.value = allDates[allDates.length-1];
-  }
+  Array.from(groups).sort().forEach(function(g) {
+    var o = document.createElement('option'); o.value = g; o.textContent = 'Group ' + g;
+    if (g === state.sel.group) o.selected = true;
+    el.groupFilterSelect.appendChild(o);
+  });
 }
+
+function populateSessionDateSelect() {
+  el.sessionDateSelect.innerHTML = '';
+  var mod = state.sel.module, intake = state.sel.intake, grp = state.sel.group;
+  var dates = new Set();
+  state.sessions.forEach(function(s) {
+    if (mod && s.module !== mod) return;
+    if (intake && s.intake !== intake) return;
+    if (grp && grp !== 'all' && s.group !== grp) return;
+    dates.add(s.date);
+  });
+  var sorted = Array.from(dates).sort();
+  if (!sorted.length) { el.sessionDateSelect.innerHTML = '<option value="">No sessions</option>'; state.sel.sessionDate = null; return; }
+  if (!state.sel.sessionDate || !dates.has(state.sel.sessionDate)) state.sel.sessionDate = sorted[sorted.length - 1];
+  sorted.forEach(function(d) {
+    var o = document.createElement('option'); o.value = d; o.textContent = toLocalDate(d);
+    if (d === state.sel.sessionDate) o.selected = true;
+    el.sessionDateSelect.appendChild(o);
+  });
+}
+
 function populateStudentSuggest() {
   el.studentSuggest.innerHTML = '';
-  Array.from(state.studentIndex.keys()).sort().forEach(id => {
-    const o = document.createElement('option'); o.value = id;
+  Array.from(state.studentIndex.keys()).sort().forEach(function(id) {
+    var o = document.createElement('option'); o.value = id;
     el.studentSuggest.appendChild(o);
   });
 }
 
-// ── Status filter chips ──
+function populateStudentYearSelect() {
+  el.studentYearSelect.innerHTML = '<option value="">All years</option>';
+  state.availableYears.forEach(function(y) {
+    var o = document.createElement('option'); o.value = y; o.textContent = y;
+    if (y === state.sel.studentYear) o.selected = true;
+    el.studentYearSelect.appendChild(o);
+  });
+}
+
+function populateStudentModuleSelect() {
+  el.studentModuleSelect.innerHTML = '<option value="">All modules</option>';
+  var sid = sanitizeId(state.sel.studentId);
+  if (!sid) return;
+  var mods = new Set();
+  var keys = state.studentIndex.get(sid);
+  if (keys) keys.forEach(function(k) {
+    var sess = state.sessions.get(k);
+    if (sess && sess.module) mods.add(sess.module);
+  });
+  if (state.rosterModGroup.size) {
+    state.rosterModGroup.forEach(function(mg, id) {
+      if (id === sid && mg.module) mods.add(mg.module);
+    });
+  }
+  Array.from(mods).sort().forEach(function(m) {
+    var o = document.createElement('option'); o.value = m; o.textContent = m;
+    if (m === state.sel.studentModule) o.selected = true;
+    el.studentModuleSelect.appendChild(o);
+  });
+}
+
+// ── Status chips ──
 function buildStatusChips(containerId, filterKey) {
-  const container = document.getElementById(containerId);
+  var container = document.getElementById(containerId);
   container.innerHTML = '';
-  STATUS_ORDER.forEach(s => {
-    const chip = document.createElement('label');
+  STATUS_ORDER.forEach(function(s) {
+    var chip = document.createElement('label');
     chip.className = 'status-chip' + (state.filters[filterKey].has(s) ? ' active' : '');
-    const inp = document.createElement('input');
-    inp.type = 'checkbox'; inp.checked = state.filters[filterKey].has(s);
-    inp.addEventListener('change', () => {
+    var inp = document.createElement('input'); inp.type = 'checkbox'; inp.checked = state.filters[filterKey].has(s);
+    inp.addEventListener('change', function() {
       if (inp.checked) state.filters[filterKey].add(s); else state.filters[filterKey].delete(s);
       chip.classList.toggle('active', inp.checked);
       renderView();
     });
     chip.appendChild(inp);
-    const span = document.createElement('span');
-    span.textContent = s;
-    chip.appendChild(span);
+    var span = document.createElement('span'); span.textContent = s; chip.appendChild(span);
     container.appendChild(chip);
   });
 }
 function syncChips(containerId, filterKey) {
-  const container = document.getElementById(containerId);
-  container.querySelectorAll('.status-chip').forEach(chip => {
-    const inp = chip.querySelector('input');
-    if (!inp) return;
-    const val = chip.querySelector('span').textContent;
+  var container = document.getElementById(containerId);
+  container.querySelectorAll('.status-chip').forEach(function(chip) {
+    var inp = chip.querySelector('input'); if (!inp) return;
+    var val = chip.querySelector('span').textContent;
     inp.checked = state.filters[filterKey].has(val);
     chip.classList.toggle('active', inp.checked);
   });
 }
 
-// ── Sortable table builder ──
-function buildSortableTable(columns, rows, options = {}) {
-  const wrapper = document.createElement('div');
-  wrapper.className = 'data-table-wrapper';
-  const table = document.createElement('table');
-  table.className = 'data-table';
-  const thead = document.createElement('thead');
-  const headerRow = document.createElement('tr');
-  let sortCol = null, sortDir = 'asc';
-
-  columns.forEach((col, idx) => {
-    const th = document.createElement('th');
-    th.textContent = col.label;
-    const arrow = document.createElement('span');
-    arrow.className = 'sort-arrow';
-    arrow.textContent = ' ↕';
-    th.appendChild(arrow);
-    th.addEventListener('click', () => {
+// ── Table builder ──
+function buildSortableTable(columns, rows, options) {
+  options = options || {};
+  var wrapper = document.createElement('div'); wrapper.className = 'data-table-wrapper';
+  var table = document.createElement('table'); table.className = 'data-table';
+  var thead = document.createElement('thead'); var headerRow = document.createElement('tr');
+  var sortCol = null, sortDir = 'asc';
+  columns.forEach(function(col, idx) {
+    var th = document.createElement('th'); th.textContent = col.label;
+    var arrow = document.createElement('span'); arrow.className = 'sort-arrow'; arrow.textContent = ' ↕'; th.appendChild(arrow);
+    th.addEventListener('click', function() {
       if (sortCol === idx) sortDir = sortDir === 'asc' ? 'desc' : 'asc';
       else { sortCol = idx; sortDir = 'asc'; }
-      thead.querySelectorAll('.sort-arrow').forEach(a => { a.textContent = ' ↕'; a.classList.remove('active'); });
-      arrow.textContent = sortDir === 'asc' ? ' ↑' : ' ↓';
-      arrow.classList.add('active');
+      thead.querySelectorAll('.sort-arrow').forEach(function(a) { a.textContent = ' ↕'; a.classList.remove('active'); });
+      arrow.textContent = sortDir === 'asc' ? ' ↑' : ' ↓'; arrow.classList.add('active');
       renderBody();
     });
     headerRow.appendChild(th);
   });
-  thead.appendChild(headerRow);
-  table.appendChild(thead);
-
-  const tbody = document.createElement('tbody');
+  thead.appendChild(headerRow); table.appendChild(thead);
+  var tbody = document.createElement('tbody');
   function renderBody() {
     tbody.innerHTML = '';
-    let sorted = [...rows];
+    var sorted = rows.slice();
     if (sortCol !== null) {
-      sorted.sort((a,b) => {
-        let va = a[columns[sortCol].key], vb = b[columns[sortCol].key];
+      sorted.sort(function(a,b) {
+        var va = a[columns[sortCol].key], vb = b[columns[sortCol].key];
         if (typeof va === 'number' && typeof vb === 'number') return sortDir === 'asc' ? va-vb : vb-va;
         va = String(va||''); vb = String(vb||'');
         return sortDir === 'asc' ? va.localeCompare(vb) : vb.localeCompare(va);
       });
     }
     if (!sorted.length) {
-      const tr = document.createElement('tr');
-      const td = document.createElement('td');
-      td.colSpan = columns.length;
-      td.textContent = options.emptyText || 'No data matches the current filters.';
+      var tr = document.createElement('tr'); var td = document.createElement('td');
+      td.colSpan = columns.length; td.textContent = options.emptyText || 'No data matches the current filters.';
       td.style.textAlign = 'center'; td.style.padding = '24px'; td.style.color = 'var(--muted)';
       tr.appendChild(td); tbody.appendChild(tr);
     } else {
-      sorted.forEach(rowData => {
-        const tr = document.createElement('tr');
+      sorted.forEach(function(rowData) {
+        var tr = document.createElement('tr');
         if (rowData._rowClass) tr.className = rowData._rowClass;
-        columns.forEach(col => {
-          const td = document.createElement('td');
-          if (col.render) col.render(td, rowData);
-          else td.textContent = rowData[col.key] ?? '';
+        columns.forEach(function(col) {
+          var td = document.createElement('td');
+          if (col.render) col.render(td, rowData); else td.textContent = rowData[col.key] != null ? rowData[col.key] : '';
           tr.appendChild(td);
         });
         tbody.appendChild(tr);
       });
     }
     if (options.totalsRow && sorted.length) {
-      const tr = document.createElement('tr');
-      tr.className = 'totals-row';
-      columns.forEach(col => {
-        const td = document.createElement('td');
-        td.textContent = options.totalsRow[col.key] ?? '';
-        tr.appendChild(td);
-      });
+      var tr = document.createElement('tr'); tr.className = 'totals-row';
+      columns.forEach(function(col) { var td = document.createElement('td'); td.textContent = options.totalsRow[col.key] != null ? options.totalsRow[col.key] : ''; tr.appendChild(td); });
       tbody.appendChild(tr);
     }
   }
-  renderBody();
-  table.appendChild(tbody);
-  wrapper.appendChild(table);
+  renderBody(); table.appendChild(tbody); wrapper.appendChild(table);
   return wrapper;
 }
 
-// ── Stacked bar chart ──
 function buildStackedBar(counts, total) {
-  const container = document.createElement('div');
-  container.className = 'chart-bar-container';
-  const h3 = document.createElement('h3');
-  h3.textContent = 'Attendance Distribution';
-  container.appendChild(h3);
-  const bar = document.createElement('div');
-  bar.className = 'stacked-bar';
-  STATUS_ORDER.forEach(s => {
-    const n = counts[s] || 0;
-    if (!n) return;
-    const seg = document.createElement('div');
-    seg.className = 'bar-segment';
-    seg.style.width = (n/total*100) + '%';
-    seg.style.background = STATUS_COLORS[s].hex;
-    seg.title = `${s}: ${n} (${Math.round(n/total*100)}%)`;
-    bar.appendChild(seg);
-  });
+  var container = document.createElement('div'); container.className = 'chart-bar-container';
+  var h3 = document.createElement('h3'); h3.textContent = 'Attendance Distribution'; container.appendChild(h3);
+  var bar = document.createElement('div'); bar.className = 'stacked-bar';
+  STATUS_ORDER.forEach(function(s) { var n = counts[s] || 0; if (!n) return; var seg = document.createElement('div'); seg.className = 'bar-segment'; seg.style.width = (n/total*100) + '%'; seg.style.background = STATUS_COLORS[s].hex; seg.title = s + ': ' + n + ' (' + Math.round(n/total*100) + '%)'; bar.appendChild(seg); });
   container.appendChild(bar);
-  const legend = document.createElement('div');
-  legend.className = 'bar-legend';
-  STATUS_ORDER.forEach(s => {
-    const n = counts[s] || 0;
-    if (!n) return;
-    const item = document.createElement('div');
-    item.className = 'bar-legend-item';
-    const dot = document.createElement('span');
-    dot.className = 'bar-legend-dot';
-    dot.style.background = STATUS_COLORS[s].hex;
-    item.appendChild(dot);
-    const lbl = document.createElement('span');
-    lbl.textContent = `${s}: ${n}`;
-    item.appendChild(lbl);
-    legend.appendChild(item);
-  });
-  container.appendChild(legend);
-  return container;
+  var legend = document.createElement('div'); legend.className = 'bar-legend';
+  STATUS_ORDER.forEach(function(s) { var n = counts[s] || 0; if (!n) return; var item = document.createElement('div'); item.className = 'bar-legend-item'; var dot = document.createElement('span'); dot.className = 'bar-legend-dot'; dot.style.background = STATUS_COLORS[s].hex; item.appendChild(dot); var lbl = document.createElement('span'); lbl.textContent = s + ': ' + n; item.appendChild(lbl); legend.appendChild(item); });
+  container.appendChild(legend); return container;
 }
 
-// ── Phase cell renderer ──
 function renderPhaseCell(td, value) {
   if (value === 'yes') { td.textContent = '✔'; td.className = 'phase-yes'; }
   else if (value === 'no') { td.textContent = '✖'; td.className = 'phase-no'; }
   else { td.textContent = '—'; td.className = 'phase-na'; }
 }
 
-// ── Email generation ──
+// ── Email ──
+function getEmailTemplate() {
+  var tpl = state.emailTemplate || localStorage.getItem('att_email_template') || '';
+  if (!tpl) {
+    tpl = "{greeting},\n\nOur records show you {status_phrase} the {module} session on {date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk\n\nIf you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.";
+  }
+  return tpl;
+}
+
 function buildEmailBody(sess, row) {
-  const phrase = EMAIL_PHRASES[row.status] || "had an attendance issue at";
-  const mod = sess.module || sess.sid;
-  const date = toLocalDate(sess.date);
-  const g = greeting(row.studentId);
-  return `${g},\n\nOur records show you ${phrase} the ${mod} session on ${date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk\n\nIf you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.`;
+  var phrase = EMAIL_PHRASES[row.status] || "had an attendance issue at";
+  var mod = sess.module || sess.sid;
+  var date = toLocalDate(sess.date);
+  var tpl = getEmailTemplate();
+  return tpl
+    .replace('{greeting}', greeting(row.studentId))
+    .replace('{status_phrase}', phrase)
+    .replace('{module}', mod)
+    .replace('{date}', date)
+    .replace('{name}', studentName(row.studentId) || row.studentId)
+    .replace('{student_id}', row.studentId);
 }
 
 function mailtoLink(sess, row) {
-  const to = `${row.studentId}@${state.emailDomain}`;
-  const subj = `[Attendance] ${sess.module || sess.sid} ${sess.date} — ${row.status}`;
-  const body = buildEmailBody(sess, row);
-  return `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body)}`;
+  var to = row.studentId + '@' + state.emailDomain;
+  var subj = '[Attendance] ' + (sess.module || sess.sid) + ' ' + sess.date + ' — ' + row.status;
+  return 'mailto:' + encodeURIComponent(to) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(buildEmailBody(sess, row));
 }
 
 function emlContent(sess, row) {
-  const to = `${row.studentId}@${state.emailDomain}`;
-  const subj = `[Attendance] ${sess.module || sess.sid} ${sess.date} — ${row.status}`;
-  const body = buildEmailBody(sess, row);
-  return `To: ${to}\r\nSubject: ${subj}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\n${body}`;
+  var to = row.studentId + '@' + state.emailDomain;
+  var subj = '[Attendance] ' + (sess.module || sess.sid) + ' ' + sess.date + ' — ' + row.status;
+  var body = buildEmailBody(sess, row);
+  var htmlBody = body.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+  return 'To: ' + to + '\r\nSubject: ' + subj + '\r\nMIME-Version: 1.0\r\nContent-Type: text/html; charset=utf-8\r\n\r\n<html><body style="font-family:Arial,sans-serif;font-size:14px;color:#222">' + htmlBody + '</body></html>';
+}
+
+// ── Sidebar visibility ──
+function updateSidebarForView() {
+  var v = state.activeView;
+  el.orgFilters.hidden = (v === 'student');
+  el.studentPrimarySection.hidden = (v !== 'student');
+
+  document.querySelectorAll('.view-controls').forEach(function(c) {
+    c.hidden = c.dataset.for !== v;
+  });
+
+  if (v === 'session') {
+    el.groupFilterWrap.hidden = false;
+  } else if (v === 'group') {
+    el.groupFilterWrap.hidden = false;
+  }
 }
 
 // ── Render views ──
 function renderView() {
-  const vc = el.viewContent;
-  vc.innerHTML = '';
+  var vc = el.viewContent; vc.innerHTML = '';
   if (!state.sessions.size) {
-    el.emptyState.removeAttribute('hidden');
-    vc.setAttribute('hidden', '');
-    el.exportXlsxBtn.disabled = true;
-    el.exportCsvBtn.disabled = true;
-    return;
+    el.emptyState.removeAttribute('hidden'); vc.setAttribute('hidden', '');
+    el.emptyState.querySelector('h2').textContent = 'No data available';
+    el.emptyState.querySelector('p').textContent = 'No attendance data found for the selected academic year.';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
   }
-  el.emptyState.setAttribute('hidden', '');
-  vc.removeAttribute('hidden');
+  if (state.activeView !== 'student' && !state.sel.module) {
+    el.emptyState.removeAttribute('hidden'); vc.setAttribute('hidden', '');
+    el.emptyState.querySelector('h2').textContent = 'Select a module';
+    el.emptyState.querySelector('p').textContent = 'Choose a module from the sidebar to begin analysis.';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+  if (state.activeView === 'session' && !state.sel.group) {
+    el.emptyState.removeAttribute('hidden'); vc.setAttribute('hidden', '');
+    el.emptyState.querySelector('h2').textContent = 'Select a group';
+    el.emptyState.querySelector('p').textContent = 'Choose a group from the sidebar for session view.';
+    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
+  }
+  el.emptyState.setAttribute('hidden', ''); vc.removeAttribute('hidden');
   switch (state.activeView) {
     case 'session': renderSessionView(vc); break;
     case 'group': renderGroupView(vc); break;
@@ -1156,171 +863,174 @@ function renderView() {
   }
 }
 
-function renderSessionView(vc) {
-  if (!state.sel.sessionKey || !state.sessions.has(state.sel.sessionKey)) {
-    vc.innerHTML = '<div class="empty-state"><h2>Select a session</h2><p>Choose a date and session from the sidebar.</p></div>';
-    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
-  }
-  const sess = state.sessions.get(state.sel.sessionKey);
-  const a = buildSessionAnalytics(sess);
-  const filterSet = state.filters.session;
-  const visible = a.rows.filter(r => filterSet.has(r.status));
+function getFilteredSessions() {
+  var mod = state.sel.module, intake = state.sel.intake, grp = state.sel.group;
+  return state.sessionKeys.map(function(k) { return state.sessions.get(k); }).filter(function(s) {
+    if (mod && s.module !== mod) return false;
+    if (intake && s.intake !== intake) return false;
+    if (grp && grp !== 'all' && s.group !== grp) return false;
+    return true;
+  });
+}
 
-  const header = document.createElement('div');
-  header.className = 'main-header';
-  const h1 = document.createElement('h1');
-  h1.textContent = readableLabel(sess);
-  header.appendChild(h1);
-  const sub = document.createElement('div');
-  sub.className = 'subtitle';
-  sub.textContent = `${toLocalDate(sess.date)} · ${a.total} students`;
-  header.appendChild(sub);
+function renderSessionView(vc) {
+  var date = state.sel.sessionDate;
+  var sessions = getFilteredSessions().filter(function(s) { return s.date === date; });
+  if (!sessions.length) { vc.innerHTML = '<div class="empty-state"><h2>No session on this date</h2><p>Select a different date from the sidebar.</p></div>'; el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return; }
+  var sess = sessions[0];
+  var a = buildSessionAnalytics(sess);
+  var filterSet = state.filters.session;
+  var visible = a.rows.filter(function(r) { return filterSet.has(r.status); });
+
+  var header = document.createElement('div'); header.className = 'main-header';
+  var h1 = document.createElement('h1'); h1.textContent = readableLabel(sess); header.appendChild(h1);
+  var sub = document.createElement('div'); sub.className = 'subtitle'; sub.textContent = toLocalDate(sess.date) + ' · ' + a.total + ' students'; header.appendChild(sub);
   vc.appendChild(header);
 
-  const stats = document.createElement('div');
-  stats.className = 'stats-bar';
-  [[`${a.presentN}`, 'Present', `${a.pct}% attendance`],
-   [`${a.total}`, 'Total Students', `${a.rows.filter(r=>r.status!=='Present').length} flagged`],
-   [`${(a.counts['Late']||0)+(a.counts['Late from break']||0)}`, 'Late / Break Issues', ''],
-   [`${(a.counts['Absent']||0)+(a.counts['Left Early']||0)+(a.counts['Partial']||0)}`, 'At Risk', '']
-  ].forEach(([val, label, meta]) => {
-    const card = document.createElement('div'); card.className = 'stat-card';
-    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
-    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
-    card.appendChild(l); card.appendChild(v);
-    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+  var stats = document.createElement('div'); stats.className = 'stats-bar';
+  var pctColor = a.pct >= 80 ? 'var(--green)' : a.pct >= 50 ? 'var(--amber)' : 'var(--red)';
+  [[a.presentN+'', 'Present', a.pct+'% attendance'], [a.total+'', 'Total Students', a.rows.filter(function(r){return r.status!=='Present';}).length+' flagged'], [((a.counts['Late']||0)+(a.counts['Late from break']||0))+'', 'Late / Break', ''], [((a.counts['Absent']||0)+(a.counts['Left Early']||0)+(a.counts['Partial']||0))+'', 'At Risk', '']].forEach(function(item) {
+    var card = document.createElement('div'); card.className = 'stat-card';
+    var l = document.createElement('div'); l.className = 'stat-label'; l.textContent = item[1]; card.appendChild(l);
+    var v = document.createElement('div'); v.className = 'stat-value'; v.textContent = item[0]; card.appendChild(v);
+    if (item[2]) { var m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = item[2]; card.appendChild(m); }
     stats.appendChild(card);
   });
   vc.appendChild(stats);
   vc.appendChild(buildStackedBar(a.counts, a.total));
 
   if (a.missing.length) {
-    const alert = document.createElement('div');
-    alert.className = 'alert-block danger';
-    alert.innerHTML = `<span class="alert-icon">⚠</span><div><strong>${a.missing.length} rostered students missing:</strong> ${a.missing.join(', ')}</div>`;
-    vc.appendChild(alert);
+    var alertEl = document.createElement('div'); alertEl.className = 'alert-block danger';
+    var icon = document.createElement('span'); icon.className = 'alert-icon'; icon.textContent = '⚠'; alertEl.appendChild(icon);
+    var alertBody = document.createElement('div');
+    var strong = document.createElement('strong'); strong.textContent = a.missing.length + ' rostered students missing: '; alertBody.appendChild(strong);
+    alertBody.appendChild(document.createTextNode(a.missing.join(', ')));
+    alertEl.appendChild(alertBody); vc.appendChild(alertEl);
   }
   if (a.outOfRoster.length) {
-    const alert = document.createElement('div');
-    alert.className = 'alert-block warning';
-    alert.innerHTML = `<span class="alert-icon">⚠</span><div><strong>${a.outOfRoster.length} not on roster:</strong> ${a.outOfRoster.join(', ')}</div>`;
-    vc.appendChild(alert);
-  }
-  if (a.dupes) {
-    const alert = document.createElement('div');
-    alert.className = 'alert-block info';
-    alert.innerHTML = `<span class="alert-icon">ℹ</span><div>${a.dupes} duplicate check-ins detected.</div>`;
-    vc.appendChild(alert);
+    var alertEl = document.createElement('div'); alertEl.className = 'alert-block warning';
+    var icon = document.createElement('span'); icon.className = 'alert-icon'; icon.textContent = '⚠'; alertEl.appendChild(icon);
+    var alertBody = document.createElement('div');
+    var strong = document.createElement('strong'); strong.textContent = a.outOfRoster.length + ' not on roster: '; alertBody.appendChild(strong);
+    alertBody.appendChild(document.createTextNode(a.outOfRoster.join(', ')));
+    alertEl.appendChild(alertBody); vc.appendChild(alertEl);
   }
 
-  const cols = [
+  var cols = [
     { key: 'studentId', label: 'Student ID' },
-    { key: 'name', label: 'Name', render: (td, r) => { td.textContent = r.name || '—'; } },
-    { key: 'start', label: 'Start', render: (td, r) => renderPhaseCell(td, r.phases.start) },
-    { key: 'break1', label: 'Break 1', render: (td, r) => renderPhaseCell(td, r.phases.break1) },
-    { key: 'break2', label: 'Break 2', render: (td, r) => renderPhaseCell(td, r.phases.break2) },
-    { key: 'end', label: 'End', render: (td, r) => renderPhaseCell(td, r.phases.end) },
-    { key: 'status', label: 'Status', render: (td, r) => { const b = document.createElement('span'); b.className = `status-badge ${statusClass(r.status)}`; b.textContent = r.status; td.appendChild(b); } },
-    { key: 'isU18', label: 'Under 18', render: (td, r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
+    { key: 'name', label: 'Name', render: function(td,r) { td.textContent = r.name || '—'; } },
+    { key: 'start', label: 'Start', render: function(td,r) { renderPhaseCell(td, r.phases.start); } },
+    { key: 'break1', label: 'Break 1', render: function(td,r) { renderPhaseCell(td, r.phases.break1); } },
+    { key: 'break2', label: 'Break 2', render: function(td,r) { renderPhaseCell(td, r.phases.break2); } },
+    { key: 'end', label: 'End', render: function(td,r) { renderPhaseCell(td, r.phases.end); } },
+    { key: 'status', label: 'Status', render: function(td,r) { var b = document.createElement('span'); b.className = 'status-badge ' + statusClass(r.status); b.textContent = r.status; td.appendChild(b); } },
+    { key: 'isU18', label: 'Under 18', render: function(td,r) { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
     { key: 'lastSeen', label: 'Last Activity' }
   ];
-  const tableRows = visible.map(r => ({...r, start: r.phases.start, break1: r.phases.break1, break2: r.phases.break2, end: r.phases.end, _rowClass: !r.onRoster ? 'not-on-roster' : ''}));
+  var tableRows = visible.map(function(r) { return Object.assign({}, r, { start: r.phases.start, break1: r.phases.break1, break2: r.phases.break2, end: r.phases.end, _rowClass: !r.onRoster ? 'not-on-roster' : '' }); });
   vc.appendChild(buildSortableTable(cols, tableRows));
-
-  state.exportRows = a.rows.map(r => ({ 'Student ID': r.studentId, Name: r.name||'', Start: r.phases.start, 'Break 1': r.phases.break1, 'Break 2': r.phases.break2, End: r.phases.end, Status: r.status, 'Under 18': r.isU18 ? 'YES' : '', 'Last Activity': r.lastSeen }));
+  state.exportRows = a.rows.map(function(r) { return { 'Student ID': r.studentId, Name: r.name||'', Start: r.phases.start, 'Break 1': r.phases.break1, 'Break 2': r.phases.break2, End: r.phases.end, Status: r.status, 'Under 18': r.isU18 ? 'YES' : '', 'Last Activity': r.lastSeen }; });
   el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
 
-  const flagged = a.rows.filter(r => r.status !== 'Present');
-  if (flagged.length) {
-    const emailSec = document.createElement('div');
-    emailSec.className = 'email-section';
-    const eh3 = document.createElement('h3');
-    eh3.textContent = `Follow-up emails (${flagged.length} students)`;
-    emailSec.appendChild(eh3);
-    const openAll = document.createElement('button');
-    openAll.className = 'sb-btn primary';
-    openAll.style.marginBottom = '12px';
-    openAll.textContent = 'Open all emails';
-    openAll.addEventListener('click', () => {
-      flagged.forEach((r, i) => {
-        setTimeout(() => window.open(mailtoLink(sess, r), '_blank'), i * 500);
-      });
+  // Under-18 report
+  var u18Flagged = a.rows.filter(function(r) { return r.isU18 && r.status !== 'Present'; });
+  if (u18Flagged.length) {
+    var u18Sec = document.createElement('div'); u18Sec.className = 'u18-report-section';
+    var u18h3 = document.createElement('h3'); u18h3.textContent = 'Under-18 Absent Report (' + u18Flagged.length + ' students)'; u18Sec.appendChild(u18h3);
+    var u18Btn = document.createElement('button'); u18Btn.className = 'sb-btn'; u18Btn.style.cssText = 'background:rgba(220,38,38,0.15);border-color:rgba(220,38,38,0.3);color:#dc2626;width:auto;display:inline-flex;margin-bottom:10px';
+    u18Btn.textContent = 'Send report to attendance team';
+    u18Btn.addEventListener('click', function() {
+      var recipient = localStorage.getItem('att_u18_report_email') || 'studentattendance@rave.ac.uk';
+      var subj = '[Under-18 Attendance] ' + (sess.module || '') + ' ' + toLocalDate(sess.date) + ' — ' + (sess.group ? 'Group ' + sess.group : '');
+      var body = 'Module: ' + (sess.module || sess.sid) + '\nDate: ' + toLocalDate(sess.date) + '\nGroup: ' + (sess.group ? 'Group ' + sess.group : 'N/A') + '\nIntake: ' + (sess.intake || 'N/A') + '\n\nUnder-18 students with attendance issues:\n\n';
+      u18Flagged.forEach(function(r) { body += '- ' + r.studentId + (r.name ? ' (' + r.name + ')' : '') + ' — ' + r.status + '\n'; });
+      window.open('mailto:' + encodeURIComponent(recipient) + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body));
     });
+    u18Sec.appendChild(u18Btn);
+    var u18List = document.createElement('div'); u18List.className = 'email-list';
+    u18Flagged.forEach(function(r) {
+      var row = document.createElement('div'); row.className = 'email-row';
+      var info = document.createElement('span'); info.className = 'student-info'; info.textContent = r.studentId + (r.name ? ' — '+r.name : '') + ' (' + r.status + ')'; row.appendChild(info);
+      u18List.appendChild(row);
+    });
+    u18Sec.appendChild(u18List); vc.appendChild(u18Sec);
+  }
+
+  // Email section for flagged students
+  var flagged = a.rows.filter(function(r) { return r.status !== 'Present'; });
+  if (flagged.length) {
+    var emailSec = document.createElement('div'); emailSec.className = 'email-section';
+    var eh3 = document.createElement('h3'); eh3.textContent = 'Follow-up emails (' + flagged.length + ' students)'; emailSec.appendChild(eh3);
+    var openAll = document.createElement('button'); openAll.className = 'sb-btn'; openAll.style.cssText = 'width:auto;display:inline-flex;margin-right:8px;margin-bottom:10px'; openAll.textContent = 'Open all emails (mailto)';
+    openAll.addEventListener('click', function() { flagged.forEach(function(r, i) { setTimeout(function() { window.open(mailtoLink(sess, r), '_blank'); }, i * 500); }); });
     emailSec.appendChild(openAll);
-    const dlAll = document.createElement('button');
-    dlAll.className = 'sb-btn';
-    dlAll.style.marginBottom = '12px';
-    dlAll.textContent = 'Download all .eml files';
-    dlAll.addEventListener('click', () => {
-      flagged.forEach(r => {
-        const blob = new Blob([emlContent(sess, r)], { type: 'message/rfc822' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `${r.studentId}_${r.status.replace(/\s+/g,'-')}.eml`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
-        setTimeout(() => URL.revokeObjectURL(url), 2000);
+    var dlAll = document.createElement('button'); dlAll.className = 'sb-btn'; dlAll.style.cssText = 'width:auto;display:inline-flex;margin-bottom:10px'; dlAll.textContent = 'Download all .eml files';
+    dlAll.addEventListener('click', function() {
+      flagged.forEach(function(r) {
+        var blob = new Blob([emlContent(sess, r)], { type: 'message/rfc822' }); var url = URL.createObjectURL(blob);
+        var a = document.createElement('a'); a.href = url; a.download = r.studentId + '_' + r.status.replace(/\s+/g,'-') + '.eml';
+        document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
       });
-      showToast(`${flagged.length} .eml files downloaded`);
+      showToast(flagged.length + ' .eml files downloaded');
     });
     emailSec.appendChild(dlAll);
-    const list = document.createElement('div');
-    list.className = 'email-list';
-    flagged.forEach(r => {
-      const row = document.createElement('div');
-      row.className = 'email-row';
-      const info = document.createElement('span');
-      info.className = 'student-info';
-      info.textContent = `${r.studentId}${r.name ? ' — '+r.name : ''} (${r.status})`;
-      row.appendChild(info);
-      const link = document.createElement('a');
-      link.href = mailtoLink(sess, r);
-      link.textContent = 'Send email';
-      row.appendChild(link);
+    var list = document.createElement('div'); list.className = 'email-list';
+    flagged.forEach(function(r) {
+      var row = document.createElement('div'); row.className = 'email-row';
+      var info = document.createElement('span'); info.className = 'student-info'; info.textContent = r.studentId + (r.name ? ' — '+r.name : '') + ' (' + r.status + ')'; row.appendChild(info);
+      var link = document.createElement('a'); link.href = mailtoLink(sess, r); link.textContent = 'Send email'; row.appendChild(link);
       list.appendChild(row);
     });
-    emailSec.appendChild(list);
-    vc.appendChild(emailSec);
+    emailSec.appendChild(list); vc.appendChild(emailSec);
   }
 }
 
 function renderGroupView(vc) {
-  const mod = state.sel.module;
-  if (!mod) {
-    vc.innerHTML = '<div class="empty-state"><h2>Select a module</h2><p>Choose a module from the sidebar.</p></div>';
-    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
-  }
-  const grp = el.groupGroupSelect.value;
-  const dateFrom = el.groupDateFrom.value;
-  const dateTo = el.groupDateTo.value;
+  var mod = state.sel.module, intake = state.sel.intake, grp = state.sel.group;
+  var periodMode = document.querySelector('input[name="groupPeriod"]:checked');
+  var isCustom = periodMode && periodMode.value === 'custom';
+  var dateFrom = isCustom ? el.groupDateFrom.value : '';
+  var dateTo = isCustom ? el.groupDateTo.value : '';
+  var u18Only = el.groupU18Only.checked;
 
-  const relevantSessions = state.sessionKeys
-    .map(k => state.sessions.get(k))
-    .filter(s => {
-      if (s.module !== mod) return false;
-      if (grp !== 'all' && s.group !== grp) return false;
-      if (dateFrom && s.date < dateFrom) return false;
-      if (dateTo && s.date > dateTo) return false;
-      return true;
+  var relevantSessions = getFilteredSessions().filter(function(s) {
+    if (dateFrom && s.date < dateFrom) return false;
+    if (dateTo && s.date > dateTo) return false;
+    return true;
+  });
+  if (!relevantSessions.length) { vc.innerHTML = '<div class="empty-state"><h2>No sessions found</h2><p>Adjust the filters or date range.</p></div>'; el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return; }
+
+  var allStudents = new Set();
+  if (grp && grp !== 'all') {
+    rosterForModGroup(mod, grp, intake).forEach(function(id) { allStudents.add(id); });
+    var mgKey = mod + '__' + grp + '__' + intake;
+    var mgs = state.modGroupStudents.get(mgKey);
+    if (mgs) mgs.forEach(function(id) { allStudents.add(id); });
+  } else {
+    var intakeList = intake ? [intake] : Array.from(state.moduleIntakes.get(mod) || []);
+    intakeList.forEach(function(ik) {
+      var miKey = mod + '__' + ik;
+      var groups = state.moduleIntakeGroups.get(miKey);
+      if (groups) groups.forEach(function(g) {
+        rosterForModGroup(mod, g, ik).forEach(function(id) { allStudents.add(id); });
+        var mgKey = mod + '__' + g + '__' + ik;
+        var mgs = state.modGroupStudents.get(mgKey);
+        if (mgs) mgs.forEach(function(id) { allStudents.add(id); });
+      });
     });
-
-  if (!relevantSessions.length) {
-    vc.innerHTML = '<div class="empty-state"><h2>No sessions found</h2><p>No sessions match the selected module, group, and date range.</p></div>';
-    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
   }
+  relevantSessions.forEach(function(s) { s.students.forEach(function(_, id) { allStudents.add(id); }); });
 
-  const allStudents = new Set();
-  state.rosterMap.forEach((_, id) => allStudents.add(id));
-  relevantSessions.forEach(s => s.students.forEach((_, id) => allStudents.add(id)));
-
-  const totalSessions = relevantSessions.length;
-  const studentRows = [];
-
-  allStudents.forEach(studentId => {
-    let attended = 0, missed = 0, leftEarly = 0, late = 0;
-    relevantSessions.forEach(sess => {
-      const a = buildSessionAnalytics(sess);
-      const row = a.rows.find(r => r.studentId === studentId);
-      const status = row ? row.status : 'Absent';
+  var totalSessions = relevantSessions.length;
+  var studentRows = [];
+  allStudents.forEach(function(studentId) {
+    var isU18 = state.under18Set.has(studentId);
+    if (u18Only && !isU18) return;
+    var attended = 0, missed = 0, leftEarly = 0, late = 0;
+    relevantSessions.forEach(function(sess) {
+      var a = buildSessionAnalytics(sess);
+      var row = a.rows.find(function(r) { return r.studentId === studentId; });
+      var status = row ? row.status : 'Absent';
       if (status === 'Present') attended++;
       else if (status === 'Absent') missed++;
       else if (status === 'Left Early') leftEarly++;
@@ -1328,377 +1038,401 @@ function renderGroupView(vc) {
       else if (status === 'Late from break') attended++;
       else if (status === 'Partial') missed++;
     });
-    const pct = totalSessions ? Math.round(attended / totalSessions * 100) : 0;
-    const onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
-    const isU18 = state.under18Set.has(studentId);
-    const name = studentName(studentId);
-    let sessGroup = '';
-    if (grp === 'all') {
-      const sessWithStudent = relevantSessions.find(s => s.students.has(studentId));
-      sessGroup = sessWithStudent ? sessWithStudent.group : '';
-    }
-    let rowClass = '';
-    if (pct < 50) rowClass = 'row-red';
-    else if (pct < 80) rowClass = 'row-amber';
-    studentRows.push({ studentId, name, group: sessGroup, totalSessions, attended, missed, leftEarly, late, pct, onRoster, isU18, _rowClass: (onRoster ? '' : 'not-on-roster') + (rowClass ? ' ' + rowClass : '') });
+    var pct = totalSessions ? Math.round(attended / totalSessions * 100) : 0;
+    var onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
+    var name = studentName(studentId);
+    var sessGroup = '';
+    if (!grp || grp === 'all') { var sw = relevantSessions.find(function(s) { return s.students.has(studentId); }); sessGroup = sw ? sw.group : ''; }
+    var sessIntake = '';
+    if (!intake) { var sw = relevantSessions.find(function(s) { return s.students.has(studentId); }); sessIntake = sw ? sw.intake : ''; }
+    studentRows.push({ studentId: studentId, name: name, group: sessGroup, intake: sessIntake, totalSessions: totalSessions, attended: attended, missed: missed, leftEarly: leftEarly, late: late, pct: pct, onRoster: onRoster, isU18: isU18, _rowClass: (!onRoster ? 'not-on-roster ' : '') + (pct < 50 ? 'row-red' : pct < 80 ? 'row-amber' : '') });
   });
 
-  const filterSet = state.filters.group;
-  const filteredRows = studentRows.filter(r => {
-    if (r.pct >= 80 && filterSet.has('Present')) return true;
-    if (r.pct >= 50 && r.pct < 80 && (filterSet.has('Late') || filterSet.has('Late from break'))) return true;
-    if (r.pct < 50 && (filterSet.has('Absent') || filterSet.has('Left Early') || filterSet.has('Partial'))) return true;
-    if (filterSet.size === STATUS_ORDER.length) return true;
-    return false;
-  });
-
-  const header = document.createElement('div');
-  header.className = 'main-header';
-  const h1 = document.createElement('h1');
-  h1.textContent = `${mod}${grp !== 'all' ? ' — Group '+grp : ' — All Groups'}`;
-  header.appendChild(h1);
-  const sub = document.createElement('div');
-  sub.className = 'subtitle';
-  sub.textContent = `${totalSessions} sessions · ${studentRows.length} students · ${dateFrom ? toLocalDate(dateFrom) : '—'} to ${dateTo ? toLocalDate(dateTo) : '—'}`;
-  header.appendChild(sub);
+  var header = document.createElement('div'); header.className = 'main-header';
+  var h1 = document.createElement('h1'); h1.textContent = mod + (intake ? ' — ' + intake : '') + (grp && grp !== 'all' ? ' — Group ' + grp : ' — All Groups'); header.appendChild(h1);
+  var sub = document.createElement('div'); sub.className = 'subtitle'; sub.textContent = totalSessions + ' sessions · ' + studentRows.length + ' students' + (u18Only ? ' (under-18 only)' : ''); header.appendChild(sub);
   vc.appendChild(header);
 
-  const avgPct = studentRows.length ? Math.round(studentRows.reduce((s,r)=>s+r.pct,0)/studentRows.length) : 0;
-  const stats = document.createElement('div');
-  stats.className = 'stats-bar';
-  [[`${totalSessions}`, 'Sessions', ''], [`${studentRows.length}`, 'Students', ''], [`${avgPct}%`, 'Avg Attendance', ''], [`${studentRows.filter(r=>r.pct<50).length}`, 'Critical (<50%)', '']].forEach(([val,label,meta]) => {
-    const card = document.createElement('div'); card.className = 'stat-card';
-    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
-    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
-    card.appendChild(l); card.appendChild(v);
-    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+  var avgPct = studentRows.length ? Math.round(studentRows.reduce(function(s,r){return s+r.pct;},0)/studentRows.length) : 0;
+  var stats = document.createElement('div'); stats.className = 'stats-bar';
+  [[totalSessions+'', 'Sessions', ''], [studentRows.length+'', 'Students', ''], [avgPct+'%', 'Avg Attendance', ''], [studentRows.filter(function(r){return r.pct<50;}).length+'', 'Critical (<50%)', '']].forEach(function(item) {
+    var card = document.createElement('div'); card.className = 'stat-card';
+    var l = document.createElement('div'); l.className = 'stat-label'; l.textContent = item[1]; card.appendChild(l);
+    var v = document.createElement('div'); v.className = 'stat-value'; v.textContent = item[0]; card.appendChild(v);
     stats.appendChild(card);
   });
   vc.appendChild(stats);
 
-  const cols = [
+  var cols = [
     { key: 'studentId', label: 'Student ID' },
-    { key: 'name', label: 'Name', render: (td,r) => { td.textContent = r.name || '—'; } }
+    { key: 'name', label: 'Name', render: function(td,r) { td.textContent = r.name || '—'; } }
   ];
-  if (grp === 'all') cols.push({ key: 'group', label: 'Group' });
+  if (!grp || grp === 'all') cols.push({ key: 'group', label: 'Group' });
+  if (!intake) cols.push({ key: 'intake', label: 'Intake' });
   cols.push(
-    { key: 'totalSessions', label: 'Total' },
-    { key: 'attended', label: 'Attended' },
-    { key: 'missed', label: 'Missed' },
-    { key: 'leftEarly', label: 'Left Early' },
-    { key: 'late', label: 'Sig. Late' },
-    { key: 'pct', label: 'Attendance %', render: (td, r) => {
-      td.textContent = r.pct + '%';
-      td.style.fontWeight = '700';
-      if (r.pct >= 80) td.style.color = 'var(--green)';
-      else if (r.pct >= 50) td.style.color = 'var(--amber)';
-      else td.style.color = 'var(--red)';
-    }},
-    { key: 'isU18', label: 'Under 18', render: (td,r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
-    { key: 'onRoster', label: 'Roster', render: (td, r) => { if (!r.onRoster && state.rosterMap.size > 0) { const b = document.createElement('span'); b.className = 'not-on-roster-badge'; b.textContent = 'NOT ON ROSTER'; td.appendChild(b); } } }
+    { key: 'totalSessions', label: 'Total' }, { key: 'attended', label: 'Attended' }, { key: 'missed', label: 'Missed' },
+    { key: 'leftEarly', label: 'Left Early' }, { key: 'late', label: 'Sig. Late' },
+    { key: 'pct', label: 'Attendance %', render: function(td,r) { td.textContent = r.pct + '%'; td.style.fontWeight = '700'; if (r.pct >= 80) td.style.color = 'var(--green)'; else if (r.pct >= 50) td.style.color = 'var(--amber)'; else td.style.color = 'var(--red)'; } },
+    { key: 'isU18', label: 'Under 18', render: function(td,r) { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } }
   );
-
-  const totalsRow = {
-    studentId: 'Totals', name: '', group: '', totalSessions: '', attended: Math.round(filteredRows.reduce((s,r)=>s+r.attended,0)/Math.max(filteredRows.length,1)),
-    missed: '', leftEarly: '', late: '', pct: avgPct + '%', isU18: '', onRoster: ''
-  };
-  vc.appendChild(buildSortableTable(cols, filteredRows, { totalsRow }));
-
-  state.exportRows = studentRows.map(r => ({
-    'Student ID': r.studentId, Name: r.name||'', ...(grp==='all'?{Group:r.group}:{}),
-    'Total Sessions': r.totalSessions, Attended: r.attended, Missed: r.missed,
-    'Left Early': r.leftEarly, 'Significantly Late': r.late, 'Attendance %': r.pct,
-    'Under 18': r.isU18 ? 'YES' : '', 'On Roster': r.onRoster ? 'Yes' : 'No'
-  }));
+  vc.appendChild(buildSortableTable(cols, studentRows));
+  state.exportRows = studentRows.map(function(r) { return { 'Student ID': r.studentId, Name: r.name||'', Group: r.group, Intake: r.intake, 'Total Sessions': r.totalSessions, Attended: r.attended, Missed: r.missed, 'Left Early': r.leftEarly, 'Significantly Late': r.late, 'Attendance %': r.pct, 'Under 18': r.isU18 ? 'YES' : '' }; });
   el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
 }
 
 function renderStudentView(vc) {
-  const sid = sanitizeId(state.sel.studentId);
-  if (!sid) {
-    vc.innerHTML = '<div class="empty-state"><h2>Enter a student ID</h2><p>Search for a student using the sidebar.</p></div>';
+  var sid = sanitizeId(state.sel.studentId);
+  if (!sid) { vc.innerHTML = '<div class="empty-state"><h2>Enter a student ID</h2><p>Search for a student using the sidebar.</p></div>'; el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return; }
+
+  var modFilter = state.sel.studentModule;
+  var periodMode = document.querySelector('input[name="studentPeriod"]:checked');
+  var isCustom = periodMode && periodMode.value === 'custom';
+  var dateFrom = isCustom ? el.studentDateFrom.value : '';
+  var dateTo = isCustom ? el.studentDateTo.value : '';
+
+  // Find all module+group+intake combos this student belongs to
+  var studentCombos = new Set();
+  var directKeys = state.studentIndex.get(sid);
+  if (directKeys) directKeys.forEach(function(k) {
+    var sess = state.sessions.get(k);
+    if (sess) studentCombos.add(sess.module + '__' + sess.group + '__' + sess.intake);
+  });
+  if (state.rosterModGroup.has(sid)) {
+    var mg = state.rosterModGroup.get(sid);
+    if (mg.module) studentCombos.add(mg.module + '__' + (mg.group || '') + '__' + (mg.intake || ''));
+  }
+
+  // Find ALL sessions for those combos (includes ones where student was absent)
+  var allRelevantSessions = [];
+  studentCombos.forEach(function(combo) {
+    var parts = combo.split('__');
+    var cMod = parts[0], cGrp = parts[1], cIntake = parts[2];
+    state.sessions.forEach(function(sess) {
+      if (sess.module === cMod && sess.group === cGrp && sess.intake === cIntake) {
+        allRelevantSessions.push(sess);
+      }
+    });
+  });
+
+  // Deduplicate
+  var sessMap = new Map();
+  allRelevantSessions.forEach(function(s) { sessMap.set(s.key, s); });
+  var uniqueSessions = Array.from(sessMap.values());
+
+  // Apply filters
+  uniqueSessions = uniqueSessions.filter(function(s) {
+    if (modFilter && s.module !== modFilter) return false;
+    if (dateFrom && s.date < dateFrom) return false;
+    if (dateTo && s.date > dateTo) return false;
+    return true;
+  }).sort(function(a,b) { return a.date.localeCompare(b.date); });
+
+  if (!uniqueSessions.length) {
+    vc.innerHTML = '<div class="empty-state"><h2>No records for ' + sid + '</h2><p>This student has no attendance records matching the current filters.</p></div>';
     el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
   }
-  const keys = state.studentIndex.get(sid);
-  if (!keys || !keys.size) {
-    vc.innerHTML = `<div class="empty-state"><h2>No records for ${sid}</h2><p>This student has no attendance records in the loaded data.</p></div>`;
-    el.exportXlsxBtn.disabled = true; el.exportCsvBtn.disabled = true; return;
-  }
 
-  let items = Array.from(keys).map(k => {
-    const sess = state.sessions.get(k);
-    if (!sess) return null;
-    const a = buildSessionAnalytics(sess);
-    const row = a.rows.find(r => r.studentId === sid);
-    return row ? { sess, row, a } : null;
-  }).filter(Boolean).sort((a,b) => a.sess.date.localeCompare(b.sess.date));
+  var items = uniqueSessions.map(function(sess) {
+    var a = buildSessionAnalytics(sess);
+    var row = a.rows.find(function(r) { return r.studentId === sid; });
+    if (row) return { sess: sess, row: row };
+    // Student is absent from this session
+    var activePhases = new Set(sess.phaseUsage);
+    var phaseCols = {};
+    ['start','break1','break2','end'].forEach(function(p) {
+      if (!activePhases.has(p)) phaseCols[p] = 'na';
+      else phaseCols[p] = 'no';
+    });
+    return { sess: sess, row: { studentId: sid, name: studentName(sid), status: 'Absent', phases: phaseCols, lastSeen: '—', onRoster: state.rosterMap.has(sid), isU18: state.under18Set.has(sid) } };
+  });
 
-  const range = state.sel.studentRange;
-  if (range === '30d' || range === '90d') {
-    const days = range === '30d' ? 30 : 90;
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - days);
-    items = items.filter(it => { const [y,m,d] = it.sess.date.split('-').map(Number); return new Date(y,(m||1)-1,d||1) >= cutoff; });
-  } else if (range === 'last10') {
-    items = items.slice(-10);
-  }
-
-  const name = studentName(sid);
-  const header = document.createElement('div');
-  header.className = 'main-header';
-  const h1 = document.createElement('h1');
-  h1.textContent = `Student ${sid}${name ? ' — ' + name : ''}`;
-  header.appendChild(h1);
-  const sub = document.createElement('div');
-  sub.className = 'subtitle';
-  sub.textContent = `${items.length} sessions in view`;
-  header.appendChild(sub);
+  var name = studentName(sid);
+  var header = document.createElement('div'); header.className = 'main-header';
+  var h1 = document.createElement('h1'); h1.textContent = 'Student ' + sid + (name ? ' — ' + name : ''); header.appendChild(h1);
+  var sub = document.createElement('div'); sub.className = 'subtitle'; sub.textContent = items.length + ' sessions'; header.appendChild(sub);
   vc.appendChild(header);
 
-  const statusCounts = {};
-  STATUS_ORDER.forEach(s => statusCounts[s] = 0);
-  items.forEach(it => statusCounts[it.row.status]++);
-  const presentN = statusCounts['Present'] || 0;
-  const totalN = items.length;
-  const pct = totalN ? Math.round(presentN / totalN * 100) : 0;
-
-  const stats = document.createElement('div');
-  stats.className = 'stats-bar';
-  [[`${totalN}`, 'Sessions', ''], [`${presentN}`, 'Present', `${pct}%`],
-   [`${statusCounts['Late']||0}`, 'Late', ''], [`${(statusCounts['Absent']||0)+(statusCounts['Left Early']||0)}`, 'At Risk', '']
-  ].forEach(([val,label,meta]) => {
-    const card = document.createElement('div'); card.className = 'stat-card';
-    const l = document.createElement('div'); l.className = 'stat-label'; l.textContent = label;
-    const v = document.createElement('div'); v.className = 'stat-value'; v.textContent = val;
-    card.appendChild(l); card.appendChild(v);
-    if (meta) { const m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = meta; card.appendChild(m); }
+  var statusCounts = {}; STATUS_ORDER.forEach(function(s) { statusCounts[s] = 0; });
+  items.forEach(function(it) { statusCounts[it.row.status]++; });
+  var presentN = statusCounts['Present'] || 0; var totalN = items.length; var pct = totalN ? Math.round(presentN/totalN*100) : 0;
+  var stats = document.createElement('div'); stats.className = 'stats-bar';
+  [[totalN+'', 'Sessions', ''], [presentN+'', 'Present', pct+'%'], [(statusCounts['Late']||0)+'', 'Late', ''], [(statusCounts['Absent']||0)+'', 'Absent', ''], [((statusCounts['Left Early']||0)+(statusCounts['Partial']||0))+'', 'Other Issues', '']].forEach(function(item) {
+    var card = document.createElement('div'); card.className = 'stat-card';
+    var l = document.createElement('div'); l.className = 'stat-label'; l.textContent = item[1]; card.appendChild(l);
+    var v = document.createElement('div'); v.className = 'stat-value'; v.textContent = item[0]; card.appendChild(v);
+    if (item[2]) { var m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = item[2]; card.appendChild(m); }
     stats.appendChild(card);
   });
   vc.appendChild(stats);
 
   if (items.length) {
-    const sparkWrap = document.createElement('div');
-    sparkWrap.className = 'chart-bar-container';
-    const sh3 = document.createElement('h3');
-    sh3.textContent = 'Attendance Trend';
-    sparkWrap.appendChild(sh3);
-    const spark = document.createElement('div');
-    spark.className = 'sparkline-container';
-    items.forEach(it => {
-      const bar = document.createElement('div');
-      bar.className = 'sparkline-bar';
-      bar.style.background = STATUS_COLORS[it.row.status]?.hex || '#94a3b8';
+    var sparkWrap = document.createElement('div'); sparkWrap.className = 'chart-bar-container';
+    var sh3 = document.createElement('h3'); sh3.textContent = 'Attendance Trend'; sparkWrap.appendChild(sh3);
+    var spark = document.createElement('div'); spark.className = 'sparkline-container';
+    items.forEach(function(it) {
+      var bar = document.createElement('div'); bar.className = 'sparkline-bar';
+      bar.style.background = (STATUS_COLORS[it.row.status] || {}).hex || '#94a3b8';
       bar.style.height = it.row.status === 'Present' ? '100%' : it.row.status === 'Late' || it.row.status === 'Late from break' ? '65%' : it.row.status === 'Left Early' ? '45%' : '25%';
-      bar.title = `${it.sess.date}: ${it.row.status}`;
-      spark.appendChild(bar);
+      bar.title = it.sess.date + ': ' + it.row.status; spark.appendChild(bar);
     });
-    sparkWrap.appendChild(spark);
-    vc.appendChild(sparkWrap);
+    sparkWrap.appendChild(spark); vc.appendChild(sparkWrap);
   }
 
-  if (totalN && !presentN) {
-    const alert = document.createElement('div');
-    alert.className = 'alert-block danger';
-    alert.innerHTML = '<span class="alert-icon">⚠</span><div>This student has zero fully present sessions in the selected window.</div>';
-    vc.appendChild(alert);
-  }
-
-  const cols = [
+  var cols = [
     { key: 'date', label: 'Date' },
-    { key: 'session', label: 'Session' },
-    { key: 'start', label: 'Start', render: (td, r) => renderPhaseCell(td, r.start) },
-    { key: 'break1', label: 'Break 1', render: (td, r) => renderPhaseCell(td, r.break1) },
-    { key: 'break2', label: 'Break 2', render: (td, r) => renderPhaseCell(td, r.break2) },
-    { key: 'end', label: 'End', render: (td, r) => renderPhaseCell(td, r.end) },
-    { key: 'status', label: 'Status', render: (td, r) => { const b = document.createElement('span'); b.className = `status-badge ${statusClass(r.status)}`; b.textContent = r.status; td.appendChild(b); } },
-    { key: 'isU18', label: 'Under 18', render: (td, r) => { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } }
+    { key: 'module', label: 'Module' },
+    { key: 'group', label: 'Group' },
+    { key: 'intake', label: 'Intake' },
+    { key: 'start', label: 'Start', render: function(td,r) { renderPhaseCell(td, r.start); } },
+    { key: 'break1', label: 'Break 1', render: function(td,r) { renderPhaseCell(td, r.break1); } },
+    { key: 'break2', label: 'Break 2', render: function(td,r) { renderPhaseCell(td, r.break2); } },
+    { key: 'end', label: 'End', render: function(td,r) { renderPhaseCell(td, r.end); } },
+    { key: 'status', label: 'Status', render: function(td,r) { var b = document.createElement('span'); b.className = 'status-badge ' + statusClass(r.status); b.textContent = r.status; td.appendChild(b); } }
   ];
-  const tableRows = items.map(it => ({
-    date: toLocalDate(it.sess.date), session: readableLabel(it.sess),
-    start: it.row.phases.start, break1: it.row.phases.break1, break2: it.row.phases.break2, end: it.row.phases.end,
-    status: it.row.status, isU18: state.under18Set.has(sid)
-  }));
+  var tableRows = items.map(function(it) { return { date: toLocalDate(it.sess.date), dateSortKey: it.sess.date, module: it.sess.module, group: it.sess.group ? 'Group ' + it.sess.group : '', intake: it.sess.intake || '', start: it.row.phases.start, break1: it.row.phases.break1, break2: it.row.phases.break2, end: it.row.phases.end, status: it.row.status }; });
   vc.appendChild(buildSortableTable(cols, tableRows));
-
-  el.studentTag.textContent = `${items.length} sessions`;
-  state.exportRows = tableRows.map(r => ({ Date: r.date, Session: r.session, Start: r.start, 'Break 1': r.break1, 'Break 2': r.break2, End: r.end, Status: r.status, 'Under 18': r.isU18 ? 'YES' : '' }));
+  el.studentTag.textContent = items.length + ' sessions · ' + pct + '% attendance';
+  state.exportRows = tableRows.map(function(r) { return { Date: r.date, Module: r.module, Group: r.group, Intake: r.intake, Start: r.start, 'Break 1': r.break1, 'Break 2': r.break2, End: r.end, Status: r.status }; });
   el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
 }
 
 // ── Export ──
-function exportXlsx() {
-  if (!state.exportRows.length || typeof XLSX === 'undefined') return;
-  const ws = XLSX.utils.json_to_sheet(state.exportRows);
-  const wb = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(wb, ws, 'Attendance');
-  XLSX.writeFile(wb, `attendance_${state.activeView}_${Date.now()}.xlsx`);
-  showToast('XLSX exported');
-}
+function exportXlsx() { if (!state.exportRows.length || typeof XLSX === 'undefined') return; var ws = XLSX.utils.json_to_sheet(state.exportRows); var wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Attendance'); XLSX.writeFile(wb, 'attendance_' + state.activeView + '_' + Date.now() + '.xlsx'); showToast('XLSX exported'); }
 function exportCsv() {
   if (!state.exportRows.length) return;
-  const headers = Object.keys(state.exportRows[0]);
-  const lines = [headers.map(csvEscape).join(',')];
-  state.exportRows.forEach(r => lines.push(headers.map(h => csvEscape(r[h])).join(',')));
-  const blob = new Blob([lines.join('\n')], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a'); a.href = url; a.download = `attendance_${state.activeView}_${Date.now()}.csv`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(() => URL.revokeObjectURL(url), 2000);
+  var headers = Object.keys(state.exportRows[0]);
+  var lines = [headers.map(csvEscape).join(',')];
+  state.exportRows.forEach(function(r) { lines.push(headers.map(function(h) { return csvEscape(r[h]); }).join(',')); });
+  var blob = new Blob([lines.join('\n')], { type: 'text/csv' }); var url = URL.createObjectURL(blob);
+  var a = document.createElement('a'); a.href = url; a.download = 'attendance_' + state.activeView + '_' + Date.now() + '.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); setTimeout(function() { URL.revokeObjectURL(url); }, 2000);
   showToast('CSV exported');
 }
 
 // ── Data loading ──
-async function loadFromServer() {
+async function loadYears() {
   try {
-    const resp = await fetch('/api/csv/current');
-    if (!resp.ok) throw new Error('CSV not found on server');
-    const text = await resp.text();
-    applyData([text], 'Server CSV');
-    showToast('Loaded from server');
+    var resp = await fetch('/api/attendance/years', { cache: 'no-store' });
+    var data = await resp.json();
+    state.availableYears = data.years || [];
+    el.yearSelect.innerHTML = '';
+    state.availableYears.forEach(function(y) {
+      var o = document.createElement('option'); o.value = y; o.textContent = y;
+      if (y === data.current) o.selected = true;
+      el.yearSelect.appendChild(o);
+    });
+    state.sel.year = data.current || (state.availableYears[0]) || '';
+    if (!el.yearSelect.options.length) {
+      var o = document.createElement('option'); o.value = ''; o.textContent = 'No data'; el.yearSelect.appendChild(o);
+    }
+    populateStudentYearSelect();
+    return state.sel.year;
   } catch (err) {
-    state.errors = [err.message];
-    renderView();
-    showToast('Failed to load from server');
+    console.warn('Failed to load years', err);
+    return '';
   }
-}
-function applyData(texts, label) {
-  const sets = [];
-  const errs = [];
-  texts.forEach((t, i) => {
-    const lb = texts.length > 1 ? `${label} ${i+1}` : label;
-    try { const { rows, errors } = parseCsv(t, lb); sets.push({ rows, label: lb }); if (errors.length) errs.push(...errors); }
-    catch (e) { errs.push(`${lb}: ${e.message}`); }
-  });
-  state.errors = errs;
-  ingestRows(sets);
-  populateSessionSelectors();
-  populateGroupSelectors();
-  populateStudentSuggest();
-  updateDataInfo();
-  renderView();
-}
-function clearData() {
-  state.sessions.clear(); state.dateToKeys.clear(); state.sessionKeys = [];
-  state.studentIndex.clear(); state.allStudentIds.clear(); state.allModules.clear();
-  state.moduleGroups.clear(); state.sources.clear(); state.warnings = []; state.errors = [];
-  state.sel.date = null; state.sel.sessionKey = null; state.sel.module = null;
-  state.sel.studentId = ''; state.exportRows = [];
-  populateSessionSelectors(); populateGroupSelectors(); populateStudentSuggest();
-  updateDataInfo(); renderView();
-  showToast('Data cleared');
-}
-function updateDataInfo() {
-  el.loadedFilesInfo.textContent = state.sources.size ? `${state.sessions.size} sessions · ${state.allStudentIds.size} students` : '';
-  el.rosterInfo.textContent = state.rosterMap.size ? `${state.rosterMap.size} students on roster` : '';
 }
 
-function handleRosterUpload(text) {
-  const lines = text.split(/\r?\n/);
-  state.rosterMap.clear();
+async function loadAttendanceData(year) {
+  if (!year) { ingestRows([]); refreshUI(); return; }
+  try {
+    var resp = await fetch('/api/attendance?year=' + encodeURIComponent(year), { cache: 'no-store' });
+    if (!resp.ok) { ingestRows([]); refreshUI(); return; }
+    var text = await resp.text();
+    var parsed = parseCsv(text);
+    ingestRows(parsed.data || []);
+    el.dataInfo.textContent = state.sessions.size + ' sessions · ' + state.allStudentIds.size + ' students';
+    refreshUI();
+    showToast('Data loaded: ' + year);
+  } catch (err) {
+    console.warn('Failed to load attendance data', err);
+    ingestRows([]); refreshUI();
+  }
+}
+
+async function loadRoster() {
+  try {
+    var resp = await fetch('/api/roster', { cache: 'no-store' });
+    if (!resp.ok) return;
+    var text = await resp.text();
+    handleRosterData(text);
+  } catch {}
+}
+
+function handleRosterData(text) {
+  state.rosterMap.clear(); state.rosterModGroup.clear();
+  var lines = text.split(/\r?\n/);
   if (lines.length > 1 && lines[0].includes(',')) {
-    const parsed = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
-    (parsed.data || []).forEach(row => {
-      const id = sanitizeId(row.student_id || row.StudentId || row.studentId || row.Student_ID || row.ID || row.id || Object.values(row)[0]);
+    var parsed = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+    (parsed.data || []).forEach(function(row) {
+      var id = sanitizeId(row.student_id || row.StudentId || row.studentId || row.Student_ID || row.ID || row.id || Object.values(row)[0]);
       if (!id) return;
-      const name = row.name || row.Name || row.student_name || row.StudentName || '';
+      var name = row.name || row.Name || row.student_name || row.StudentName || '';
       state.rosterMap.set(id, { name: name.trim() });
+      var mod = (row.module || row.Module || '').toString().trim().toUpperCase();
+      var grp = (row.group || row.Group || '').toString().trim();
+      var gm = grp.match(/group\s*(\w+)/i); if (gm) grp = gm[1];
+      var intake = (row.intake || row.Intake || '').toString().trim();
+      if (mod) state.rosterModGroup.set(id, { module: mod, group: grp, intake: intake });
     });
   } else {
-    lines.forEach(line => {
-      const id = sanitizeId(line);
-      if (id) state.rosterMap.set(id, { name: '' });
-    });
+    lines.forEach(function(line) { var id = sanitizeId(line); if (id) state.rosterMap.set(id, { name: '' }); });
   }
   state.rosterVersion++;
-  state.sessions.forEach(s => s.cache.clear());
-  updateDataInfo();
+  state.sessions.forEach(function(s) { s.cache.clear(); });
+  el.rosterInfo.textContent = state.rosterMap.size + ' students on roster';
+}
+
+async function loadUnder18() {
+  try {
+    var resp = await fetch('/api/under18', { cache: 'no-store' });
+    if (!resp.ok) return;
+    var text = await resp.text();
+    state.under18Set.clear();
+    var parsed = Papa.parse(text, { header: true, skipEmptyLines: 'greedy' });
+    (parsed.data || []).forEach(function(row) {
+      var id = sanitizeId(row.student_id || row.StudentId || row.studentId || row.Student_ID || row.ID || row.id || Object.values(row)[0]);
+      if (id) state.under18Set.add(id);
+    });
+  } catch {}
+}
+
+function refreshUI() {
+  populateModuleSelect();
+  populateIntakeSelect();
+  populateGroupSelect();
+  populateSessionDateSelect();
+  populateStudentSuggest();
+  populateStudentModuleSelect();
   renderView();
-  showToast(`Roster loaded: ${state.rosterMap.size} students`);
 }
 
 // ── View switching ──
 function switchView(view) {
   state.activeView = view;
-  document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === view));
-  document.querySelectorAll('.view-controls').forEach(c => { c.hidden = c.dataset.for !== view; });
+  document.querySelectorAll('.nav-btn').forEach(function(b) { b.classList.toggle('active', b.dataset.view === view); });
+  updateSidebarForView();
+
+  if (view === 'session') {
+    populateGroupSelect();
+    populateSessionDateSelect();
+  } else if (view === 'group') {
+    populateGroupSelect();
+  } else if (view === 'student') {
+    populateStudentModuleSelect();
+  }
   renderView();
 }
 
-// ── Event wiring ──
-document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
-  btn.addEventListener('click', () => switchView(btn.dataset.view));
+// ── Events ──
+document.querySelectorAll('.nav-btn[data-view]').forEach(function(btn) { btn.addEventListener('click', function() { switchView(btn.dataset.view); }); });
+
+el.yearSelect.addEventListener('change', function() {
+  state.sel.year = el.yearSelect.value;
+  state.sel.module = ''; state.sel.intake = ''; state.sel.group = ''; state.sel.sessionDate = null;
+  loadAttendanceData(state.sel.year);
 });
 
-el.attendanceDropZone.addEventListener('click', () => el.attendanceFileInput.click());
-el.attendanceDropZone.addEventListener('dragover', e => { e.preventDefault(); el.attendanceDropZone.classList.add('drag-over'); });
-el.attendanceDropZone.addEventListener('dragleave', () => el.attendanceDropZone.classList.remove('drag-over'));
-el.attendanceDropZone.addEventListener('drop', e => {
-  e.preventDefault(); el.attendanceDropZone.classList.remove('drag-over');
-  const files = Array.from(e.dataTransfer.files).filter(f => f.name.endsWith('.csv'));
-  if (files.length) Promise.all(files.map(f => f.text())).then(texts => applyData(texts, 'Upload'));
-});
-el.attendanceFileInput.addEventListener('change', e => {
-  const files = Array.from(e.target.files || []);
-  if (files.length) Promise.all(files.map(f => f.text())).then(texts => applyData(texts, 'Upload'));
+el.moduleSelect.addEventListener('change', function() {
+  state.sel.module = el.moduleSelect.value; state.sel.intake = ''; state.sel.group = ''; state.sel.sessionDate = null;
+  populateIntakeSelect(); populateGroupSelect(); populateSessionDateSelect(); renderView();
 });
 
-el.rosterDropZone.addEventListener('click', () => el.rosterFileInput.click());
-el.rosterDropZone.addEventListener('dragover', e => { e.preventDefault(); el.rosterDropZone.classList.add('drag-over'); });
-el.rosterDropZone.addEventListener('dragleave', () => el.rosterDropZone.classList.remove('drag-over'));
-el.rosterDropZone.addEventListener('drop', e => {
-  e.preventDefault(); el.rosterDropZone.classList.remove('drag-over');
-  const file = e.dataTransfer.files[0];
-  if (file) file.text().then(handleRosterUpload);
-});
-el.rosterFileInput.addEventListener('change', e => {
-  const file = e.target.files?.[0];
-  if (file) file.text().then(handleRosterUpload);
+el.intakeFilterSelect.addEventListener('change', function() {
+  state.sel.intake = el.intakeFilterSelect.value; state.sel.group = ''; state.sel.sessionDate = null;
+  populateGroupSelect(); populateSessionDateSelect(); renderView();
 });
 
-el.reloadServerBtn.addEventListener('click', loadFromServer);
-el.clearDataBtn.addEventListener('click', clearData);
-el.clearRosterBtn.addEventListener('click', () => {
-  state.rosterMap.clear(); state.rosterVersion++;
-  state.sessions.forEach(s => s.cache.clear());
-  updateDataInfo(); renderView(); showToast('Roster cleared');
+el.groupFilterSelect.addEventListener('change', function() {
+  state.sel.group = el.groupFilterSelect.value; state.sel.sessionDate = null;
+  populateSessionDateSelect(); renderView();
 });
 
-el.sessionDateSelect.addEventListener('change', e => {
-  state.sel.date = e.target.value;
-  populateSessionKeySelect(state.sel.date);
+el.sessionDateSelect.addEventListener('change', function() { state.sel.sessionDate = el.sessionDateSelect.value; renderView(); });
+el.groupDateFrom.addEventListener('change', function() { renderView(); });
+el.groupDateTo.addEventListener('change', function() { renderView(); });
+el.groupU18Only.addEventListener('change', function() { renderView(); });
+
+// Group period radio
+document.querySelectorAll('input[name="groupPeriod"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    el.groupCustomDates.hidden = (r.value !== 'custom');
+    r.closest('.period-radio-group').querySelectorAll('.period-radio').forEach(function(pr) {
+      pr.classList.toggle('active', pr.querySelector('input').checked);
+    });
+    renderView();
+  });
+});
+
+// Student controls
+el.studentSearchInput.addEventListener('input', function(e) {
+  state.sel.studentId = e.target.value;
+  populateStudentModuleSelect();
   renderView();
 });
-el.sessionKeySelect.addEventListener('change', e => { state.sel.sessionKey = e.target.value; renderView(); });
-el.groupModuleSelect.addEventListener('change', e => { state.sel.module = e.target.value; populateGroupGroupSelect(); renderView(); });
-el.groupGroupSelect.addEventListener('change', () => renderView());
-el.groupDateFrom.addEventListener('change', () => renderView());
-el.groupDateTo.addEventListener('change', () => renderView());
 
-el.studentSearchInput.addEventListener('input', e => { state.sel.studentId = e.target.value; renderView(); });
-el.studentRangeSelect.addEventListener('change', e => { state.sel.studentRange = e.target.value; renderView(); });
-el.emailDomainInput.addEventListener('input', e => {
-  const v = e.target.value.trim().replace(/^@/, '');
-  state.emailDomain = v || 'rave.ac.uk';
+el.studentYearSelect.addEventListener('change', function() {
+  var newYear = el.studentYearSelect.value;
+  if (newYear && newYear !== state.sel.year) {
+    state.sel.studentYear = newYear;
+    loadAttendanceData(newYear).then(function() {
+      populateStudentModuleSelect();
+      renderView();
+    });
+  } else if (!newYear) {
+    state.sel.studentYear = '';
+    loadAttendanceData(state.sel.year).then(function() {
+      populateStudentModuleSelect();
+      renderView();
+    });
+  }
 });
+
+el.studentModuleSelect.addEventListener('change', function() {
+  state.sel.studentModule = el.studentModuleSelect.value;
+  renderView();
+});
+
+document.querySelectorAll('input[name="studentPeriod"]').forEach(function(r) {
+  r.addEventListener('change', function() {
+    el.studentCustomDates.hidden = (r.value !== 'custom');
+    r.closest('.period-radio-group').querySelectorAll('.period-radio').forEach(function(pr) {
+      pr.classList.toggle('active', pr.querySelector('input').checked);
+    });
+    renderView();
+  });
+});
+
+el.studentDateFrom && el.studentDateFrom.addEventListener('change', function() { renderView(); });
+el.studentDateTo && el.studentDateTo.addEventListener('change', function() { renderView(); });
 
 el.exportXlsxBtn.addEventListener('click', exportXlsx);
 el.exportCsvBtn.addEventListener('click', exportCsv);
 
-document.querySelectorAll('.chip-actions button').forEach(btn => {
-  btn.addEventListener('click', () => {
-    const target = btn.dataset.target;
-    if (btn.dataset.action === 'all') STATUS_ORDER.forEach(s => state.filters[target].add(s));
+document.querySelectorAll('.chip-actions button').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    var target = btn.dataset.target;
+    if (btn.dataset.action === 'all') STATUS_ORDER.forEach(function(s) { state.filters[target].add(s); });
     else state.filters[target].clear();
-    syncChips(target === 'session' ? 'sessionStatusChips' : 'groupStatusChips', target);
+    syncChips(target + 'StatusChips', target);
     renderView();
   });
 });
 
 // ── Init ──
-buildStatusChips('sessionStatusChips', 'session');
-buildStatusChips('groupStatusChips', 'group');
-updateDataInfo();
-renderView();
+var savedDomain = localStorage.getItem('att_email_domain');
+if (savedDomain) state.emailDomain = savedDomain;
 
+buildStatusChips('sessionStatusChips', 'session');
+updateSidebarForView();
+
+(async function() {
+  await Promise.all([loadRoster(), loadUnder18()]);
+  var year = await loadYears();
+  await loadAttendanceData(year);
+})();
+
+})();
 </script>
 </body>
 </html>

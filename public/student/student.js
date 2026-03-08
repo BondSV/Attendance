@@ -36,6 +36,7 @@
   const sid = payload.sid;
   const moduleCode = payload.m || payload.module || '';
   const groupNumber = payload.g || payload.group || '';
+  const intake = payload.i || payload.intake || '';
   const normalizePhase = (value) => {
     const raw = (value || 'start').toString().trim().toLowerCase();
     if (raw === 'break' || raw === 'break1' || raw === 'break 1') return 'break1';
@@ -158,7 +159,7 @@
   }
 
   async function submitChallenge(challenge) {
-    const body = { sid, module: moduleCode, group: groupNumber, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
+    const body = { sid, module: moduleCode, group: groupNumber, intake, phase, challenge, page_session_id: pageSessionId, device_id: deviceId };
     const resp = await fetch('/api/validate-challenge', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -326,7 +327,7 @@
         const checkResp = await fetch('/api/manual-override/check', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId })
+          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, intake, phase, device_id: deviceId, page_session_id: pageSessionId })
         });
         const checkData = await checkResp.json();
         if (!checkResp.ok || !checkData.ok) {
@@ -367,7 +368,7 @@
         const completeResp = await fetch('/api/manual-override/complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: passwordValue })
+          body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, intake, phase, device_id: deviceId, page_session_id: pageSessionId, teacher_password: passwordValue })
         });
         const completeData = await completeResp.json();
         if (!completeResp.ok || !completeData.verified || !completeData.verification_id) {
@@ -411,7 +412,7 @@
       const resp = await fetch('/api/checkin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
+        body: JSON.stringify({ sid, module: moduleCode, group: groupNumber, intake, phase, student_id: studentId, verification_id: verificationId, page_session_id: pageSessionId, device_id: deviceId })
       });
       const data = await resp.json();
       if (data.ok) {

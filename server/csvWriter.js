@@ -2,44 +2,85 @@ const fs = require('fs');
 const path = require('path');
 
 const CSV_DIR = process.env.CSV_DIR || path.join(__dirname, '..', 'data');
-const CSV_PATH = path.join(CSV_DIR, 'attendance.csv');
+const CSV_HEADER = 'ts_utc,module,group,intake,sid,phase,student_id,ip,ua_short\n';
 
-function ensureHeaderFormat() {
-  if (!fs.existsSync(CSV_PATH)) return false;
+fs.mkdirSync(CSV_DIR, { recursive: true });
+
+function getAcademicYear(date) {
+  const d = date || new Date();
+  const y = d.getFullYear();
+  const m = d.getMonth();
+  const day = d.getDate();
+  const pastBoundary = m > 8 || (m === 8 && day >= 15);
+  const startYear = pastBoundary ? y : y - 1;
+  const endShort = String(startYear + 1).slice(2);
+  return { label: `${startYear}-${endShort}`, startYear };
+}
+
+function csvPathForYear(yearLabel) {
+  return path.join(CSV_DIR, `attendance_${yearLabel}.csv`);
+}
+
+function currentCsvPath() {
+  return csvPathForYear(getAcademicYear().label);
+}
+
+function listAvailableYears() {
   try {
-    const fd = fs.openSync(CSV_PATH, 'r');
+    const files = fs.readdirSync(CSV_DIR);
+    const years = [];
+    const re = /^attendance_(\d{4}-\d{2})\.csv$/;
+    files.forEach(f => {
+      const m = f.match(re);
+      if (m) years.push(m[1]);
+    });
+    years.sort().reverse();
+    return years;
+  } catch {
+    return [];
+  }
+}
+
+let stream = null;
+let streamPath = null;
+let flushIntervalId = null;
+
+function ensureHeaderFormat(filePath) {
+  if (!fs.existsSync(filePath)) return false;
+  try {
+    const fd = fs.openSync(filePath, 'r');
     const buffer = Buffer.alloc(512);
     const bytes = fs.readSync(fd, buffer, 0, buffer.length, 0);
     fs.closeSync(fd);
     const head = buffer.slice(0, bytes).toString('utf8');
     const firstLine = head.split(/\r?\n/)[0] || '';
-    return firstLine.includes('module') && firstLine.includes('group');
-  } catch (err) {
+    return firstLine.includes('module') && firstLine.includes('group') && firstLine.includes('intake');
+  } catch {
     return false;
   }
 }
 
-fs.mkdirSync(CSV_DIR, { recursive: true });
-
-let stream = null;
-let flushIntervalId = null;
-
 function ensureStream() {
-  if (stream) return;
-  let exists = fs.existsSync(CSV_PATH);
-  if (exists && !ensureHeaderFormat()) {
+  const targetPath = currentCsvPath();
+  if (stream && streamPath === targetPath) return;
+  if (stream) { try { stream.end(); } catch {} }
+  stream = null;
+  streamPath = null;
+
+  let exists = fs.existsSync(targetPath);
+  if (exists && !ensureHeaderFormat(targetPath)) {
     try {
-      const legacyPath = `${CSV_PATH}.legacy-${Date.now()}`;
-      fs.renameSync(CSV_PATH, legacyPath);
+      const legacyPath = `${targetPath}.legacy-${Date.now()}`;
+      fs.renameSync(targetPath, legacyPath);
       exists = false;
     } catch (err) {
-      // If rename fails we proceed and append, which may duplicate columns but preserves data.
       console.warn('Unable to rotate legacy attendance CSV', err);
     }
   }
-  stream = fs.createWriteStream(CSV_PATH, { flags: 'a' });
+  stream = fs.createWriteStream(targetPath, { flags: 'a' });
+  streamPath = targetPath;
   if (!exists) {
-    stream.write('ts_utc,module,group,sid,phase,student_id,ip,ua_short\n');
+    stream.write(CSV_HEADER);
   }
 }
 
@@ -49,7 +90,7 @@ function startFlusher() {
     if (!stream) return;
     const fd = stream.fd;
     if (typeof fd === 'number') {
-      try { fs.fsyncSync(fd); } catch (e) { /* ignore */ }
+      try { fs.fsyncSync(fd); } catch {}
     }
   }, 5000);
 }
@@ -74,11 +115,15 @@ async function appendCsvRow(fields) {
 }
 
 process.on('exit', () => {
-  if (stream) try { stream.end(); } catch (e) {}
+  if (stream) try { stream.end(); } catch {}
   if (flushIntervalId) clearInterval(flushIntervalId);
 });
 
 module.exports = {
   appendCsvRow,
-  CSV_PATH,
+  currentCsvPath,
+  csvPathForYear,
+  listAvailableYears,
+  getAcademicYear,
+  CSV_DIR,
 };

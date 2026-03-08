@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel — Attendance System</title>
+  <style>
+    :root {
+      --bg: #f1f4f9; --surface: #ffffff; --border: #e2e8f0; --text: #0f172a;
+      --text-sec: #475569; --muted: #94a3b8; --primary: #2563eb; --primary-soft: rgba(37,99,235,0.1);
+      --green: #16a34a; --green-soft: rgba(22,163,74,0.1); --red: #dc2626; --red-soft: rgba(220,38,38,0.1);
+      --amber: #d97706; --amber-soft: rgba(217,119,6,0.1);
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; }
+    .top-bar { background: #1e293b; color: #fff; padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+    .top-bar h1 { font-size: 18px; font-weight: 700; }
+    .top-bar a { color: #93c5fd; text-decoration: none; font-size: 13px; font-weight: 600; }
+    .top-bar a:hover { text-decoration: underline; }
+    .container { max-width: 960px; margin: 0 auto; padding: 24px; }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 20px; margin-bottom: 20px; }
+    .card h2 { font-size: 16px; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; gap: 8px; }
+    .card-desc { font-size: 13px; color: var(--text-sec); margin-bottom: 14px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
+    .field textarea, .field input[type="text"], .field input[type="file"] {
+      width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
+      font-size: 13px; font-family: "JetBrains Mono", "Fira Code", monospace;
+    }
+    .field textarea { min-height: 120px; resize: vertical; }
+    .field textarea:focus, .field input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-soft); }
+    .btn-row { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+    .btn {
+      padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border);
+      background: var(--surface); color: var(--text); transition: all 0.15s;
+    }
+    .btn:hover { background: var(--bg); }
+    .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .btn.primary:hover { opacity: 0.9; }
+    .btn.danger { background: var(--red-soft); color: var(--red); border-color: rgba(220,38,38,0.2); }
+    .btn.danger:hover { background: rgba(220,38,38,0.15); }
+    .btn.success { background: var(--green-soft); color: var(--green); border-color: rgba(22,163,74,0.2); }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .status-msg { font-size: 12px; margin-top: 8px; padding: 6px 10px; border-radius: 6px; display: none; }
+    .status-msg.ok { display: block; background: var(--green-soft); color: var(--green); }
+    .status-msg.err { display: block; background: var(--red-soft); color: var(--red); }
+    .status-msg.info { display: block; background: var(--primary-soft); color: var(--primary); }
+    .data-preview { font-size: 12px; color: var(--text-sec); background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 10px; max-height: 200px; overflow: auto; white-space: pre-wrap; font-family: "JetBrains Mono", "Fira Code", monospace; margin-top: 8px; }
+    .year-list { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 12px; }
+    .year-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; border-radius: 8px;
+      font-size: 13px; font-weight: 600; background: var(--bg); border: 1px solid var(--border); cursor: pointer;
+    }
+    .year-chip.current { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    .year-chip .yr-size { font-weight: 400; color: var(--muted); font-size: 11px; }
+    .drop-zone {
+      border: 2px dashed var(--border); border-radius: 12px; padding: 24px; text-align: center;
+      font-size: 13px; color: var(--muted); cursor: pointer; transition: all 0.2s; margin-bottom: 10px;
+    }
+    .drop-zone:hover, .drop-zone.drag-over { border-color: var(--primary); background: var(--primary-soft); color: var(--primary); }
+    table.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
+    table.preview-table th { background: var(--bg); padding: 6px 10px; text-align: left; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; border-bottom: 1px solid var(--border); }
+    table.preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+  </style>
+</head>
+<body>
+<div class="top-bar">
+  <h1>Admin Panel</h1>
+  <a href="/analysis">Back to Analysis</a>
+</div>
+
+<div class="container">
+
+  <!-- Intakes Configuration -->
+  <div class="card" id="intakesCard">
+    <h2>Intakes Configuration</h2>
+    <p class="card-desc">Map module codes to their active intakes. The teacher app uses this to auto-fill or prompt for intake selection. Format: JSON object, e.g. <code>{"BSM24105": ["Sep24", "Nov24"], "BSM24201": ["Jan25"]}</code></p>
+    <div class="field">
+      <label>intakes.json</label>
+      <textarea id="intakesTextarea" placeholder='{"BSM24105": ["Sep24", "Nov24"]}'></textarea>
+    </div>
+    <div class="btn-row">
+      <button class="btn primary" id="intakesSaveBtn">Save intakes</button>
+      <button class="btn" id="intakesReloadBtn">Reload from server</button>
+    </div>
+    <div class="status-msg" id="intakesStatus"></div>
+  </div>
+
+  <!-- Roster Management -->
+  <div class="card" id="rosterCard">
+    <h2>Roster Management</h2>
+    <p class="card-desc">Upload the student roster as a CSV file with columns: <code>student_id, name, module, group, intake</code>. This roster is used by the analysis app to identify enrolled students and enable scoped analysis.</p>
+    <div class="drop-zone" id="rosterDropZone">Drop roster CSV here or click to upload</div>
+    <input type="file" accept=".csv,.txt" id="rosterFileInput" style="display:none">
+    <div class="btn-row">
+      <button class="btn" id="rosterViewBtn">View current roster</button>
+      <button class="btn success" id="rosterDownloadBtn">Download</button>
+      <button class="btn danger" id="rosterDeleteBtn">Delete roster</button>
+    </div>
+    <div class="status-msg" id="rosterStatus"></div>
+    <div class="data-preview" id="rosterPreview" style="display:none"></div>
+  </div>
+
+  <!-- Attendance Data -->
+  <div class="card" id="attendanceCard">
+    <h2>Attendance Data Files</h2>
+    <p class="card-desc">Attendance data is stored in per-academic-year CSV files. The current year file is automatically appended when students check in.</p>
+    <div class="year-list" id="yearList"></div>
+    <div class="btn-row">
+      <button class="btn" id="attRefreshBtn">Refresh list</button>
+    </div>
+    <div class="status-msg" id="attStatus"></div>
+    <div class="data-preview" id="attPreview" style="display:none"></div>
+  </div>
+
+  <!-- Under-18 List -->
+  <div class="card" id="u18Card">
+    <h2>Under-18 Students</h2>
+    <p class="card-desc">Upload a CSV with under-18 student IDs (and optional names). Columns: <code>student_id, name</code>. These students will be flagged in all analysis views and can be reported to the attendance team.</p>
+    <div class="drop-zone" id="u18DropZone">Drop under-18 CSV here or click to upload</div>
+    <input type="file" accept=".csv,.txt" id="u18FileInput" style="display:none">
+    <div class="btn-row">
+      <button class="btn" id="u18ViewBtn">View current list</button>
+      <button class="btn success" id="u18DownloadBtn">Download</button>
+      <button class="btn danger" id="u18DeleteBtn">Delete list</button>
+    </div>
+    <div class="status-msg" id="u18Status"></div>
+    <div class="data-preview" id="u18Preview" style="display:none"></div>
+  </div>
+
+  <!-- Email Templates -->
+  <div class="card">
+    <h2>Email Templates</h2>
+    <p class="card-desc">Configure the email body templates sent to students for each attendance status. Plain text for mailto links; HTML formatting is preserved in .eml downloads.</p>
+    <div class="field">
+      <label>Absent / Late / Left Early template</label>
+      <textarea id="emailTemplate" rows="10">Dear {name},
+
+Our records show you {status_phrase} the {module} session on {date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.
+
+If you're absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6
+If you're away for more than 7 days, please send evidence (e.g. a doctor's note) to studentattendance@rave.ac.uk
+
+If you're having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).
+
+For support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.</textarea>
+    </div>
+    <div class="field">
+      <label>Student email domain</label>
+      <input type="text" id="emailDomainInput" value="rave.ac.uk" placeholder="rave.ac.uk">
+    </div>
+    <div class="field">
+      <label>Under-18 report recipient email</label>
+      <input type="text" id="u18ReportEmail" value="studentattendance@rave.ac.uk" placeholder="studentattendance@rave.ac.uk">
+    </div>
+    <div class="status-msg info">Email templates are stored in browser localStorage. A server-backed rich text editor will be available in a future update.</div>
+  </div>
+
+</div>
+
+<script>
+(function() {
+'use strict';
+
+const $ = id => document.getElementById(id);
+
+function statusMsg(el, type, text) {
+  el.className = 'status-msg ' + type;
+  el.textContent = text;
+  el.style.display = 'block';
+  if (type === 'ok') setTimeout(() => { el.style.display = 'none'; }, 4000);
+}
+
+// ── Intakes ──
+async function loadIntakes() {
+  try {
+    const resp = await fetch('/api/intakes', { cache: 'no-store' });
+    if (!resp.ok) { $('intakesTextarea').value = '{}'; return; }
+    const data = await resp.json();
+    $('intakesTextarea').value = JSON.stringify(data, null, 2);
+  } catch { $('intakesTextarea').value = '{}'; }
+}
+
+$('intakesSaveBtn').addEventListener('click', async () => {
+  const el = $('intakesStatus');
+  let parsed;
+  try { parsed = JSON.parse($('intakesTextarea').value); }
+  catch (e) { return statusMsg(el, 'err', 'Invalid JSON: ' + e.message); }
+  try {
+    const resp = await fetch('/api/intakes', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(parsed) });
+    if (resp.ok) statusMsg(el, 'ok', 'Intakes saved successfully');
+    else statusMsg(el, 'err', 'Server error: ' + (await resp.text()));
+  } catch (e) { statusMsg(el, 'err', 'Network error: ' + e.message); }
+});
+
+$('intakesReloadBtn').addEventListener('click', () => loadIntakes());
+
+// ── Roster ──
+function setupFileUpload(dropZoneId, fileInputId, uploadFn) {
+  const dz = $(dropZoneId), fi = $(fileInputId);
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) f.text().then(uploadFn); });
+  fi.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) f.text().then(uploadFn); fi.value = ''; });
+}
+
+async function uploadRoster(text) {
+  const el = $('rosterStatus');
+  try {
+    const resp = await fetch('/api/roster', { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: text });
+    if (resp.ok) { const d = await resp.json(); statusMsg(el, 'ok', 'Roster uploaded (' + d.bytes + ' bytes)'); }
+    else statusMsg(el, 'err', 'Upload failed');
+  } catch (e) { statusMsg(el, 'err', 'Network error: ' + e.message); }
+}
+
+setupFileUpload('rosterDropZone', 'rosterFileInput', uploadRoster);
+
+$('rosterViewBtn').addEventListener('click', async () => {
+  const prev = $('rosterPreview');
+  try {
+    const resp = await fetch('/api/roster', { cache: 'no-store' });
+    if (!resp.ok) { prev.style.display = 'block'; prev.textContent = 'No roster on server.'; return; }
+    const text = await resp.text();
+    const lines = text.split('\n');
+    prev.style.display = 'block';
+    prev.textContent = lines.length + ' lines\n\n' + lines.slice(0, 20).join('\n') + (lines.length > 20 ? '\n... (' + (lines.length - 20) + ' more lines)' : '');
+  } catch (e) { prev.style.display = 'block'; prev.textContent = 'Error: ' + e.message; }
+});
+
+$('rosterDownloadBtn').addEventListener('click', () => {
+  window.open('/api/roster', '_blank');
+});
+
+$('rosterDeleteBtn').addEventListener('click', async () => {
+  if (!confirm('Delete the roster file from the server?')) return;
+  const el = $('rosterStatus');
+  try {
+    const resp = await fetch('/api/roster', { method: 'DELETE' });
+    if (resp.ok) statusMsg(el, 'ok', 'Roster deleted');
+    else statusMsg(el, 'err', 'Delete failed');
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
+
+// ── Attendance years ──
+async function loadAttendanceYears() {
+  const list = $('yearList');
+  list.innerHTML = '';
+  try {
+    const resp = await fetch('/api/attendance/years', { cache: 'no-store' });
+    const data = await resp.json();
+    if (!data.years || !data.years.length) { list.innerHTML = '<span style="color:var(--muted);font-size:13px">No attendance files found.</span>'; return; }
+    data.years.forEach(y => {
+      const chip = document.createElement('div');
+      chip.className = 'year-chip' + (y === data.current ? ' current' : '');
+      chip.innerHTML = '<span>' + y + '</span>';
+      chip.addEventListener('click', () => downloadAttendance(y));
+      chip.title = 'Click to download';
+      list.appendChild(chip);
+    });
+  } catch { list.innerHTML = '<span style="color:var(--muted);font-size:13px">Failed to load.</span>'; }
+}
+
+function downloadAttendance(year) {
+  window.open('/api/attendance?year=' + encodeURIComponent(year), '_blank');
+}
+
+$('attRefreshBtn').addEventListener('click', loadAttendanceYears);
+
+// ── Under-18 ──
+async function uploadU18(text) {
+  const el = $('u18Status');
+  try {
+    const resp = await fetch('/api/under18', { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: text });
+    if (resp.ok) { const d = await resp.json(); statusMsg(el, 'ok', 'Under-18 list uploaded (' + d.bytes + ' bytes)'); }
+    else statusMsg(el, 'err', 'Upload failed');
+  } catch (e) { statusMsg(el, 'err', 'Network error: ' + e.message); }
+}
+
+setupFileUpload('u18DropZone', 'u18FileInput', uploadU18);
+
+$('u18ViewBtn').addEventListener('click', async () => {
+  const prev = $('u18Preview');
+  try {
+    const resp = await fetch('/api/under18', { cache: 'no-store' });
+    if (!resp.ok) { prev.style.display = 'block'; prev.textContent = 'No under-18 list on server.'; return; }
+    const text = await resp.text();
+    prev.style.display = 'block';
+    prev.textContent = text.split('\n').filter(Boolean).length + ' entries\n\n' + text;
+  } catch (e) { prev.style.display = 'block'; prev.textContent = 'Error: ' + e.message; }
+});
+
+$('u18DownloadBtn').addEventListener('click', () => {
+  window.open('/api/under18', '_blank');
+});
+
+$('u18DeleteBtn').addEventListener('click', async () => {
+  if (!confirm('Delete the under-18 list from the server?')) return;
+  const el = $('u18Status');
+  try {
+    const resp = await fetch('/api/under18', { method: 'DELETE' });
+    if (resp.ok) statusMsg(el, 'ok', 'Under-18 list deleted');
+    else statusMsg(el, 'err', 'Delete failed');
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
+
+// ── Email settings localStorage persistence ──
+const savedDomain = localStorage.getItem('att_email_domain');
+if (savedDomain) $('emailDomainInput').value = savedDomain;
+$('emailDomainInput').addEventListener('input', () => { localStorage.setItem('att_email_domain', $('emailDomainInput').value.trim().replace(/^@/, '')); });
+
+const savedTpl = localStorage.getItem('att_email_template');
+if (savedTpl) $('emailTemplate').value = savedTpl;
+$('emailTemplate').addEventListener('input', () => { localStorage.setItem('att_email_template', $('emailTemplate').value); });
+
+const savedU18Email = localStorage.getItem('att_u18_report_email');
+if (savedU18Email) $('u18ReportEmail').value = savedU18Email;
+$('u18ReportEmail').addEventListener('input', () => { localStorage.setItem('att_u18_report_email', $('u18ReportEmail').value); });
+
+// ── Init ──
+loadIntakes();
+loadAttendanceYears();
+
+})();
+</script>
+</body>
+</html>
