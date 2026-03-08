@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const { issueVerification, consumeVerification, acquireDeviceLock, peekDeviceLock } = require('./memoryState');
-const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, getActiveYear, getActiveYearOverride, setActiveYearOverride, clearActiveYearOverride, createYearFile, deleteYearFile, yearFileSize, yearFileRowCount, resolveYearPath, readYearMapping, writeYearMapping, listUploadedFiles, saveUploadedFile, deleteUploadedFile, fileMetadata, CSV_DIR, CSV_HEADER, UPLOADS_DIR } = require('./csvWriter');
+const { appendCsvRow, currentCsvPath, csvPathForYear, resolveYearPath, listAttendanceFiles, listAssignedYears, getAcademicYear, getActiveYear, getActiveYearOverride, setActiveYearOverride, clearActiveYearOverride, createYearFile, saveFile, deleteFile, assignFile, unassignYear, readAssignments, fileMetadata, CSV_DIR, CSV_HEADER } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } = require('./manualOverrides');
@@ -270,19 +270,20 @@ const server = http.createServer(async (req, res) => {
     }
 
     if (pathname === '/api/attendance/years' && req.method === 'GET') {
-      const years = listAvailableYears();
+      const years = listAssignedYears();
       const autoYear = getAcademicYear().label;
       const override = getActiveYearOverride();
       const active = getActiveYear();
-      const mapping = readYearMapping();
-      const uploads = listUploadedFiles().map(f => ({ name: f.name, size: f.size, rows: f.rows }));
-      const files = years.map(y => {
-        const resolved = resolveYearPath(y);
-        const meta = fileMetadata(resolved);
-        const source = mapping[y] || null;
-        return { year: y, size: meta.size, rows: meta.rows, mappedFile: source };
-      });
-      return sendJson(res, { years, files, current: autoYear, active, override: override || null, mapping, uploads });
+      return sendJson(res, { years, current: autoYear, active, override: override || null });
+    }
+
+    if (pathname === '/api/attendance/files' && req.method === 'GET') {
+      const files = listAttendanceFiles();
+      const autoYear = getAcademicYear().label;
+      const override = getActiveYearOverride();
+      const active = getActiveYear();
+      const assignments = readAssignments();
+      return sendJson(res, { files, assignments, activeYear: active, autoYear, override: override || null });
     }
 
     if (pathname === '/api/attendance' && req.method === 'GET') {
@@ -330,30 +331,18 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, { ok: true, year: yearLabel });
     }
 
-    if (pathname === '/api/attendance/mapping' && req.method === 'GET') {
-      return sendJson(res, readYearMapping());
-    }
-
-    if (pathname === '/api/attendance/mapping' && req.method === 'PUT') {
-      const body = await parseRequestBody(req);
-      if (!body || typeof body !== 'object') return sendJson(res, { error: 'Invalid payload' }, 400);
-      writeYearMapping(body);
-      return sendJson(res, { ok: true });
-    }
-
-    if (pathname === '/api/uploads' && req.method === 'GET') {
-      const files = listUploadedFiles().map(f => ({ name: f.name, size: f.size, rows: f.rows }));
-      return sendJson(res, { files });
-    }
-
-    if (pathname === '/api/uploads' && req.method === 'POST') {
+    if (pathname === '/api/attendance/upload' && req.method === 'POST') {
       const filenameParam = parsed.searchParams.get('filename') || 'upload_' + Date.now() + '.csv';
+      const yearParam = parsed.searchParams.get('year') || null;
       return new Promise((resolve) => {
         let body = '';
         req.on('data', (chunk) => { body += chunk; if (body.length > 20e6) { req.connection.destroy(); resolve(); } });
         req.on('end', () => {
           try {
-            const result = saveUploadedFile(filenameParam, body);
+            const result = saveFile(filenameParam, body);
+            if (yearParam && /^\d{4}-\d{2}$/.test(yearParam)) {
+              assignFile(result.name, yearParam);
+            }
             sendJson(res, { ok: true, name: result.name, bytes: result.bytes });
           } catch (err) {
             console.error('Failed to save upload', err);
@@ -364,23 +353,12 @@ const server = http.createServer(async (req, res) => {
       });
     }
 
-    if (pathname === '/api/uploads' && req.method === 'DELETE') {
-      const body = await parseRequestBody(req);
-      const filename = body && body.file;
-      const password = body && body.password;
-      if (!filename) return sendJson(res, { error: 'Missing file name' }, 400);
-      if (!password || password !== ADMIN_PASSWORD) return sendJson(res, { error: 'Invalid password' }, 403);
-      const result = deleteUploadedFile(filename);
-      if (!result.ok) return sendJson(res, { error: result.error }, 404);
-      return sendJson(res, { ok: true });
-    }
-
-    if (pathname === '/api/uploads/download' && req.method === 'GET') {
+    if (pathname === '/api/attendance/download' && req.method === 'GET') {
       const filename = parsed.searchParams.get('file');
       if (!filename) return sendJson(res, { error: 'Missing file parameter' }, 400);
       const safeName = path.basename(filename);
-      const filePath = path.join(UPLOADS_DIR, safeName);
-      if (!filePath.startsWith(UPLOADS_DIR) || !fs.existsSync(filePath)) {
+      const filePath = path.join(CSV_DIR, safeName);
+      if (!filePath.startsWith(CSV_DIR) || !fs.existsSync(filePath)) {
         return sendJson(res, { error: 'File not found' }, 404);
       }
       res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Disposition': `attachment; filename="${safeName}"`, 'Cache-Control': 'no-store' });
@@ -388,15 +366,35 @@ const server = http.createServer(async (req, res) => {
       return;
     }
 
-    if (pathname === '/api/attendance' && req.method === 'DELETE') {
+    if (pathname === '/api/attendance/assign' && req.method === 'PUT') {
+      const body = await parseRequestBody(req);
+      const filename = body && body.file;
+      const yearLabel = body && body.year;
+      if (!filename) return sendJson(res, { error: 'Missing file name' }, 400);
+      if (!yearLabel || !/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year format (use YYYY-YY)' }, 400);
+      const result = assignFile(filename, yearLabel);
+      if (!result.ok) return sendJson(res, { error: result.error }, 400);
+      return sendJson(res, { ok: true, file: filename, year: yearLabel });
+    }
+
+    if (pathname === '/api/attendance/assign' && req.method === 'DELETE') {
       const body = await parseRequestBody(req);
       const yearLabel = body && body.year;
-      const password = body && body.password;
-      if (!yearLabel || !/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year' }, 400);
-      if (!password || password !== ADMIN_PASSWORD) return sendJson(res, { error: 'Invalid password' }, 403);
-      const result = deleteYearFile(yearLabel);
-      if (!result.ok) return sendJson(res, { error: result.error }, 404);
+      if (!yearLabel || !/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year format' }, 400);
+      const result = unassignYear(yearLabel);
+      if (!result.ok) return sendJson(res, { error: result.error }, 400);
       return sendJson(res, { ok: true, year: yearLabel });
+    }
+
+    if (pathname === '/api/attendance/file' && req.method === 'DELETE') {
+      const body = await parseRequestBody(req);
+      const filename = body && body.file;
+      const password = body && body.password;
+      if (!filename) return sendJson(res, { error: 'Missing file name' }, 400);
+      if (!password || password !== ADMIN_PASSWORD) return sendJson(res, { error: 'Invalid password' }, 403);
+      const result = deleteFile(filename);
+      if (!result.ok) return sendJson(res, { error: result.error }, 404);
+      return sendJson(res, { ok: true, file: filename });
     }
 
     if (pathname === '/api/challenge' && req.method === 'GET') {

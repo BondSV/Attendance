@@ -134,7 +134,7 @@
   <!-- Attendance Data -->
   <div class="card" id="attendanceCard">
     <h2>Attendance Data</h2>
-    <p class="card-desc">Manage attendance data files. New check-ins are appended to the <strong>active write target</strong>. You can upload CSV files and assign them to academic years for analysis.</p>
+    <p class="card-desc">All attendance CSV files are listed below. Each file can optionally be assigned to an academic year for analysis. New check-ins are appended to the file assigned to the <strong>active write target</strong> year.</p>
 
     <div style="margin-bottom:16px">
       <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Active write target</label>
@@ -143,23 +143,21 @@
         <span id="activeYearNote" style="font-size:12px;color:var(--muted)"></span>
       </div>
       <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
-        <select id="activeYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:120px">
-          <option value="">Auto-detect</option>
-        </select>
+        <input type="text" id="activeYearInput" placeholder="e.g. 2025-26" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:120px">
         <button class="btn primary" id="setActiveBtn" style="padding:6px 14px">Set active</button>
         <button class="btn" id="resetActiveBtn" style="padding:6px 14px">Reset to auto</button>
       </div>
     </div>
 
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
-      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Year files</label>
-      <div id="attYearTable"></div>
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Files</label>
+      <div id="attFileTable"></div>
     </div>
 
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:16px">
       <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Upload a file</label>
-      <div class="drop-zone" id="libraryDropZone">Drop attendance CSV here or click to upload</div>
-      <input type="file" accept=".csv,.txt" id="libraryFileInput" style="display:none">
+      <div class="drop-zone" id="attDropZone">Drop attendance CSV here or click to upload</div>
+      <input type="file" accept=".csv,.txt" id="attFileInput" style="display:none">
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px">
         <span style="font-size:12px;color:var(--muted)">Assign to year (optional):</span>
         <input type="text" id="uploadAssignYear" placeholder="e.g. 2025-26" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:110px">
@@ -342,167 +340,121 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-let cachedData = null;
+let cachedFiles = null;
 
-async function loadAll() {
+async function loadFiles() {
   try {
-    const resp = await fetch('/api/attendance/years', { cache: 'no-store' });
-    cachedData = await resp.json();
-  } catch { cachedData = { years: [], files: [], uploads: [], mapping: {}, current: '', active: '', override: null }; }
+    const resp = await fetch('/api/attendance/files', { cache: 'no-store' });
+    if (!resp.ok) throw new Error('Server returned ' + resp.status);
+    cachedFiles = await resp.json();
+  } catch (e) {
+    console.error('loadFiles failed:', e);
+    if (!cachedFiles) cachedFiles = { files: [], assignments: {}, activeYear: '', autoYear: '', override: null };
+    statusMsg($('attStatus'), 'err', 'Failed to refresh file list. Try reloading the page.');
+  }
   renderAttendance();
 }
 
-function allUploadedFileNames() {
-  return (cachedData.uploads || []).map(f => f.name);
-}
-
 function renderAttendance() {
-  const d = cachedData;
-  const mapping = d.mapping || {};
+  const d = cachedFiles;
   const el = $('attStatus');
 
-  // Active write target
-  $('activeYearLabel').textContent = d.active || '—';
+  $('activeYearLabel').textContent = d.activeYear || '—';
   $('activeYearNote').textContent = d.override
-    ? '(manually set — auto would be ' + d.current + ')'
+    ? '(manually set — auto would be ' + d.autoYear + ')'
     : '(auto-detected)';
 
-  const activeSelect = $('activeYearSelect');
-  activeSelect.innerHTML = '<option value="">Auto-detect (' + d.current + ')</option>';
-  const allYears = new Set(d.years || []);
-  Object.keys(mapping).forEach(y => allYears.add(y));
-  Array.from(allYears).sort().reverse().forEach(y => {
-    const o = document.createElement('option');
-    o.value = y; o.textContent = y;
-    if (y === d.active) o.selected = true;
-    activeSelect.appendChild(o);
-  });
-
-  // Unified year table
-  const container = $('attYearTable');
+  const container = $('attFileTable');
   container.innerHTML = '';
-  const sortedYears = Array.from(allYears).sort().reverse();
 
-  if (!sortedYears.length) {
+  if (!d.files || !d.files.length) {
     container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No attendance files yet. Upload one or create a year file below.</div>';
     return;
   }
 
-  const uploadNames = allUploadedFileNames();
-
   const table = document.createElement('table');
   table.className = 'preview-table';
-  table.innerHTML = '<thead><tr><th>Year</th><th>Source file</th><th>Records</th><th>Size</th><th></th></tr></thead>';
+  table.innerHTML = '<thead><tr><th>File</th><th>Assigned Year</th><th>Records</th><th>Size</th><th></th></tr></thead>';
   const tbody = document.createElement('tbody');
 
-  sortedYears.forEach(y => {
+  d.files.forEach(function(f) {
     const tr = document.createElement('tr');
-    const fileInfo = (d.files || []).find(f => f.year === y);
-    const mappedFile = mapping[y] || null;
+    if (!f.assignedYear) tr.style.opacity = '0.7';
 
-    // Year cell with badge
-    const tdYear = document.createElement('td');
-    tdYear.style.fontWeight = '700'; tdYear.style.whiteSpace = 'nowrap';
-    tdYear.textContent = y;
-    if (y === d.active) {
-      const badge = document.createElement('span');
-      badge.className = 'yf-active'; badge.textContent = 'ACTIVE'; badge.style.marginLeft = '6px';
-      tdYear.appendChild(badge);
+    var tdName = document.createElement('td');
+    tdName.textContent = f.name;
+    tdName.style.fontWeight = '600';
+    tr.appendChild(tdName);
+
+    var tdYear = document.createElement('td');
+    tdYear.style.whiteSpace = 'nowrap';
+    if (f.assignedYear) {
+      tdYear.textContent = f.assignedYear;
+      tdYear.style.fontWeight = '700';
+      if (f.assignedYear === d.activeYear) {
+        var badge = document.createElement('span');
+        badge.className = 'yf-active';
+        badge.textContent = 'WRITE TARGET';
+        badge.style.marginLeft = '6px';
+        tdYear.appendChild(badge);
+      }
+    } else {
+      tdYear.textContent = 'Unassigned';
+      tdYear.style.color = 'var(--muted)';
     }
     tr.appendChild(tdYear);
 
-    // Source file cell
-    const tdFile = document.createElement('td');
-    if (mappedFile) {
-      tdFile.textContent = mappedFile;
-      tdFile.style.color = 'var(--primary)'; tdFile.style.fontWeight = '600';
-    } else {
-      tdFile.textContent = 'attendance_' + y + '.csv';
-      tdFile.style.color = 'var(--muted)';
-    }
-    tr.appendChild(tdFile);
-
-    // Records & size
-    const tdRows = document.createElement('td');
-    tdRows.textContent = fileInfo ? fileInfo.rows : '—';
+    var tdRows = document.createElement('td');
+    tdRows.textContent = f.rows;
     tr.appendChild(tdRows);
-    const tdSize = document.createElement('td');
-    tdSize.textContent = fileInfo ? formatSize(fileInfo.size) : '—';
+
+    var tdSize = document.createElement('td');
+    tdSize.textContent = formatSize(f.size);
     tr.appendChild(tdSize);
 
-    // Actions
-    const tdAct = document.createElement('td');
+    var tdAct = document.createElement('td');
     tdAct.style.whiteSpace = 'nowrap';
 
-    const dlBtn = mkBtn('Download');
-    dlBtn.addEventListener('click', () => { window.open('/api/attendance?year=' + encodeURIComponent(y), '_blank'); });
+    var dlBtn = mkBtn('Download');
+    dlBtn.addEventListener('click', function() {
+      window.open('/api/attendance/download?file=' + encodeURIComponent(f.name), '_blank');
+    });
     tdAct.appendChild(dlBtn);
 
-    // Assign file dropdown (inline)
-    if (uploadNames.length) {
-      const assignBtn = mkBtn('Assign file', 'var(--amber)');
-      assignBtn.addEventListener('click', () => {
-        const name = prompt('Enter uploaded filename to assign to ' + y + ':\n\nAvailable: ' + uploadNames.join(', '));
-        if (!name) return;
-        if (uploadNames.indexOf(name) === -1) { statusMsg(el, 'err', 'File "' + name + '" not found in uploads'); return; }
-        const newMap = Object.assign({}, mapping); newMap[y] = name;
-        fetch('/api/attendance/mapping', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMap) })
-          .then(r => { if (r.ok) { statusMsg(el, 'ok', 'Assigned ' + name + ' to ' + y); loadAll(); } else statusMsg(el, 'err', 'Failed'); })
-          .catch(e => statusMsg(el, 'err', e.message));
-      });
-      tdAct.appendChild(assignBtn);
-    }
-
-    if (mappedFile) {
-      const unBtn = mkBtn('Unassign', 'var(--amber)');
-      unBtn.addEventListener('click', () => {
-        const newMap = Object.assign({}, mapping); delete newMap[y];
-        fetch('/api/attendance/mapping', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newMap) })
-          .then(r => { if (r.ok) { statusMsg(el, 'ok', 'Unassigned ' + y); loadAll(); } else statusMsg(el, 'err', 'Failed'); })
-          .catch(e => statusMsg(el, 'err', e.message));
+    if (f.assignedYear) {
+      var unBtn = mkBtn('Unassign', 'var(--amber)');
+      unBtn.addEventListener('click', function() {
+        fetch('/api/attendance/assign', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ year: f.assignedYear }) })
+          .then(function(r) { if (r.ok) { statusMsg(el, 'ok', 'Unassigned ' + f.name + ' from ' + f.assignedYear); loadFiles(); } else r.json().then(function(d) { statusMsg(el, 'err', d.error || 'Failed'); }); })
+          .catch(function(e) { statusMsg(el, 'err', e.message); });
       });
       tdAct.appendChild(unBtn);
-    }
-
-    if (fileInfo) {
-      const delBtn = mkBtn('Delete', 'var(--red)');
-      delBtn.addEventListener('click', () => {
-        const pw = prompt('Enter admin password to delete ' + y + ':');
-        if (!pw) return;
-        fetch('/api/attendance', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ year: y, password: pw }) })
-          .then(async r => { if (r.ok) { statusMsg(el, 'ok', 'Deleted ' + y); loadAll(); } else { const d = await r.json(); statusMsg(el, 'err', d.error || 'Failed'); } })
-          .catch(e => statusMsg(el, 'err', e.message));
+    } else {
+      var asBtn = mkBtn('Assign...', 'var(--primary)');
+      asBtn.addEventListener('click', function() {
+        var year = prompt('Assign "' + f.name + '" to which academic year?\n\nFormat: YYYY-YY (e.g. 2025-26)');
+        if (!year) return;
+        if (!/^\d{4}-\d{2}$/.test(year.trim())) { statusMsg(el, 'err', 'Invalid year format'); return; }
+        fetch('/api/attendance/assign', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ file: f.name, year: year.trim() }) })
+          .then(function(r) { if (r.ok) { statusMsg(el, 'ok', 'Assigned "' + f.name + '" to ' + year.trim()); loadFiles(); } else r.json().then(function(d) { statusMsg(el, 'err', d.error || 'Failed'); }); })
+          .catch(function(e) { statusMsg(el, 'err', e.message); });
       });
-      tdAct.appendChild(delBtn);
+      tdAct.appendChild(asBtn);
     }
 
-    tr.appendChild(tdAct);
-    tbody.appendChild(tr);
-  });
-
-  // Uploaded files not assigned to any year
-  const assignedFiles = new Set(Object.values(mapping));
-  (cachedData.uploads || []).forEach(f => {
-    if (assignedFiles.has(f.name)) return;
-    const tr = document.createElement('tr');
-    tr.style.opacity = '0.65';
-    const tdYear = document.createElement('td'); tdYear.textContent = '—'; tdYear.style.color = 'var(--muted)'; tr.appendChild(tdYear);
-    const tdFile = document.createElement('td'); tdFile.textContent = f.name; tdFile.style.fontWeight = '600'; tr.appendChild(tdFile);
-    const tdRows = document.createElement('td'); tdRows.textContent = f.rows; tr.appendChild(tdRows);
-    const tdSize = document.createElement('td'); tdSize.textContent = formatSize(f.size); tr.appendChild(tdSize);
-    const tdAct = document.createElement('td'); tdAct.style.whiteSpace = 'nowrap';
-    const dlBtn = mkBtn('Download');
-    dlBtn.addEventListener('click', () => { window.open('/api/uploads/download?file=' + encodeURIComponent(f.name), '_blank'); });
-    tdAct.appendChild(dlBtn);
-    const delBtn = mkBtn('Delete', 'var(--red)');
-    delBtn.addEventListener('click', () => {
-      const pw = prompt('Enter admin password to delete "' + f.name + '":');
+    var delBtn = mkBtn('Delete', 'var(--red)');
+    delBtn.addEventListener('click', async function() {
+      if (!confirm('Permanently delete "' + f.name + '"? This cannot be undone.')) return;
+      var pw = prompt('Enter admin password to confirm:');
       if (!pw) return;
-      fetch('/api/uploads', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ file: f.name, password: pw }) })
-        .then(async r => { if (r.ok) { statusMsg(el, 'ok', 'Deleted ' + f.name); loadAll(); } else { const d = await r.json(); statusMsg(el, 'err', d.error || 'Failed'); } })
-        .catch(e => statusMsg(el, 'err', e.message));
+      try {
+        var r = await fetch('/api/attendance/file', { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ file: f.name, password: pw }) });
+        if (r.ok) { statusMsg(el, 'ok', 'Deleted "' + f.name + '"'); setTimeout(loadFiles, 500); }
+        else { var rd = await r.json(); statusMsg(el, 'err', rd.error || 'Delete failed'); }
+      } catch (e) { statusMsg(el, 'err', e.message); }
     });
     tdAct.appendChild(delBtn);
+
     tr.appendChild(tdAct);
     tbody.appendChild(tr);
   });
@@ -510,85 +462,93 @@ function renderAttendance() {
   table.appendChild(tbody);
   container.appendChild(table);
 
-  function mkBtn(text, color) { const b = document.createElement('button'); b.className = 'yf-download'; b.textContent = text; if (color) b.style.color = color; b.style.marginRight = '8px'; return b; }
+  function mkBtn(text, color) {
+    var b = document.createElement('button');
+    b.className = 'yf-download';
+    b.textContent = text;
+    if (color) b.style.color = color;
+    b.style.marginRight = '8px';
+    return b;
+  }
 }
 
 // Upload file
-async function uploadToLibrary(file) {
-  const el = $('attStatus');
-  const filename = file.name || 'upload_' + Date.now() + '.csv';
+async function uploadAttFile(file) {
+  var el = $('attStatus');
+  var filename = file.name || 'upload_' + Date.now() + '.csv';
+  var yearParam = $('uploadAssignYear').value.trim();
+  var url = '/api/attendance/upload?filename=' + encodeURIComponent(filename);
+  if (yearParam && /^\d{4}-\d{2}$/.test(yearParam)) {
+    url += '&year=' + encodeURIComponent(yearParam);
+  }
   try {
-    const text = await file.text();
-    const resp = await fetch('/api/uploads?filename=' + encodeURIComponent(filename), {
-      method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: text
-    });
+    var text = await file.text();
+    var resp = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'text/csv' }, body: text });
     if (!resp.ok) { statusMsg(el, 'err', 'Upload failed'); return; }
-    const d = await resp.json();
-    const assignYear = $('uploadAssignYear').value.trim();
-    if (assignYear && /^\d{4}-\d{2}$/.test(assignYear)) {
-      const mapping = Object.assign({}, cachedData.mapping || {});
-      mapping[assignYear] = d.name;
-      await fetch('/api/attendance/mapping', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(mapping) });
-      statusMsg(el, 'ok', 'Uploaded "' + d.name + '" and assigned to ' + assignYear);
-      $('uploadAssignYear').value = '';
-    } else {
-      statusMsg(el, 'ok', 'Uploaded "' + d.name + '" (' + formatSize(d.bytes) + ')');
-    }
-    loadAll();
+    var rd = await resp.json();
+    var msg = 'Uploaded "' + rd.name + '"';
+    if (yearParam && /^\d{4}-\d{2}$/.test(yearParam)) msg += ' and assigned to ' + yearParam;
+    statusMsg(el, 'ok', msg);
+    $('uploadAssignYear').value = '';
+    loadFiles();
   } catch (e) { statusMsg(el, 'err', 'Network error: ' + e.message); }
 }
 (function() {
-  const dz = $('libraryDropZone'), fi = $('libraryFileInput');
-  dz.addEventListener('click', () => fi.click());
-  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
-  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
-  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) uploadToLibrary(f); });
-  fi.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) uploadToLibrary(f); fi.value = ''; });
+  var dz = $('attDropZone'), fi = $('attFileInput');
+  dz.addEventListener('click', function() { fi.click(); });
+  dz.addEventListener('dragover', function(e) { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', function() { dz.classList.remove('drag-over'); });
+  dz.addEventListener('drop', function(e) { e.preventDefault(); dz.classList.remove('drag-over'); var f = e.dataTransfer.files[0]; if (f) uploadAttFile(f); });
+  fi.addEventListener('change', function(e) { var f = e.target.files && e.target.files[0]; if (f) uploadAttFile(f); fi.value = ''; });
 })();
 
 // Active write target
-$('setActiveBtn').addEventListener('click', async () => {
-  const el = $('attStatus');
-  const yearVal = $('activeYearSelect').value;
+$('setActiveBtn').addEventListener('click', async function() {
+  var el = $('attStatus');
+  var yearVal = $('activeYearInput').value.trim();
+  if (yearVal && !/^\d{4}-\d{2}$/.test(yearVal)) {
+    return statusMsg(el, 'err', 'Invalid year format. Use YYYY-YY, e.g. 2025-26');
+  }
   try {
-    const resp = await fetch('/api/attendance/active', {
+    var resp = await fetch('/api/attendance/active', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ year: yearVal || null })
     });
     if (resp.ok) {
-      const d = await resp.json();
-      statusMsg(el, 'ok', 'Active year set to ' + d.active + (d.override ? ' (override)' : ' (auto)'));
-      loadAll();
+      var rd = await resp.json();
+      statusMsg(el, 'ok', 'Active year set to ' + rd.active + (rd.override ? ' (override)' : ' (auto)'));
+      $('activeYearInput').value = '';
+      loadFiles();
     } else { statusMsg(el, 'err', 'Failed: ' + (await resp.text())); }
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
 
-$('resetActiveBtn').addEventListener('click', async () => {
-  const el = $('attStatus');
+$('resetActiveBtn').addEventListener('click', async function() {
+  var el = $('attStatus');
   try {
-    const resp = await fetch('/api/attendance/active', {
+    var resp = await fetch('/api/attendance/active', {
       method: 'PUT', headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ year: null })
     });
-    if (resp.ok) { statusMsg(el, 'ok', 'Active year reset to auto-detect'); loadAll(); }
+    if (resp.ok) { statusMsg(el, 'ok', 'Active year reset to auto-detect'); loadFiles(); }
     else { statusMsg(el, 'err', 'Failed'); }
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
 
 // Create empty year file
-$('createYearBtn').addEventListener('click', async () => {
-  const el = $('attStatus');
-  const year = $('newYearInput').value.trim();
+$('createYearBtn').addEventListener('click', async function() {
+  var el = $('attStatus');
+  var year = $('newYearInput').value.trim();
   if (!year || !/^\d{4}-\d{2}$/.test(year)) {
     return statusMsg(el, 'err', 'Invalid format. Use YYYY-YY, e.g. 2026-27');
   }
   try {
-    const resp = await fetch('/api/attendance/create', {
+    var resp = await fetch('/api/attendance/create', {
       method: 'POST', headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ year })
+      body: JSON.stringify({ year: year })
     });
-    if (resp.ok) { statusMsg(el, 'ok', 'Created file for ' + year); $('newYearInput').value = ''; loadAll(); }
-    else { const d = await resp.json(); statusMsg(el, 'err', d.error || 'Failed'); }
+    if (resp.ok) { statusMsg(el, 'ok', 'Created file for ' + year); $('newYearInput').value = ''; loadFiles(); }
+    else { var rd = await resp.json(); statusMsg(el, 'err', rd.error || 'Failed'); }
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
 
@@ -690,7 +650,7 @@ switchTplTab('Absent');
 
 // ── Init ──
 loadIntakes();
-loadAll();
+loadFiles();
 
 } // end initAdmin
 
