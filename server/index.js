@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const { issueVerification, consumeVerification, acquireDeviceLock, peekDeviceLock } = require('./memoryState');
-const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, CSV_DIR } = require('./csvWriter');
+const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, getActiveYear, getActiveYearOverride, setActiveYearOverride, clearActiveYearOverride, createYearFile, deleteYearFile, yearFileSize, yearFileRowCount, CSV_DIR, CSV_HEADER } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } = require('./manualOverrides');
@@ -16,6 +16,7 @@ const INTAKES_PATH = path.join(CSV_DIR, 'intakes.json');
 const ROSTER_PATH = path.join(CSV_DIR, 'roster.csv');
 const UNDER18_PATH = path.join(CSV_DIR, 'under18.csv');
 
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'raveadmin2026';
 const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || 'RaveCheck2026';
 const MANUAL_OVERRIDE_PASSWORD_BUFFER = MANUAL_OVERRIDE_PASSWORD ? Buffer.from(MANUAL_OVERRIDE_PASSWORD, 'utf8') : null;
 const MANUAL_OVERRIDE_PASSWORD_VERSION = MANUAL_OVERRIDE_PASSWORD ? crypto.createHash('sha256').update(MANUAL_OVERRIDE_PASSWORD_BUFFER).digest('hex').slice(0, 12) : null;
@@ -270,12 +271,15 @@ const server = http.createServer(async (req, res) => {
 
     if (pathname === '/api/attendance/years' && req.method === 'GET') {
       const years = listAvailableYears();
-      const current = getAcademicYear().label;
-      return sendJson(res, { years, current });
+      const autoYear = getAcademicYear().label;
+      const override = getActiveYearOverride();
+      const active = getActiveYear();
+      const files = years.map(y => ({ year: y, size: yearFileSize(y), rows: yearFileRowCount(y) }));
+      return sendJson(res, { years, files, current: autoYear, active, override: override || null });
     }
 
     if (pathname === '/api/attendance' && req.method === 'GET') {
-      const yearParam = parsed.searchParams.get('year') || getAcademicYear().label;
+      const yearParam = parsed.searchParams.get('year') || getActiveYear();
       const yearRe = /^\d{4}-\d{2}$/;
       if (!yearRe.test(yearParam)) return sendJson(res, { error: 'Invalid year format' }, 400);
       const csvPath = csvPathForYear(yearParam);
@@ -290,6 +294,64 @@ const server = http.createServer(async (req, res) => {
       res.writeHead(200, headers);
       fs.createReadStream(csvPath).pipe(res);
       return;
+    }
+
+    if (pathname === '/api/attendance/active' && req.method === 'GET') {
+      const override = getActiveYearOverride();
+      const auto = getAcademicYear().label;
+      return sendJson(res, { active: getActiveYear(), auto, override: override || null });
+    }
+
+    if (pathname === '/api/attendance/active' && req.method === 'PUT') {
+      const body = await parseRequestBody(req);
+      const yearLabel = body && body.year;
+      if (!yearLabel) {
+        clearActiveYearOverride();
+        return sendJson(res, { ok: true, active: getAcademicYear().label, override: null });
+      }
+      if (!/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year format' }, 400);
+      setActiveYearOverride(yearLabel);
+      return sendJson(res, { ok: true, active: yearLabel, override: yearLabel });
+    }
+
+    if (pathname === '/api/attendance/create' && req.method === 'POST') {
+      const body = await parseRequestBody(req);
+      const yearLabel = body && body.year;
+      if (!yearLabel || !/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year format (use YYYY-YY)' }, 400);
+      const result = createYearFile(yearLabel);
+      if (!result.ok) return sendJson(res, { error: result.error }, 409);
+      return sendJson(res, { ok: true, year: yearLabel });
+    }
+
+    if (pathname === '/api/attendance/upload' && req.method === 'POST') {
+      const yearParam = parsed.searchParams.get('year');
+      if (!yearParam || !/^\d{4}-\d{2}$/.test(yearParam)) return sendJson(res, { error: 'Invalid year format' }, 400);
+      return new Promise((resolve) => {
+        let body = '';
+        req.on('data', (chunk) => { body += chunk; if (body.length > 20e6) { req.connection.destroy(); resolve(); } });
+        req.on('end', () => {
+          try {
+            const filePath = csvPathForYear(yearParam);
+            fs.writeFileSync(filePath, body, 'utf8');
+            sendJson(res, { ok: true, year: yearParam, bytes: Buffer.byteLength(body) });
+          } catch (err) {
+            console.error('Failed to write attendance file', err);
+            sendJson(res, { error: 'Failed to save' }, 500);
+          }
+          resolve();
+        });
+      });
+    }
+
+    if (pathname === '/api/attendance' && req.method === 'DELETE') {
+      const body = await parseRequestBody(req);
+      const yearLabel = body && body.year;
+      const password = body && body.password;
+      if (!yearLabel || !/^\d{4}-\d{2}$/.test(yearLabel)) return sendJson(res, { error: 'Invalid year' }, 400);
+      if (!password || password !== ADMIN_PASSWORD) return sendJson(res, { error: 'Invalid password' }, 403);
+      const result = deleteYearFile(yearLabel);
+      if (!result.ok) return sendJson(res, { error: result.error }, 404);
+      return sendJson(res, { ok: true, year: yearLabel });
     }
 
     if (pathname === '/api/challenge' && req.method === 'GET') {

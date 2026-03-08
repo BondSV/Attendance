@@ -62,6 +62,15 @@
     table.preview-table { width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 10px; }
     table.preview-table th { background: var(--bg); padding: 6px 10px; text-align: left; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; font-size: 10px; border-bottom: 1px solid var(--border); }
     table.preview-table td { padding: 6px 10px; border-bottom: 1px solid var(--border); }
+    .year-file-row {
+      display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 8px;
+      background: var(--bg); border: 1px solid var(--border); margin-bottom: 6px; font-size: 13px;
+    }
+    .year-file-row .yf-label { font-weight: 700; min-width: 70px; }
+    .year-file-row .yf-meta { color: var(--muted); font-size: 12px; flex: 1; }
+    .year-file-row .yf-active { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 10px; font-weight: 700; background: var(--green-soft); color: var(--green); margin-left: 6px; }
+    .year-file-row .yf-download { color: var(--primary); text-decoration: none; font-weight: 600; font-size: 12px; cursor: pointer; border: none; background: none; }
+    .year-file-row .yf-download:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -105,13 +114,55 @@
   <!-- Attendance Data -->
   <div class="card" id="attendanceCard">
     <h2>Attendance Data Files</h2>
-    <p class="card-desc">Attendance data is stored in per-academic-year CSV files. The current year file is automatically appended when students check in.</p>
-    <div class="year-list" id="yearList"></div>
-    <div class="btn-row">
-      <button class="btn" id="attRefreshBtn">Refresh list</button>
+    <p class="card-desc">Attendance data is stored in per-academic-year CSV files. The <strong>active file</strong> is where all new check-ins are appended. By default it is auto-detected from today's date, but you can override it below.</p>
+
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Active file</label>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+        <span id="activeYearLabel" style="font-size:15px;font-weight:700;color:var(--primary)">—</span>
+        <span id="activeYearNote" style="font-size:12px;color:var(--muted)"></span>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+        <select id="activeYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:120px">
+          <option value="">Auto-detect</option>
+        </select>
+        <button class="btn primary" id="setActiveBtn" style="padding:6px 14px">Set active</button>
+        <button class="btn" id="resetActiveBtn" style="padding:6px 14px">Reset to auto</button>
+      </div>
     </div>
+
+    <div style="margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Year files</label>
+      <div id="yearList"></div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Create new year file</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="newYearInput" placeholder="e.g. 2026-27" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:120px">
+        <button class="btn success" id="createYearBtn" style="padding:6px 14px">Create</button>
+      </div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Upload data to a year file</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
+        <select id="uploadYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:120px"></select>
+        <button class="btn" id="uploadYearBtn" style="padding:6px 14px">Choose CSV file...</button>
+        <input type="file" accept=".csv,.txt" id="uploadYearFileInput" style="display:none">
+      </div>
+      <div style="font-size:11px;color:var(--muted)">This will <strong>replace</strong> the entire contents of the selected year file with the uploaded CSV.</div>
+    </div>
+
+    <div style="border-top:1px solid var(--border);padding-top:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Delete a year file</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <select id="deleteYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:120px"></select>
+        <button class="btn danger" id="deleteYearBtn" style="padding:6px 14px">Delete</button>
+      </div>
+    </div>
+
     <div class="status-msg" id="attStatus"></div>
-    <div class="data-preview" id="attPreview" style="display:none"></div>
   </div>
 
   <!-- Under-18 List -->
@@ -243,30 +294,182 @@ $('rosterDeleteBtn').addEventListener('click', async () => {
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
 
-// ── Attendance years ──
+// ── Attendance data management ──
+function formatSize(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+}
+
 async function loadAttendanceYears() {
   const list = $('yearList');
+  const activeSelect = $('activeYearSelect');
+  const uploadSelect = $('uploadYearSelect');
+  const deleteSelect = $('deleteYearSelect');
   list.innerHTML = '';
+
   try {
     const resp = await fetch('/api/attendance/years', { cache: 'no-store' });
     const data = await resp.json();
-    if (!data.years || !data.years.length) { list.innerHTML = '<span style="color:var(--muted);font-size:13px">No attendance files found.</span>'; return; }
-    data.years.forEach(y => {
-      const chip = document.createElement('div');
-      chip.className = 'year-chip' + (y === data.current ? ' current' : '');
-      chip.innerHTML = '<span>' + y + '</span>';
-      chip.addEventListener('click', () => downloadAttendance(y));
-      chip.title = 'Click to download';
-      list.appendChild(chip);
+
+    $('activeYearLabel').textContent = data.active || '—';
+    $('activeYearNote').textContent = data.override
+      ? '(manually set — auto would be ' + data.current + ')'
+      : '(auto-detected)';
+
+    activeSelect.innerHTML = '<option value="">Auto-detect (' + data.current + ')</option>';
+    uploadSelect.innerHTML = '';
+    deleteSelect.innerHTML = '';
+
+    if (!data.files || !data.files.length) {
+      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No attendance files found. Create one below.</div>';
+      return;
+    }
+
+    data.files.forEach(f => {
+      // Year file row
+      const row = document.createElement('div');
+      row.className = 'year-file-row';
+      const label = document.createElement('span');
+      label.className = 'yf-label';
+      label.textContent = f.year;
+      row.appendChild(label);
+      if (f.year === data.active) {
+        const badge = document.createElement('span');
+        badge.className = 'yf-active';
+        badge.textContent = 'ACTIVE';
+        row.appendChild(badge);
+      }
+      const meta = document.createElement('span');
+      meta.className = 'yf-meta';
+      meta.textContent = f.rows + ' records · ' + formatSize(f.size);
+      row.appendChild(meta);
+      const dl = document.createElement('button');
+      dl.className = 'yf-download';
+      dl.textContent = 'Download';
+      dl.addEventListener('click', () => { window.open('/api/attendance?year=' + encodeURIComponent(f.year), '_blank'); });
+      row.appendChild(dl);
+      list.appendChild(row);
+
+      // Populate selects
+      const opt1 = document.createElement('option');
+      opt1.value = f.year; opt1.textContent = f.year;
+      if (f.year === data.active) opt1.selected = true;
+      activeSelect.appendChild(opt1);
+
+      const opt2 = document.createElement('option');
+      opt2.value = f.year; opt2.textContent = f.year;
+      uploadSelect.appendChild(opt2);
+
+      const opt3 = document.createElement('option');
+      opt3.value = f.year; opt3.textContent = f.year + ' (' + f.rows + ' records)';
+      deleteSelect.appendChild(opt3);
     });
-  } catch { list.innerHTML = '<span style="color:var(--muted);font-size:13px">Failed to load.</span>'; }
+  } catch {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load.</div>';
+  }
 }
 
-function downloadAttendance(year) {
-  window.open('/api/attendance?year=' + encodeURIComponent(year), '_blank');
-}
+$('setActiveBtn').addEventListener('click', async () => {
+  const el = $('attStatus');
+  const yearVal = $('activeYearSelect').value;
+  try {
+    const resp = await fetch('/api/attendance/active', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year: yearVal || null })
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      statusMsg(el, 'ok', 'Active year set to ' + d.active + (d.override ? ' (override)' : ' (auto)'));
+      loadAttendanceYears();
+    } else { statusMsg(el, 'err', 'Failed: ' + (await resp.text())); }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
 
-$('attRefreshBtn').addEventListener('click', loadAttendanceYears);
+$('resetActiveBtn').addEventListener('click', async () => {
+  const el = $('attStatus');
+  try {
+    const resp = await fetch('/api/attendance/active', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year: null })
+    });
+    if (resp.ok) {
+      statusMsg(el, 'ok', 'Active year reset to auto-detect');
+      loadAttendanceYears();
+    } else { statusMsg(el, 'err', 'Failed'); }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
+
+$('createYearBtn').addEventListener('click', async () => {
+  const el = $('attStatus');
+  const year = $('newYearInput').value.trim();
+  if (!year || !/^\d{4}-\d{2}$/.test(year)) {
+    return statusMsg(el, 'err', 'Invalid format. Use YYYY-YY, e.g. 2026-27');
+  }
+  try {
+    const resp = await fetch('/api/attendance/create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year })
+    });
+    if (resp.ok) {
+      statusMsg(el, 'ok', 'Created file for ' + year);
+      $('newYearInput').value = '';
+      loadAttendanceYears();
+    } else {
+      const d = await resp.json();
+      statusMsg(el, 'err', d.error || 'Failed');
+    }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
+
+$('uploadYearBtn').addEventListener('click', () => { $('uploadYearFileInput').click(); });
+$('uploadYearFileInput').addEventListener('change', async (e) => {
+  const file = e.target.files && e.target.files[0];
+  if (!file) return;
+  const el = $('attStatus');
+  const year = $('uploadYearSelect').value;
+  if (!year) { statusMsg(el, 'err', 'Select a year file first'); return; }
+  if (!confirm('This will REPLACE all data in the ' + year + ' file. Continue?')) { $('uploadYearFileInput').value = ''; return; }
+  try {
+    const text = await file.text();
+    const resp = await fetch('/api/attendance/upload?year=' + encodeURIComponent(year), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/csv' },
+      body: text
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      statusMsg(el, 'ok', 'Uploaded ' + formatSize(d.bytes) + ' to ' + year);
+      loadAttendanceYears();
+    } else { statusMsg(el, 'err', 'Upload failed'); }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+  $('uploadYearFileInput').value = '';
+});
+
+$('deleteYearBtn').addEventListener('click', async () => {
+  const el = $('attStatus');
+  const year = $('deleteYearSelect').value;
+  if (!year) { statusMsg(el, 'err', 'Select a year to delete'); return; }
+  const password = prompt('Enter admin password to delete the ' + year + ' attendance file:');
+  if (!password) return;
+  try {
+    const resp = await fetch('/api/attendance', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year, password })
+    });
+    if (resp.ok) {
+      statusMsg(el, 'ok', 'Deleted ' + year);
+      loadAttendanceYears();
+    } else {
+      const d = await resp.json();
+      statusMsg(el, 'err', d.error || 'Delete failed');
+    }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
 
 // ── Under-18 ──
 async function uploadU18(text) {

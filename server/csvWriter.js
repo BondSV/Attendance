@@ -3,6 +3,7 @@ const path = require('path');
 
 const CSV_DIR = process.env.CSV_DIR || path.join(__dirname, '..', 'data');
 const CSV_HEADER = 'ts_utc,module,group,intake,sid,phase,student_id,ip,ua_short\n';
+const ACTIVE_YEAR_PATH = path.join(CSV_DIR, 'active_year.json');
 
 fs.mkdirSync(CSV_DIR, { recursive: true });
 
@@ -17,12 +18,33 @@ function getAcademicYear(date) {
   return { label: `${startYear}-${endShort}`, startYear };
 }
 
+function getActiveYearOverride() {
+  try {
+    if (!fs.existsSync(ACTIVE_YEAR_PATH)) return null;
+    const data = JSON.parse(fs.readFileSync(ACTIVE_YEAR_PATH, 'utf8'));
+    if (data && data.year && /^\d{4}-\d{2}$/.test(data.year)) return data.year;
+    return null;
+  } catch { return null; }
+}
+
+function setActiveYearOverride(yearLabel) {
+  fs.writeFileSync(ACTIVE_YEAR_PATH, JSON.stringify({ year: yearLabel }, null, 2), 'utf8');
+}
+
+function clearActiveYearOverride() {
+  try { if (fs.existsSync(ACTIVE_YEAR_PATH)) fs.unlinkSync(ACTIVE_YEAR_PATH); } catch {}
+}
+
+function getActiveYear() {
+  return getActiveYearOverride() || getAcademicYear().label;
+}
+
 function csvPathForYear(yearLabel) {
   return path.join(CSV_DIR, `attendance_${yearLabel}.csv`);
 }
 
 function currentCsvPath() {
-  return csvPathForYear(getAcademicYear().label);
+  return csvPathForYear(getActiveYear());
 }
 
 function listAvailableYears() {
@@ -39,6 +61,39 @@ function listAvailableYears() {
   } catch {
     return [];
   }
+}
+
+function createYearFile(yearLabel) {
+  const filePath = csvPathForYear(yearLabel);
+  if (fs.existsSync(filePath)) return { ok: false, error: 'File already exists' };
+  fs.writeFileSync(filePath, CSV_HEADER, 'utf8');
+  return { ok: true };
+}
+
+function deleteYearFile(yearLabel) {
+  const filePath = csvPathForYear(yearLabel);
+  if (!fs.existsSync(filePath)) return { ok: false, error: 'File not found' };
+  if (stream && streamPath === filePath) {
+    try { stream.end(); } catch {}
+    stream = null;
+    streamPath = null;
+  }
+  fs.unlinkSync(filePath);
+  return { ok: true };
+}
+
+function yearFileSize(yearLabel) {
+  const filePath = csvPathForYear(yearLabel);
+  try { return fs.statSync(filePath).size; } catch { return 0; }
+}
+
+function yearFileRowCount(yearLabel) {
+  const filePath = csvPathForYear(yearLabel);
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n').filter(l => l.trim());
+    return Math.max(0, lines.length - 1);
+  } catch { return 0; }
 }
 
 let stream = null;
@@ -125,5 +180,14 @@ module.exports = {
   csvPathForYear,
   listAvailableYears,
   getAcademicYear,
+  getActiveYear,
+  getActiveYearOverride,
+  setActiveYearOverride,
+  clearActiveYearOverride,
+  createYearFile,
+  deleteYearFile,
+  yearFileSize,
+  yearFileRowCount,
   CSV_DIR,
+  CSV_HEADER,
 };

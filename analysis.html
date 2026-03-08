@@ -1215,13 +1215,14 @@ async function loadYears() {
     var resp = await fetch('/api/attendance/years', { cache: 'no-store' });
     var data = await resp.json();
     state.availableYears = data.years || [];
+    var activeYear = data.active || data.current;
     el.yearSelect.innerHTML = '';
     state.availableYears.forEach(function(y) {
       var o = document.createElement('option'); o.value = y; o.textContent = y;
-      if (y === data.current) o.selected = true;
+      if (y === activeYear) o.selected = true;
       el.yearSelect.appendChild(o);
     });
-    state.sel.year = data.current || (state.availableYears[0]) || '';
+    state.sel.year = activeYear || (state.availableYears[0]) || '';
     if (!el.yearSelect.options.length) {
       var o = document.createElement('option'); o.value = ''; o.textContent = 'No data'; el.yearSelect.appendChild(o);
     }
