@@ -3,164 +3,205 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Attendance Console</title>
+  <title>Attendance Management Suite</title>
   <style>
     :root {
-      color-scheme: light dark;
-      --bg: radial-gradient(circle at top left, rgba(22, 101, 216, 0.12), transparent 55%),
-             radial-gradient(circle at bottom right, rgba(15, 23, 42, 0.1), transparent 60%),
-             #f4f6fb;
-      --surface: rgba(255, 255, 255, 0.95);
-      --border: rgba(15, 23, 42, 0.08);
+      --bg: #f1f4f9;
+      --surface: #ffffff;
+      --border: #e2e8f0;
       --text: #0f172a;
-      --muted: #475467;
-      --brand: linear-gradient(135deg, #0ea5e9, #2563eb);
-      --brand-soft: rgba(37, 99, 235, 0.12);
-      --teach-start: linear-gradient(135deg, #15803d, #22c55e);
-      --analysis-start: linear-gradient(135deg, #2563eb, #3b82f6);
-      --teach-shadow: rgba(21, 128, 61, 0.28);
-      --analysis-shadow: rgba(37, 99, 235, 0.28);
-      font-family: "Inter", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --text-sec: #475569;
+      --muted: #94a3b8;
+      --primary: #2563eb;
+      --primary-soft: rgba(37,99,235,0.08);
+      --green: #16a34a;
+      --green-soft: rgba(22,163,74,0.08);
+      --slate-dark: #1e293b;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
     }
-    * { box-sizing: border-box; }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
     body {
-      margin: 0;
       min-height: 100vh;
       background: var(--bg);
       color: var(--text);
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+    }
+
+    .top-bar {
+      background: var(--slate-dark);
+      padding: 0 clamp(24px, 5vw, 48px);
+      height: 56px;
+      display: flex;
       align-items: center;
-      padding: clamp(24px, 5vw, 48px);
     }
-    .hero {
-      width: min(980px, 100%);
-      background: var(--surface);
-      border-radius: 32px;
-      border: 1px solid var(--border);
-      box-shadow: 0 32px 64px rgba(15, 23, 42, 0.16);
-      padding: clamp(36px, 5vw, 56px);
-      display: grid;
-      gap: clamp(28px, 4vw, 40px);
-    }
-    .hero__header {
-      display: grid;
-      gap: 12px;
-    }
-    .brand {
-      display: inline-flex;
-      align-items: center;
-      gap: 10px;
-      padding: 10px 18px;
-      border-radius: 999px;
-      background: var(--brand-soft);
-      color: #0f172a;
-      font-size: 15px;
+    .top-bar-brand {
+      font-size: 14px;
       font-weight: 700;
-      letter-spacing: 0.5px;
+      color: #f1f5f9;
+      letter-spacing: 0.3px;
       text-transform: uppercase;
     }
-    .brand::before {
-      content: '';
-      width: 8px;
-      height: 8px;
-      border-radius: 999px;
-      background: linear-gradient(135deg, #0ea5e9, #3b82f6);
-      box-shadow: 0 0 12px rgba(37, 99, 235, 0.4);
-    }
-    h1 {
-      margin: 0;
-      font-size: clamp(32px, 5.6vw, 42px);
-      letter-spacing: -0.7px;
-    }
-    .subhead {
-      margin: 0;
-      color: var(--muted);
-      font-size: clamp(16px, 2.8vw, 18px);
-      max-width: none;
-    }
-    .grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: clamp(20px, 3vw, 30px);
-    }
-    .card {
-      position: relative;
-      padding: clamp(26px, 3vw, 34px);
-      border-radius: 24px;
-      border: 1px solid rgba(15, 23, 42, 0.08);
-      background: linear-gradient(135deg, rgba(255,255,255,0.98), rgba(244,247,255,0.72));
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.14);
+
+    .page {
+      flex: 1;
       display: flex;
       flex-direction: column;
-      gap: 18px;
-      min-height: 260px;
-    }
-    .card h2 {
-      margin: 0;
-      font-size: 22px;
-      font-weight: 600;
-    }
-    .card p {
-      margin: 0;
-      color: var(--muted);
-      font-size: 15px;
-      line-height: 1.55;
-      flex: 1;
-    }
-    .card a {
-      display: inline-flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
-      padding: 13px 20px;
+      padding: clamp(32px, 6vw, 64px) clamp(20px, 4vw, 48px);
+    }
+
+    .hero-text {
+      text-align: center;
+      max-width: 640px;
+      margin-bottom: clamp(32px, 5vw, 48px);
+    }
+    .hero-text h1 {
+      font-size: clamp(26px, 4.5vw, 36px);
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .hero-text p {
+      color: var(--text-sec);
+      font-size: clamp(15px, 2.5vw, 17px);
+      line-height: 1.6;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 20px;
+      width: min(920px, 100%);
+    }
+
+    .card {
+      position: relative;
+      background: var(--surface);
+      border: 1px solid var(--border);
       border-radius: 16px;
+      padding: clamp(24px, 3vw, 32px);
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      transition: box-shadow 0.2s, transform 0.2s;
+    }
+    .card:hover {
+      box-shadow: 0 12px 40px rgba(15, 23, 42, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+    .card-icon.green { background: var(--green-soft); color: var(--green); }
+    .card-icon.blue { background: var(--primary-soft); color: var(--primary); }
+    .card-icon.slate { background: rgba(100,116,139,0.1); color: #64748b; }
+
+    .card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .card p {
+      color: var(--text-sec);
+      font-size: 14px;
+      line-height: 1.6;
+      flex: 1;
+    }
+
+    .card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      font-weight: 700;
       text-decoration: none;
-      font-weight: 600;
-      font-size: 15px;
+      padding: 11px 20px;
+      border-radius: 10px;
+      transition: opacity 0.15s;
       color: #fff;
-      transition: transform 0.15s ease, box-shadow 0.2s ease;
+      align-self: flex-start;
     }
-    .card a.primary {
-      background: var(--teach-start);
-      box-shadow: 0 16px 30px var(--teach-shadow);
+    .card-link:hover { opacity: 0.88; }
+    .card-link.green { background: var(--green); }
+    .card-link.blue { background: var(--primary); }
+    .card-link.slate { background: #64748b; }
+
+    .card-link svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+    .footer {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--muted);
     }
-    .card a.secondary {
-      background: var(--analysis-start);
-      box-shadow: 0 16px 30px var(--analysis-shadow);
-    }
-    .card a:hover {
-      transform: translateY(-1px);
-    }
-    @media (max-width: 720px) {
-      .hero {
-        padding: 30px;
-      }
-      h1 {
-        font-size: 32px;
-      }
+
+    @media (max-width: 640px) {
+      .grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <div class="hero">
-    <div class="hero__header">
-      <span class="brand">Attendance Management Suite</span>
-      <h1>Launch the tools you need for today’s attendance workflow</h1>
-      <p class="subhead">Start the live classroom console or review captured attendance to stay on top of every session.</p>
+
+<div class="top-bar">
+  <span class="top-bar-brand">Attendance Management Suite</span>
+</div>
+
+<div class="page">
+  <div class="hero-text">
+    <h1>Attendance tracking tools for every step of the workflow</h1>
+    <p>Capture live check-ins during sessions, analyse attendance patterns across modules and groups, and manage system configuration.</p>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-icon green">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      </div>
+      <h2>Teacher Live Console</h2>
+      <p>Launch the classroom toolkit to generate QR codes and capture students' real-time check-in attendance during sessions.</p>
+      <a class="card-link green" href="/teacher.html">
+        Open Console
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
-    <div class="grid">
-      <div class="card">
-        <h2>Teacher Live Console</h2>
-        <p>Launch the classroom toolkit to verify and capture students’ in-class attendance via check-in.</p>
-        <a class="primary" href="/teacher.html">Open Teacher App →</a>
+
+    <div class="card">
+      <div class="card-icon blue">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
       </div>
-      <div class="card">
-        <h2>Attendance Analysis</h2>
-        <p>Review and analyse captured attendance, compile and export follow-up emails to students after each session.</p>
-        <a class="secondary" href="/analysis.html">Open Analysis App →</a>
+      <h2>Attendance Analysis</h2>
+      <p>Review session data, track group and student performance across weeks, and generate follow-up emails for absences.</p>
+      <a class="card-link blue" href="/analysis.html">
+        Open Analysis
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
+    </div>
+
+    <div class="card">
+      <div class="card-icon slate">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
       </div>
+      <h2>Admin Panel</h2>
+      <p>Manage intakes, roster, under-18 list, attendance data files, email templates, and other system configuration.</p>
+      <a class="card-link slate" href="/admin">
+        Open Admin
+        <svg viewBox="0 0 24 24"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+      </a>
     </div>
   </div>
+</div>
+
 </body>
 </html>

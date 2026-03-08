@@ -4,7 +4,7 @@ const path = require('path');
 const crypto = require('crypto');
 
 const { issueVerification, consumeVerification, acquireDeviceLock, peekDeviceLock } = require('./memoryState');
-const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, getActiveYear, getActiveYearOverride, setActiveYearOverride, clearActiveYearOverride, createYearFile, deleteYearFile, yearFileSize, yearFileRowCount, CSV_DIR, CSV_HEADER } = require('./csvWriter');
+const { appendCsvRow, currentCsvPath, csvPathForYear, listAvailableYears, getAcademicYear, getActiveYear, getActiveYearOverride, setActiveYearOverride, clearActiveYearOverride, createYearFile, deleteYearFile, yearFileSize, yearFileRowCount, resolveYearPath, readYearMapping, writeYearMapping, listUploadedFiles, saveUploadedFile, deleteUploadedFile, fileMetadata, CSV_DIR, CSV_HEADER, UPLOADS_DIR } = require('./csvWriter');
 const { canCheckin, CHECKIN_WINDOW_MS } = require('./checkins');
 const { issueChallenge, validateChallenge, DEFAULT_TTL_MS } = require('./challenges');
 const { registerManualOverride, consumeManualOverride, logManualOverrideUsage } = require('./manualOverrides');
@@ -16,7 +16,7 @@ const INTAKES_PATH = path.join(CSV_DIR, 'intakes.json');
 const ROSTER_PATH = path.join(CSV_DIR, 'roster.csv');
 const UNDER18_PATH = path.join(CSV_DIR, 'under18.csv');
 
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'raveadmin2026';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'RaveAdmin2026';
 const MANUAL_OVERRIDE_PASSWORD = process.env.MANUAL_OVERRIDE_PASSWORD || 'RaveCheck2026';
 const MANUAL_OVERRIDE_PASSWORD_BUFFER = MANUAL_OVERRIDE_PASSWORD ? Buffer.from(MANUAL_OVERRIDE_PASSWORD, 'utf8') : null;
 const MANUAL_OVERRIDE_PASSWORD_VERSION = MANUAL_OVERRIDE_PASSWORD ? crypto.createHash('sha256').update(MANUAL_OVERRIDE_PASSWORD_BUFFER).digest('hex').slice(0, 12) : null;
@@ -274,15 +274,22 @@ const server = http.createServer(async (req, res) => {
       const autoYear = getAcademicYear().label;
       const override = getActiveYearOverride();
       const active = getActiveYear();
-      const files = years.map(y => ({ year: y, size: yearFileSize(y), rows: yearFileRowCount(y) }));
-      return sendJson(res, { years, files, current: autoYear, active, override: override || null });
+      const mapping = readYearMapping();
+      const uploads = listUploadedFiles().map(f => ({ name: f.name, size: f.size, rows: f.rows }));
+      const files = years.map(y => {
+        const resolved = resolveYearPath(y);
+        const meta = fileMetadata(resolved);
+        const source = mapping[y] || null;
+        return { year: y, size: meta.size, rows: meta.rows, mappedFile: source };
+      });
+      return sendJson(res, { years, files, current: autoYear, active, override: override || null, mapping, uploads });
     }
 
     if (pathname === '/api/attendance' && req.method === 'GET') {
       const yearParam = parsed.searchParams.get('year') || getActiveYear();
       const yearRe = /^\d{4}-\d{2}$/;
       if (!yearRe.test(yearParam)) return sendJson(res, { error: 'Invalid year format' }, 400);
-      const csvPath = csvPathForYear(yearParam);
+      const csvPath = resolveYearPath(yearParam);
       if (!fs.existsSync(csvPath)) {
         return sendJson(res, { error: 'No data for this academic year' }, 404);
       }
@@ -323,24 +330,62 @@ const server = http.createServer(async (req, res) => {
       return sendJson(res, { ok: true, year: yearLabel });
     }
 
-    if (pathname === '/api/attendance/upload' && req.method === 'POST') {
-      const yearParam = parsed.searchParams.get('year');
-      if (!yearParam || !/^\d{4}-\d{2}$/.test(yearParam)) return sendJson(res, { error: 'Invalid year format' }, 400);
+    if (pathname === '/api/attendance/mapping' && req.method === 'GET') {
+      return sendJson(res, readYearMapping());
+    }
+
+    if (pathname === '/api/attendance/mapping' && req.method === 'PUT') {
+      const body = await parseRequestBody(req);
+      if (!body || typeof body !== 'object') return sendJson(res, { error: 'Invalid payload' }, 400);
+      writeYearMapping(body);
+      return sendJson(res, { ok: true });
+    }
+
+    if (pathname === '/api/uploads' && req.method === 'GET') {
+      const files = listUploadedFiles().map(f => ({ name: f.name, size: f.size, rows: f.rows }));
+      return sendJson(res, { files });
+    }
+
+    if (pathname === '/api/uploads' && req.method === 'POST') {
+      const filenameParam = parsed.searchParams.get('filename') || 'upload_' + Date.now() + '.csv';
       return new Promise((resolve) => {
         let body = '';
         req.on('data', (chunk) => { body += chunk; if (body.length > 20e6) { req.connection.destroy(); resolve(); } });
         req.on('end', () => {
           try {
-            const filePath = csvPathForYear(yearParam);
-            fs.writeFileSync(filePath, body, 'utf8');
-            sendJson(res, { ok: true, year: yearParam, bytes: Buffer.byteLength(body) });
+            const result = saveUploadedFile(filenameParam, body);
+            sendJson(res, { ok: true, name: result.name, bytes: result.bytes });
           } catch (err) {
-            console.error('Failed to write attendance file', err);
+            console.error('Failed to save upload', err);
             sendJson(res, { error: 'Failed to save' }, 500);
           }
           resolve();
         });
       });
+    }
+
+    if (pathname === '/api/uploads' && req.method === 'DELETE') {
+      const body = await parseRequestBody(req);
+      const filename = body && body.file;
+      const password = body && body.password;
+      if (!filename) return sendJson(res, { error: 'Missing file name' }, 400);
+      if (!password || password !== ADMIN_PASSWORD) return sendJson(res, { error: 'Invalid password' }, 403);
+      const result = deleteUploadedFile(filename);
+      if (!result.ok) return sendJson(res, { error: result.error }, 404);
+      return sendJson(res, { ok: true });
+    }
+
+    if (pathname === '/api/uploads/download' && req.method === 'GET') {
+      const filename = parsed.searchParams.get('file');
+      if (!filename) return sendJson(res, { error: 'Missing file parameter' }, 400);
+      const safeName = path.basename(filename);
+      const filePath = path.join(UPLOADS_DIR, safeName);
+      if (!filePath.startsWith(UPLOADS_DIR) || !fs.existsSync(filePath)) {
+        return sendJson(res, { error: 'File not found' }, 404);
+      }
+      res.writeHead(200, { 'Content-Type': 'text/csv', 'Content-Disposition': `attachment; filename="${safeName}"`, 'Cache-Control': 'no-store' });
+      fs.createReadStream(filePath).pipe(res);
+      return;
     }
 
     if (pathname === '/api/attendance' && req.method === 'DELETE') {

@@ -4,8 +4,11 @@ const path = require('path');
 const CSV_DIR = process.env.CSV_DIR || path.join(__dirname, '..', 'data');
 const CSV_HEADER = 'ts_utc,module,group,intake,sid,phase,student_id,ip,ua_short\n';
 const ACTIVE_YEAR_PATH = path.join(CSV_DIR, 'active_year.json');
+const UPLOADS_DIR = path.join(CSV_DIR, 'uploads');
+const YEAR_MAPPING_PATH = path.join(CSV_DIR, 'year_mapping.json');
 
 fs.mkdirSync(CSV_DIR, { recursive: true });
+fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 
 function getAcademicYear(date) {
   const d = date || new Date();
@@ -48,19 +51,22 @@ function currentCsvPath() {
 }
 
 function listAvailableYears() {
+  const yearSet = new Set();
   try {
     const files = fs.readdirSync(CSV_DIR);
-    const years = [];
     const re = /^attendance_(\d{4}-\d{2})\.csv$/;
     files.forEach(f => {
       const m = f.match(re);
-      if (m) years.push(m[1]);
+      if (m) yearSet.add(m[1]);
     });
-    years.sort().reverse();
-    return years;
-  } catch {
-    return [];
-  }
+  } catch {}
+  try {
+    const mapping = readYearMapping();
+    Object.keys(mapping).forEach(y => {
+      if (/^\d{4}-\d{2}$/.test(y)) yearSet.add(y);
+    });
+  } catch {}
+  return Array.from(yearSet).sort().reverse();
 }
 
 function createYearFile(yearLabel) {
@@ -94,6 +100,85 @@ function yearFileRowCount(yearLabel) {
     const lines = content.split('\n').filter(l => l.trim());
     return Math.max(0, lines.length - 1);
   } catch { return 0; }
+}
+
+function fileMetadata(filePath) {
+  try {
+    const stat = fs.statSync(filePath);
+    const content = fs.readFileSync(filePath, 'utf8');
+    const lines = content.split('\n').filter(l => l.trim());
+    return { size: stat.size, rows: Math.max(0, lines.length - 1) };
+  } catch { return { size: 0, rows: 0 }; }
+}
+
+// ── Year mapping ──
+
+function readYearMapping() {
+  try {
+    if (!fs.existsSync(YEAR_MAPPING_PATH)) return {};
+    return JSON.parse(fs.readFileSync(YEAR_MAPPING_PATH, 'utf8'));
+  } catch { return {}; }
+}
+
+function writeYearMapping(map) {
+  fs.writeFileSync(YEAR_MAPPING_PATH, JSON.stringify(map, null, 2), 'utf8');
+}
+
+function resolveYearPath(yearLabel) {
+  const mapping = readYearMapping();
+  if (mapping[yearLabel]) {
+    const mapped = mapping[yearLabel];
+    const uploadPath = path.join(UPLOADS_DIR, mapped);
+    if (fs.existsSync(uploadPath)) return uploadPath;
+    const directPath = path.join(CSV_DIR, mapped);
+    if (fs.existsSync(directPath)) return directPath;
+  }
+  return csvPathForYear(yearLabel);
+}
+
+// ── Uploaded files library ──
+
+function listUploadedFiles() {
+  try {
+    const files = fs.readdirSync(UPLOADS_DIR);
+    return files
+      .filter(f => f.endsWith('.csv') || f.endsWith('.txt'))
+      .map(f => {
+        const fp = path.join(UPLOADS_DIR, f);
+        const meta = fileMetadata(fp);
+        return { name: f, size: meta.size, rows: meta.rows, path: fp };
+      })
+      .sort((a, b) => b.size - a.size);
+  } catch { return []; }
+}
+
+function saveUploadedFile(filename, content) {
+  const safeName = filename.replace(/[^a-zA-Z0-9_\-. ]/g, '_');
+  let targetName = safeName;
+  const targetPath = path.join(UPLOADS_DIR, targetName);
+  if (fs.existsSync(targetPath)) {
+    const ext = path.extname(safeName);
+    const base = path.basename(safeName, ext);
+    targetName = `${base}_${Date.now()}${ext}`;
+  }
+  const finalPath = path.join(UPLOADS_DIR, targetName);
+  fs.writeFileSync(finalPath, content, 'utf8');
+  return { name: targetName, path: finalPath, bytes: Buffer.byteLength(content) };
+}
+
+function deleteUploadedFile(filename) {
+  const safeName = path.basename(filename);
+  const filePath = path.join(UPLOADS_DIR, safeName);
+  if (!filePath.startsWith(UPLOADS_DIR)) return { ok: false, error: 'Invalid path' };
+  if (!fs.existsSync(filePath)) return { ok: false, error: 'File not found' };
+  fs.unlinkSync(filePath);
+  const mapping = readYearMapping();
+  let changed = false;
+  Object.keys(mapping).forEach(y => {
+    if (mapping[y] === safeName) { delete mapping[y]; changed = true; }
+  });
+  if (changed) writeYearMapping(mapping);
+  return { ok: true };
 }
 
 let stream = null;
@@ -188,6 +273,14 @@ module.exports = {
   deleteYearFile,
   yearFileSize,
   yearFileRowCount,
+  resolveYearPath,
+  readYearMapping,
+  writeYearMapping,
+  listUploadedFiles,
+  saveUploadedFile,
+  deleteUploadedFile,
+  fileMetadata,
   CSV_DIR,
   CSV_HEADER,
+  UPLOADS_DIR,
 };

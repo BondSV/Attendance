@@ -74,6 +74,18 @@
   </style>
 </head>
 <body>
+
+<div id="loginGate" style="display:flex;align-items:center;justify-content:center;min-height:100vh;background:var(--bg)">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:32px;max-width:360px;width:100%;text-align:center">
+    <h2 style="font-size:18px;font-weight:700;margin-bottom:6px">Admin Panel</h2>
+    <p style="font-size:13px;color:var(--text-sec);margin-bottom:18px">Enter the admin password to continue.</p>
+    <input type="password" id="gatePwInput" placeholder="Password" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:14px;margin-bottom:10px">
+    <button id="gateLoginBtn" style="width:100%;padding:10px;border-radius:8px;border:none;background:#2563eb;color:#fff;font-size:14px;font-weight:600;cursor:pointer">Unlock</button>
+    <div id="gateError" style="font-size:12px;color:var(--red);margin-top:8px;display:none"></div>
+  </div>
+</div>
+
+<div id="adminContent" style="display:none">
 <div class="top-bar">
   <h1>Admin Panel</h1>
   <a href="/analysis">Back to Analysis</a>
@@ -111,13 +123,39 @@
     <div class="data-preview" id="rosterPreview" style="display:none"></div>
   </div>
 
-  <!-- Attendance Data -->
-  <div class="card" id="attendanceCard">
-    <h2>Attendance Data Files</h2>
-    <p class="card-desc">Attendance data is stored in per-academic-year CSV files. The <strong>active file</strong> is where all new check-ins are appended. By default it is auto-detected from today's date, but you can override it below.</p>
+  <!-- Attendance Data: File Library -->
+  <div class="card" id="libraryCard">
+    <h2>File Library</h2>
+    <p class="card-desc">Upload attendance CSV files here. Files are stored on the server and can be assigned to academic years below. Auto-generated files (from live check-ins) also appear here.</p>
+    <div class="drop-zone" id="libraryDropZone">Drop attendance CSV here or click to upload</div>
+    <input type="file" accept=".csv,.txt" id="libraryFileInput" style="display:none">
+    <div id="libraryFileList"></div>
+    <div class="status-msg" id="libraryStatus"></div>
+  </div>
+
+  <!-- Attendance Data: Year Assignments -->
+  <div class="card" id="yearCard">
+    <h2>Year Assignments</h2>
+    <p class="card-desc">Map each academic year to a file from the library. When the analysis app loads a year, it reads from the assigned file. Years without an assignment fall back to the auto-generated <code>attendance_YYYY-YY.csv</code> file.</p>
+    <div id="yearMappingTable"></div>
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:14px">
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Add year assignment</label>
+      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
+        <input type="text" id="newMappingYear" placeholder="e.g. 2025-26" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:110px">
+        <select id="newMappingFile" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:180px"></select>
+        <button class="btn primary" id="addMappingBtn" style="padding:6px 14px">Assign</button>
+      </div>
+    </div>
+    <div class="status-msg" id="yearStatus"></div>
+  </div>
+
+  <!-- Attendance Data: Active Write Target & Year Management -->
+  <div class="card" id="activeCard">
+    <h2>Active Write Target &amp; Year Files</h2>
+    <p class="card-desc">The <strong>active file</strong> is where all new student check-ins are appended. By default it is auto-detected from today's date. You can also create empty year files or delete existing ones.</p>
 
     <div style="margin-bottom:14px">
-      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Active file</label>
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:4px">Active write target</label>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
         <span id="activeYearLabel" style="font-size:15px;font-weight:700;color:var(--primary)">—</span>
         <span id="activeYearNote" style="font-size:12px;color:var(--muted)"></span>
@@ -131,27 +169,12 @@
       </div>
     </div>
 
-    <div style="margin-bottom:14px">
-      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Year files</label>
-      <div id="yearList"></div>
-    </div>
-
     <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
-      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Create new year file</label>
+      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Create empty year file</label>
       <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">
         <input type="text" id="newYearInput" placeholder="e.g. 2026-27" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;width:120px">
         <button class="btn success" id="createYearBtn" style="padding:6px 14px">Create</button>
       </div>
-    </div>
-
-    <div style="border-top:1px solid var(--border);padding-top:14px;margin-bottom:14px">
-      <label style="display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--muted);margin-bottom:6px">Upload data to a year file</label>
-      <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-bottom:6px">
-        <select id="uploadYearSelect" style="padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-size:13px;min-width:120px"></select>
-        <button class="btn" id="uploadYearBtn" style="padding:6px 14px">Choose CSV file...</button>
-        <input type="file" accept=".csv,.txt" id="uploadYearFileInput" style="display:none">
-      </div>
-      <div style="font-size:11px;color:var(--muted)">This will <strong>replace</strong> the entire contents of the selected year file with the uploaded CSV.</div>
     </div>
 
     <div style="border-top:1px solid var(--border);padding-top:14px">
@@ -209,12 +232,44 @@ For support with health, wellbeing, disability, finance, accommodation or study 
   </div>
 
 </div>
+</div>
 
 <script>
 (function() {
 'use strict';
 
 const $ = id => document.getElementById(id);
+
+// ── Password gate ──
+const ADMIN_PW = 'RaveAdmin2026';
+const SESSION_KEY = 'att_admin_auth';
+
+function unlockAdmin() {
+  $('loginGate').style.display = 'none';
+  $('adminContent').style.display = 'block';
+  sessionStorage.setItem(SESSION_KEY, '1');
+  initAdmin();
+}
+
+if (sessionStorage.getItem(SESSION_KEY) === '1') {
+  unlockAdmin();
+} else {
+  $('gatePwInput').addEventListener('keydown', e => { if (e.key === 'Enter') $('gateLoginBtn').click(); });
+  $('gateLoginBtn').addEventListener('click', () => {
+    const val = $('gatePwInput').value;
+    if (val === ADMIN_PW) {
+      unlockAdmin();
+    } else {
+      $('gateError').textContent = 'Incorrect password';
+      $('gateError').style.display = 'block';
+      $('gatePwInput').value = '';
+      $('gatePwInput').focus();
+    }
+  });
+  $('gatePwInput').focus();
+}
+
+function initAdmin() {
 
 function statusMsg(el, type, text) {
   el.className = 'status-msg ' + type;
@@ -301,73 +356,286 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
 }
 
-async function loadAttendanceYears() {
-  const list = $('yearList');
-  const activeSelect = $('activeYearSelect');
-  const uploadSelect = $('uploadYearSelect');
-  const deleteSelect = $('deleteYearSelect');
-  list.innerHTML = '';
+let cachedData = null;
 
+async function loadAll() {
   try {
     const resp = await fetch('/api/attendance/years', { cache: 'no-store' });
-    const data = await resp.json();
+    cachedData = await resp.json();
+  } catch { cachedData = { years: [], files: [], uploads: [], mapping: {}, current: '', active: '', override: null }; }
+  renderLibrary();
+  renderYearMapping();
+  renderActiveCard();
+}
 
-    $('activeYearLabel').textContent = data.active || '—';
-    $('activeYearNote').textContent = data.override
-      ? '(manually set — auto would be ' + data.current + ')'
-      : '(auto-detected)';
+// ── File Library ──
+function renderLibrary() {
+  const list = $('libraryFileList');
+  list.innerHTML = '';
+  const d = cachedData;
+  const allFiles = [];
 
-    activeSelect.innerHTML = '<option value="">Auto-detect (' + data.current + ')</option>';
-    uploadSelect.innerHTML = '';
-    deleteSelect.innerHTML = '';
+  (d.files || []).forEach(f => {
+    allFiles.push({ name: 'attendance_' + f.year + '.csv', size: f.size, rows: f.rows, type: 'auto', year: f.year });
+  });
+  (d.uploads || []).forEach(f => {
+    allFiles.push({ name: f.name, size: f.size, rows: f.rows, type: 'uploaded' });
+  });
 
-    if (!data.files || !data.files.length) {
-      list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No attendance files found. Create one below.</div>';
-      return;
-    }
-
-    data.files.forEach(f => {
-      // Year file row
-      const row = document.createElement('div');
-      row.className = 'year-file-row';
-      const label = document.createElement('span');
-      label.className = 'yf-label';
-      label.textContent = f.year;
-      row.appendChild(label);
-      if (f.year === data.active) {
-        const badge = document.createElement('span');
-        badge.className = 'yf-active';
-        badge.textContent = 'ACTIVE';
-        row.appendChild(badge);
-      }
-      const meta = document.createElement('span');
-      meta.className = 'yf-meta';
-      meta.textContent = f.rows + ' records · ' + formatSize(f.size);
-      row.appendChild(meta);
-      const dl = document.createElement('button');
-      dl.className = 'yf-download';
-      dl.textContent = 'Download';
-      dl.addEventListener('click', () => { window.open('/api/attendance?year=' + encodeURIComponent(f.year), '_blank'); });
-      row.appendChild(dl);
-      list.appendChild(row);
-
-      // Populate selects
-      const opt1 = document.createElement('option');
-      opt1.value = f.year; opt1.textContent = f.year;
-      if (f.year === data.active) opt1.selected = true;
-      activeSelect.appendChild(opt1);
-
-      const opt2 = document.createElement('option');
-      opt2.value = f.year; opt2.textContent = f.year;
-      uploadSelect.appendChild(opt2);
-
-      const opt3 = document.createElement('option');
-      opt3.value = f.year; opt3.textContent = f.year + ' (' + f.rows + ' records)';
-      deleteSelect.appendChild(opt3);
-    });
-  } catch {
-    list.innerHTML = '<div style="color:var(--muted);font-size:13px">Failed to load.</div>';
+  if (!allFiles.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No files found. Upload one above.</div>';
+    populateFileSelects([]);
+    return;
   }
+
+  const table = document.createElement('table');
+  table.className = 'preview-table';
+  table.innerHTML = '<thead><tr><th>File</th><th>Type</th><th>Records</th><th>Size</th><th></th></tr></thead>';
+  const tbody = document.createElement('tbody');
+
+  allFiles.forEach(f => {
+    const tr = document.createElement('tr');
+    const tdName = document.createElement('td');
+    tdName.textContent = f.name;
+    tdName.style.fontWeight = '600';
+    tr.appendChild(tdName);
+
+    const tdType = document.createElement('td');
+    tdType.textContent = f.type === 'auto' ? 'Auto (year file)' : 'Uploaded';
+    tdType.style.color = 'var(--muted)';
+    tr.appendChild(tdType);
+
+    const tdRows = document.createElement('td');
+    tdRows.textContent = f.rows;
+    tr.appendChild(tdRows);
+
+    const tdSize = document.createElement('td');
+    tdSize.textContent = formatSize(f.size);
+    tr.appendChild(tdSize);
+
+    const tdActions = document.createElement('td');
+    tdActions.style.whiteSpace = 'nowrap';
+
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'yf-download';
+    dlBtn.textContent = 'Download';
+    dlBtn.addEventListener('click', () => {
+      if (f.type === 'auto') window.open('/api/attendance?year=' + encodeURIComponent(f.year), '_blank');
+      else window.open('/api/uploads/download?file=' + encodeURIComponent(f.name), '_blank');
+    });
+    tdActions.appendChild(dlBtn);
+
+    if (f.type === 'uploaded') {
+      const delBtn = document.createElement('button');
+      delBtn.className = 'yf-download';
+      delBtn.style.color = 'var(--red)';
+      delBtn.style.marginLeft = '8px';
+      delBtn.textContent = 'Delete';
+      delBtn.addEventListener('click', async () => {
+        const password = prompt('Enter admin password to delete "' + f.name + '":');
+        if (!password) return;
+        try {
+          const resp = await fetch('/api/uploads', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ file: f.name, password })
+          });
+          if (resp.ok) { statusMsg($('libraryStatus'), 'ok', 'Deleted ' + f.name); loadAll(); }
+          else { const d = await resp.json(); statusMsg($('libraryStatus'), 'err', d.error || 'Delete failed'); }
+        } catch (e) { statusMsg($('libraryStatus'), 'err', e.message); }
+      });
+      tdActions.appendChild(delBtn);
+    }
+    tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  list.appendChild(table);
+  populateFileSelects(allFiles);
+}
+
+function populateFileSelects(allFiles) {
+  const newMappingFile = $('newMappingFile');
+  newMappingFile.innerHTML = '';
+  allFiles.forEach(f => {
+    const o = document.createElement('option');
+    o.value = f.name;
+    o.textContent = f.name + ' (' + f.rows + ' records)';
+    newMappingFile.appendChild(o);
+  });
+}
+
+async function uploadToLibrary(file) {
+  const el = $('libraryStatus');
+  const filename = file.name || 'upload_' + Date.now() + '.csv';
+  try {
+    const text = await file.text();
+    const resp = await fetch('/api/uploads?filename=' + encodeURIComponent(filename), {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/csv' },
+      body: text
+    });
+    if (resp.ok) {
+      const d = await resp.json();
+      statusMsg(el, 'ok', 'Uploaded "' + d.name + '" (' + formatSize(d.bytes) + ')');
+      loadAll();
+    } else { statusMsg(el, 'err', 'Upload failed'); }
+  } catch (e) { statusMsg(el, 'err', 'Network error: ' + e.message); }
+}
+(function() {
+  const dz = $('libraryDropZone'), fi = $('libraryFileInput');
+  dz.addEventListener('click', () => fi.click());
+  dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('drag-over'); });
+  dz.addEventListener('dragleave', () => dz.classList.remove('drag-over'));
+  dz.addEventListener('drop', e => { e.preventDefault(); dz.classList.remove('drag-over'); const f = e.dataTransfer.files[0]; if (f) uploadToLibrary(f); });
+  fi.addEventListener('change', e => { const f = e.target.files && e.target.files[0]; if (f) uploadToLibrary(f); fi.value = ''; });
+})();
+
+// ── Year Mapping ──
+function renderYearMapping() {
+  const container = $('yearMappingTable');
+  container.innerHTML = '';
+  const d = cachedData;
+  const mapping = d.mapping || {};
+  const years = d.years || [];
+
+  const allFileNames = [];
+  (d.files || []).forEach(f => allFileNames.push('attendance_' + f.year + '.csv'));
+  (d.uploads || []).forEach(f => allFileNames.push(f.name));
+
+  if (!years.length && !Object.keys(mapping).length) {
+    container.innerHTML = '<div style="color:var(--muted);font-size:13px;padding:8px 0">No years available yet. Upload a file and assign it below.</div>';
+    return;
+  }
+
+  const allYears = new Set(years);
+  Object.keys(mapping).forEach(y => allYears.add(y));
+  const sortedYears = Array.from(allYears).sort().reverse();
+
+  const table = document.createElement('table');
+  table.className = 'preview-table';
+  table.innerHTML = '<thead><tr><th>Year</th><th>Assigned File</th><th>Records</th><th></th></tr></thead>';
+  const tbody = document.createElement('tbody');
+
+  sortedYears.forEach(y => {
+    const tr = document.createElement('tr');
+
+    const tdYear = document.createElement('td');
+    tdYear.textContent = y;
+    tdYear.style.fontWeight = '700';
+    if (y === d.active) {
+      const badge = document.createElement('span');
+      badge.className = 'yf-active';
+      badge.textContent = 'ACTIVE';
+      badge.style.marginLeft = '6px';
+      tdYear.appendChild(badge);
+    }
+    tr.appendChild(tdYear);
+
+    const fileInfo = (d.files || []).find(f => f.year === y);
+    const mappedFile = mapping[y] || null;
+
+    const tdFile = document.createElement('td');
+    if (mappedFile) {
+      tdFile.textContent = mappedFile;
+      tdFile.style.color = 'var(--primary)';
+      tdFile.style.fontWeight = '600';
+    } else {
+      tdFile.textContent = 'attendance_' + y + '.csv (default)';
+      tdFile.style.color = 'var(--muted)';
+    }
+    tr.appendChild(tdFile);
+
+    const tdRows = document.createElement('td');
+    tdRows.textContent = fileInfo ? fileInfo.rows : '—';
+    tr.appendChild(tdRows);
+
+    const tdActions = document.createElement('td');
+    tdActions.style.whiteSpace = 'nowrap';
+
+    const dlBtn = document.createElement('button');
+    dlBtn.className = 'yf-download';
+    dlBtn.textContent = 'Download';
+    dlBtn.addEventListener('click', () => { window.open('/api/attendance?year=' + encodeURIComponent(y), '_blank'); });
+    tdActions.appendChild(dlBtn);
+
+    if (mappedFile) {
+      const clearBtn = document.createElement('button');
+      clearBtn.className = 'yf-download';
+      clearBtn.style.color = 'var(--amber)';
+      clearBtn.style.marginLeft = '8px';
+      clearBtn.textContent = 'Unassign';
+      clearBtn.addEventListener('click', async () => {
+        const newMapping = Object.assign({}, mapping);
+        delete newMapping[y];
+        try {
+          const resp = await fetch('/api/attendance/mapping', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(newMapping)
+          });
+          if (resp.ok) { statusMsg($('yearStatus'), 'ok', 'Unassigned ' + y); loadAll(); }
+          else { statusMsg($('yearStatus'), 'err', 'Failed'); }
+        } catch (e) { statusMsg($('yearStatus'), 'err', e.message); }
+      });
+      tdActions.appendChild(clearBtn);
+    }
+    tr.appendChild(tdActions);
+    tbody.appendChild(tr);
+  });
+
+  table.appendChild(tbody);
+  container.appendChild(table);
+}
+
+$('addMappingBtn').addEventListener('click', async () => {
+  const el = $('yearStatus');
+  const year = $('newMappingYear').value.trim();
+  const file = $('newMappingFile').value;
+  if (!year || !/^\d{4}-\d{2}$/.test(year)) {
+    return statusMsg(el, 'err', 'Invalid year format. Use YYYY-YY, e.g. 2025-26');
+  }
+  if (!file) { return statusMsg(el, 'err', 'Select a file to assign'); }
+  const mapping = Object.assign({}, cachedData.mapping || {});
+  mapping[year] = file;
+  try {
+    const resp = await fetch('/api/attendance/mapping', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(mapping)
+    });
+    if (resp.ok) {
+      statusMsg(el, 'ok', 'Assigned ' + file + ' to ' + year);
+      $('newMappingYear').value = '';
+      loadAll();
+    } else { statusMsg(el, 'err', 'Failed to save'); }
+  } catch (e) { statusMsg(el, 'err', e.message); }
+});
+
+// ── Active Write Target ──
+function renderActiveCard() {
+  const d = cachedData;
+  $('activeYearLabel').textContent = d.active || '—';
+  $('activeYearNote').textContent = d.override
+    ? '(manually set — auto would be ' + d.current + ')'
+    : '(auto-detected)';
+
+  const activeSelect = $('activeYearSelect');
+  activeSelect.innerHTML = '<option value="">Auto-detect (' + d.current + ')</option>';
+  const deleteSelect = $('deleteYearSelect');
+  deleteSelect.innerHTML = '';
+
+  (d.files || []).forEach(f => {
+    const opt1 = document.createElement('option');
+    opt1.value = f.year; opt1.textContent = f.year;
+    if (f.year === d.active) opt1.selected = true;
+    activeSelect.appendChild(opt1);
+
+    const opt3 = document.createElement('option');
+    opt3.value = f.year; opt3.textContent = f.year + ' (' + f.rows + ' records)';
+    deleteSelect.appendChild(opt3);
+  });
 }
 
 $('setActiveBtn').addEventListener('click', async () => {
@@ -382,7 +650,7 @@ $('setActiveBtn').addEventListener('click', async () => {
     if (resp.ok) {
       const d = await resp.json();
       statusMsg(el, 'ok', 'Active year set to ' + d.active + (d.override ? ' (override)' : ' (auto)'));
-      loadAttendanceYears();
+      loadAll();
     } else { statusMsg(el, 'err', 'Failed: ' + (await resp.text())); }
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
@@ -397,7 +665,7 @@ $('resetActiveBtn').addEventListener('click', async () => {
     });
     if (resp.ok) {
       statusMsg(el, 'ok', 'Active year reset to auto-detect');
-      loadAttendanceYears();
+      loadAll();
     } else { statusMsg(el, 'err', 'Failed'); }
   } catch (e) { statusMsg(el, 'err', e.message); }
 });
@@ -417,36 +685,12 @@ $('createYearBtn').addEventListener('click', async () => {
     if (resp.ok) {
       statusMsg(el, 'ok', 'Created file for ' + year);
       $('newYearInput').value = '';
-      loadAttendanceYears();
+      loadAll();
     } else {
       const d = await resp.json();
       statusMsg(el, 'err', d.error || 'Failed');
     }
   } catch (e) { statusMsg(el, 'err', e.message); }
-});
-
-$('uploadYearBtn').addEventListener('click', () => { $('uploadYearFileInput').click(); });
-$('uploadYearFileInput').addEventListener('change', async (e) => {
-  const file = e.target.files && e.target.files[0];
-  if (!file) return;
-  const el = $('attStatus');
-  const year = $('uploadYearSelect').value;
-  if (!year) { statusMsg(el, 'err', 'Select a year file first'); return; }
-  if (!confirm('This will REPLACE all data in the ' + year + ' file. Continue?')) { $('uploadYearFileInput').value = ''; return; }
-  try {
-    const text = await file.text();
-    const resp = await fetch('/api/attendance/upload?year=' + encodeURIComponent(year), {
-      method: 'POST',
-      headers: { 'Content-Type': 'text/csv' },
-      body: text
-    });
-    if (resp.ok) {
-      const d = await resp.json();
-      statusMsg(el, 'ok', 'Uploaded ' + formatSize(d.bytes) + ' to ' + year);
-      loadAttendanceYears();
-    } else { statusMsg(el, 'err', 'Upload failed'); }
-  } catch (e) { statusMsg(el, 'err', e.message); }
-  $('uploadYearFileInput').value = '';
 });
 
 $('deleteYearBtn').addEventListener('click', async () => {
@@ -463,7 +707,7 @@ $('deleteYearBtn').addEventListener('click', async () => {
     });
     if (resp.ok) {
       statusMsg(el, 'ok', 'Deleted ' + year);
-      loadAttendanceYears();
+      loadAll();
     } else {
       const d = await resp.json();
       statusMsg(el, 'err', d.error || 'Delete failed');
@@ -523,7 +767,9 @@ $('u18ReportEmail').addEventListener('input', () => { localStorage.setItem('att_
 
 // ── Init ──
 loadIntakes();
-loadAttendanceYears();
+loadAll();
+
+} // end initAdmin
 
 })();
 </script>
