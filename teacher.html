@@ -81,6 +81,13 @@
       letter-spacing: 0.6px;
     }
     
+    .form-help {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.7);
+      line-height: 1.35;
+      min-height: 15px;
+    }
+    
     input[type="text"], select {
       background: rgba(255, 255, 255, 0.14);
       border: 1px solid rgba(255, 255, 255, 0.3);
@@ -456,8 +463,10 @@
           <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
         </div>
         <div class="form-group" id="intakeGroup" hidden>
-          <label for="intakeSelect">Intake</label>
-          <select id="intakeSelect" style="width:100%;padding:8px 10px;border:1px solid #d1d5db;border-radius:10px;font-size:14px;background:#fff;color:#0f172a;cursor:pointer"></select>
+          <label for="intakeInput">Intake</label>
+          <input id="intakeInput" type="text" placeholder="Loading intakes…" autocomplete="off" disabled>
+          <datalist id="intakeOptions"></datalist>
+          <div class="form-help" id="intakeHelp"></div>
         </div>
         <div class="form-group">
   <label for="phase">Phase</label>
@@ -509,7 +518,9 @@
     const moduleOptions = document.getElementById('moduleOptions');
     const groupInput = document.getElementById('groupInput');
     const intakeGroup = document.getElementById('intakeGroup');
-    const intakeSelect = document.getElementById('intakeSelect');
+    const intakeInput = document.getElementById('intakeInput');
+    const intakeOptions = document.getElementById('intakeOptions');
+    const intakeHelp = document.getElementById('intakeHelp');
     const phaseDropdown = document.getElementById('phaseDropdown');
     const phaseBtn = phaseDropdown.querySelector('.dropdown-btn');
     const phaseList = phaseDropdown.querySelector('.dropdown-list');
@@ -569,6 +580,49 @@
     let cachedModules = [];
     let intakesConfig = {};
     let selectedIntake = '';
+    let intakeModuleCode = '';
+    let intakesLoaded = false;
+    let intakesLoading = false;
+
+    function normalizeIntakesConfigClient(config) {
+      const normalized = {};
+      if (!config || typeof config !== 'object') return normalized;
+      Object.keys(config).forEach((key) => {
+        const moduleCode = (key || '').toString().trim().toUpperCase();
+        if (!moduleCode) return;
+        const rawValues = Array.isArray(config[key]) ? config[key] : [];
+        const values = [];
+        rawValues.forEach((value) => {
+          const intake = (value || '').toString().trim();
+          if (intake && !values.includes(intake)) values.push(intake);
+        });
+        normalized[moduleCode] = values;
+      });
+      return normalized;
+    }
+
+    function setIntakeFieldState(opts = {}) {
+      const mode = opts.mode || 'hidden';
+      const value = opts.value || '';
+      const help = opts.help || '';
+      const placeholder = opts.placeholder || '';
+      const suggestions = Array.isArray(opts.suggestions) ? opts.suggestions : [];
+      intakeGroup.hidden = (mode === 'hidden');
+      intakeInput.value = value;
+      intakeInput.placeholder = placeholder;
+      intakeInput.disabled = !!opts.disabled;
+      intakeInput.readOnly = !!opts.readOnly;
+      if (suggestions.length) intakeInput.setAttribute('list', 'intakeOptions');
+      else intakeInput.removeAttribute('list');
+      intakeHelp.textContent = help;
+      intakeOptions.innerHTML = '';
+      suggestions.forEach((ik) => {
+        const opt = document.createElement('option');
+        opt.value = ik;
+        intakeOptions.appendChild(opt);
+      });
+      selectedIntake = value.trim();
+    }
 
     function renderModuleOptions(filterValue = '') {
       if (!comboOpen) return;
@@ -590,7 +644,8 @@
           moduleInput.value = mod;
           closeModuleOptions();
           updateIntakeSelector(mod);
-          groupInput.focus();
+          if (intakeGroup.hidden || intakeInput.readOnly) groupInput.focus();
+          else intakeInput.focus();
         });
         moduleOptions.appendChild(option);
       });
@@ -618,33 +673,77 @@
     }
 
     async function fetchIntakesConfig() {
+      intakesLoading = true;
       try {
         const resp = await fetch('/api/intakes', { cache: 'no-store' });
         if (!resp.ok) return;
-        intakesConfig = await resp.json();
+        intakesConfig = normalizeIntakesConfigClient(await resp.json());
       } catch (err) {
         console.warn('Failed to load intakes config', err);
+      } finally {
+        intakesLoaded = true;
+        intakesLoading = false;
+        updateIntakeSelector(moduleInput.value.trim().toUpperCase());
       }
     }
 
     function updateIntakeSelector(moduleCode) {
-      const intakes = intakesConfig[moduleCode] || [];
-      if (intakes.length <= 1) {
-        intakeGroup.hidden = true;
-        selectedIntake = intakes[0] || '';
+      const normalizedModule = (moduleCode || '').trim().toUpperCase();
+      if (!normalizedModule) {
+        intakeModuleCode = '';
+        setIntakeFieldState({ mode: 'hidden', value: '', help: '' });
         return;
       }
-      intakeGroup.hidden = false;
-      intakeSelect.innerHTML = '';
-      intakes.forEach(ik => {
-        const o = document.createElement('option');
-        o.value = ik; o.textContent = ik;
-        intakeSelect.appendChild(o);
+      if (normalizedModule !== intakeModuleCode) {
+        selectedIntake = '';
+        intakeModuleCode = normalizedModule;
+      }
+      if (intakesLoading && !intakesLoaded) {
+        setIntakeFieldState({
+          mode: 'loading',
+          value: '',
+          placeholder: 'Loading intakes…',
+          help: 'Loading intake options from admin settings.',
+          disabled: true
+        });
+        return;
+      }
+      const intakes = intakesConfig[normalizedModule] || [];
+      if (!intakes.length) {
+        setIntakeFieldState({
+          mode: 'manual',
+          value: selectedIntake,
+          placeholder: 'Enter intake manually',
+          help: 'No intake is configured for this module yet. You can type it manually.',
+          disabled: false,
+          readOnly: false
+        });
+        return;
+      }
+      if (intakes.length === 1) {
+        setIntakeFieldState({
+          mode: 'single',
+          value: intakes[0],
+          help: 'Auto-filled from admin intake settings.',
+          disabled: false,
+          readOnly: true
+        });
+        return;
+      }
+      const nextValue = intakes.includes(selectedIntake) ? selectedIntake : intakes[0];
+      setIntakeFieldState({
+        mode: 'multiple',
+        value: nextValue,
+        placeholder: 'Choose or type intake',
+        help: 'Multiple active intakes found for this module.',
+        suggestions: intakes,
+        disabled: false,
+        readOnly: false
       });
-      selectedIntake = intakes[0];
     }
 
-    intakeSelect.addEventListener('change', () => { selectedIntake = intakeSelect.value; });
+    intakeInput.addEventListener('input', () => { selectedIntake = intakeInput.value.trim(); });
+    intakeInput.addEventListener('change', () => { selectedIntake = intakeInput.value.trim(); });
 
     async function fetchChallenge() {
       if (!activeSession) return;
@@ -704,7 +803,7 @@
         groupInput.focus();
       return;
     }
-      const intake = selectedIntake;
+      const intake = intakeInput.disabled ? selectedIntake : intakeInput.value.trim();
       const sid = buildSessionId(moduleCode, groupNumber, intake);
       const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber, i: intake };
       const frag = encodePayload(sessionPayload);
@@ -773,6 +872,7 @@
     });
 
     fetchModuleSuggestions();
+    updateIntakeSelector(moduleInput.value.trim().toUpperCase());
     fetchIntakesConfig();
   })();
   </script>

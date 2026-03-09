@@ -347,6 +347,7 @@ var STATUS_COLORS = {
 };
 var EMAIL_PHRASES = { 'Absent': "haven't attended", 'Late': 'were late for', 'Late from break': 'missed a break check-in during', 'Left Early': 'left early from', 'Multiple issues': 'had multiple attendance issues during' };
 var ISSUE_PHRASES = { 'Late': 'were late for the session', 'Late from break': 'were late returning from break', 'Left Early': 'left early' };
+var NO_INTAKE_KEY = '__NO_INTAKE__';
 var dateFmt = new Intl.DateTimeFormat(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' });
 var timeFmt = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' });
 
@@ -432,10 +433,17 @@ function toLocalDate(ds) {
   var parts = ds.split('-').map(Number);
   return dateFmt.format(new Date(parts[0], (parts[1]||1)-1, parts[2]||1));
 }
+function normalizeIntake(v) { return (v || '').toString().trim(); }
+function intakeBucket(v) { var ik = normalizeIntake(v); return ik || NO_INTAKE_KEY; }
+function intakeLabel(v) { var ik = normalizeIntake(v); return ik || 'No intake'; }
+function matchesIntakeFilter(sessionIntake, selectedIntake) {
+  if (!selectedIntake) return true;
+  return intakeBucket(sessionIntake) === selectedIntake;
+}
 function readableLabel(s) {
   var mod = s.module ? s.module.toUpperCase() : '';
   var grp = s.group ? 'Group ' + s.group : '';
-  var ik = s.intake || '';
+  var ik = intakeLabel(s.intake);
   var parts = [mod, grp, ik].filter(Boolean);
   return parts.join(' — ') || s.sid;
 }
@@ -468,7 +476,8 @@ function ingestRows(rows) {
     var mod = (row.module || row.Module || '').toString().trim().toUpperCase();
     var grp = (row.group || row.Group || '').toString().trim();
     if (grp) { var gm = grp.match(groupRe); if (gm) grp = gm[1]; }
-    var intake = (row.intake || row.Intake || '').toString().trim();
+    var intake = normalizeIntake(row.intake || row.Intake || '');
+    var intakeKey = intakeBucket(intake);
 
     var key = sid + '__' + intake + '__' + date;
     var sess = state.sessions.get(key);
@@ -493,11 +502,11 @@ function ingestRows(rows) {
     if (mod) {
       state.allModules.add(mod);
       if (!state.moduleIntakes.has(mod)) state.moduleIntakes.set(mod, new Set());
-      if (intake) state.moduleIntakes.get(mod).add(intake);
-      var miKey = mod + '__' + intake;
+      state.moduleIntakes.get(mod).add(intakeKey);
+      var miKey = mod + '__' + intakeKey;
       if (!state.moduleIntakeGroups.has(miKey)) state.moduleIntakeGroups.set(miKey, new Set());
       if (grp) state.moduleIntakeGroups.get(miKey).add(grp);
-      var mgKey = mod + '__' + grp + '__' + intake;
+      var mgKey = mod + '__' + grp + '__' + intakeKey;
       if (!state.modGroupStudents.has(mgKey)) state.modGroupStudents.set(mgKey, new Set());
       state.modGroupStudents.get(mgKey).add(studentId);
     }
@@ -546,14 +555,15 @@ function buildIssuesDetail(issues) {
 
 function rosterForModGroup(mod, grp, intake) {
   if (!state.rosterMap.size) return new Set();
+  var normalizedIntake = normalizeIntake(intake);
   if (state.rosterModGroup.size) {
     var scoped = new Set();
     state.rosterModGroup.forEach(function(mg, id) {
-      if (mg.module === mod && (mg.group === grp || !mg.group) && (mg.intake === intake || !mg.intake)) scoped.add(id);
+      if (mg.module === mod && (mg.group === grp || !mg.group) && (normalizeIntake(mg.intake) === normalizedIntake || !mg.intake)) scoped.add(id);
     });
     if (scoped.size) return scoped;
   }
-  var mgKey = mod + '__' + grp + '__' + intake;
+  var mgKey = mod + '__' + grp + '__' + intakeBucket(normalizedIntake);
   var checkedIn = state.modGroupStudents.get(mgKey);
   if (checkedIn) {
     var scoped = new Set();
@@ -569,7 +579,7 @@ function buildSessionAnalytics(sess) {
   var activePhases = new Set(sess.phaseUsage);
   var scopedRoster = rosterForModGroup(sess.module, sess.group, sess.intake);
   var combined = new Set();
-  var mgKey = sess.module + '__' + sess.group + '__' + sess.intake;
+  var mgKey = sess.module + '__' + sess.group + '__' + intakeBucket(sess.intake);
   var mgs = state.modGroupStudents.get(mgKey);
   if (mgs) mgs.forEach(function(id) { combined.add(id); });
   scopedRoster.forEach(function(id) { combined.add(id); });
@@ -624,7 +634,7 @@ function populateIntakeSelect() {
   var intakes = state.moduleIntakes.get(mod);
   if (!intakes) return;
   Array.from(intakes).sort().forEach(function(ik) {
-    var o = document.createElement('option'); o.value = ik; o.textContent = ik;
+    var o = document.createElement('option'); o.value = ik; o.textContent = intakeLabel(ik === NO_INTAKE_KEY ? '' : ik);
     if (ik === state.sel.intake) o.selected = true;
     el.intakeFilterSelect.appendChild(o);
   });
@@ -665,7 +675,7 @@ function populateSessionDateSelect() {
   var dates = new Set();
   state.sessions.forEach(function(s) {
     if (mod && s.module !== mod) return;
-    if (intake && s.intake !== intake) return;
+    if (!matchesIntakeFilter(s.intake, intake)) return;
     if (grp && grp !== 'all' && s.group !== grp) return;
     dates.add(s.date);
   });
@@ -931,7 +941,7 @@ function getFilteredSessions() {
   var mod = state.sel.module, intake = state.sel.intake, grp = state.sel.group;
   return state.sessionKeys.map(function(k) { return state.sessions.get(k); }).filter(function(s) {
     if (mod && s.module !== mod) return false;
-    if (intake && s.intake !== intake) return false;
+    if (!matchesIntakeFilter(s.intake, intake)) return false;
     if (grp && grp !== 'all' && s.group !== grp) return false;
     return true;
   });
@@ -1164,12 +1174,13 @@ function renderGroupView(vc) {
     var name = studentName(studentId);
     var sessGroup = (!grp || grp === 'all') ? sGroup : '';
     var sessIntake = '';
-    if (!intake) { var sw = relevantSessions.find(function(s) { return s.students.has(studentId); }); sessIntake = sw ? sw.intake : ''; }
+    if (!intake) { var sw = relevantSessions.find(function(s) { return s.students.has(studentId); }); sessIntake = intakeLabel(sw ? sw.intake : ''); }
     studentRows.push({ studentId: studentId, name: name, group: sessGroup, intake: sessIntake, totalSessions: myTotal, attended: attended, missed: missed, late: late, lateFromBreak: lateFromBreak, leftEarly: leftEarly, issueCount: issueCount, pct: pct, onRoster: onRoster, isU18: isU18, _rowClass: (!onRoster ? 'not-on-roster ' : '') + (pct < 50 ? 'row-red' : pct < 80 ? 'row-amber' : '') });
   });
 
   var header = document.createElement('div'); header.className = 'main-header';
-  var h1 = document.createElement('h1'); h1.textContent = mod + (intake ? ' — ' + intake : '') + (grp && grp !== 'all' ? ' — Group ' + grp : ' — All Groups'); header.appendChild(h1);
+  var intakeTitle = intake ? ' — ' + intakeLabel(intake === NO_INTAKE_KEY ? '' : intake) : '';
+  var h1 = document.createElement('h1'); h1.textContent = mod + intakeTitle + (grp && grp !== 'all' ? ' — Group ' + grp : ' — All Groups'); header.appendChild(h1);
   var sub = document.createElement('div'); sub.className = 'subtitle'; sub.textContent = teachingWeeks + ' teaching weeks · ' + studentRows.length + ' students' + (u18Only ? ' (under-18 only)' : ''); header.appendChild(sub);
   vc.appendChild(header);
 
@@ -1334,7 +1345,7 @@ function renderStudentView(vc) {
       b.textContent = r.issueLabel; td.appendChild(b);
     }}
   ];
-  var tableRows = items.map(function(it) { return { date: toLocalDate(it.sess.date), dateSortKey: it.sess.date, module: it.sess.module, group: it.sess.group ? 'Group ' + it.sess.group : '', intake: it.sess.intake || '', start: it.row.phases.start, break1: it.row.phases.break1, break2: it.row.phases.break2, end: it.row.phases.end, attendance: it.row.attendance, issueLabel: it.row.issueLabel }; });
+  var tableRows = items.map(function(it) { return { date: toLocalDate(it.sess.date), dateSortKey: it.sess.date, module: it.sess.module, group: it.sess.group ? 'Group ' + it.sess.group : '', intake: intakeLabel(it.sess.intake), start: it.row.phases.start, break1: it.row.phases.break1, break2: it.row.phases.break2, end: it.row.phases.end, attendance: it.row.attendance, issueLabel: it.row.issueLabel }; });
   vc.appendChild(buildSortableTable(cols, tableRows));
   el.studentTag.textContent = items.length + ' sessions · ' + pct + '% attendance';
   state.exportRows = tableRows.map(function(r) { return { Date: r.date, Module: r.module, Group: r.group, Intake: r.intake, Start: r.start, 'Break 1': r.break1, 'Break 2': r.break2, End: r.end, Attendance: r.attendance, Issues: r.issueLabel }; });

@@ -134,10 +134,27 @@ function readIntakesConfig() {
   try {
     if (!fs.existsSync(INTAKES_PATH)) return {};
     const raw = fs.readFileSync(INTAKES_PATH, 'utf8');
-    return JSON.parse(raw);
+    return normalizeIntakesConfig(JSON.parse(raw));
   } catch {
     return {};
   }
+}
+
+function normalizeIntakesConfig(input) {
+  const normalized = {};
+  if (!input || typeof input !== 'object' || Array.isArray(input)) return normalized;
+  Object.keys(input).forEach((key) => {
+    const moduleCode = (key || '').toString().trim().toUpperCase();
+    if (!moduleCode) return;
+    const values = Array.isArray(input[key]) ? input[key] : [];
+    const deduped = [];
+    values.forEach((value) => {
+      const intake = (value || '').toString().trim();
+      if (intake && !deduped.includes(intake)) deduped.push(intake);
+    });
+    normalized[moduleCode] = deduped;
+  });
+  return normalized;
 }
 
 function readModuleListFromCsv() {
@@ -565,7 +582,8 @@ const server = http.createServer(async (req, res) => {
       const body = await parseRequestBody(req);
       if (!body || typeof body !== 'object') return sendJson(res, { error: 'Invalid payload' }, 400);
       try {
-        fs.writeFileSync(INTAKES_PATH, JSON.stringify(body, null, 2), 'utf8');
+        const normalized = normalizeIntakesConfig(body);
+        fs.writeFileSync(INTAKES_PATH, JSON.stringify(normalized, null, 2), 'utf8');
         return sendJson(res, { ok: true });
       } catch (err) {
         console.error('Failed to write intakes', err);
