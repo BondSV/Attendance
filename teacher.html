@@ -62,10 +62,17 @@
     .teacher-form {
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
+      grid-template-areas:
+        "module group intake"
+        "phase phase .";
       gap: 10px;
       margin-bottom: 14px;
-      align-items: end;
+      align-items: start;
     }
+    .module-field { grid-area: module; }
+    .group-field { grid-area: group; }
+    .intake-field { grid-area: intake; }
+    .phase-field { grid-area: phase; }
     
     .form-group {
       display: flex;
@@ -418,6 +425,11 @@
 
       .teacher-form {
         grid-template-columns: 1fr;
+        grid-template-areas:
+          "module"
+          "group"
+          "intake"
+          "phase";
         gap: 12px;
       }
 
@@ -451,24 +463,24 @@
     <section class="teacher-section">
       <h1>Teacher Controls</h1>
       <form class="teacher-form">
-        <div class="form-group">
+        <div class="form-group module-field">
           <label for="moduleInput">Module</label>
           <div class="combo">
             <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
             <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
           </div>
         </div>
-        <div class="form-group">
+        <div class="form-group group-field">
           <label for="groupInput">Group</label>
           <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
         </div>
-        <div class="form-group" id="intakeGroup" hidden>
+        <div class="form-group intake-field" id="intakeGroup" hidden>
           <label for="intakeInput">Intake</label>
           <input id="intakeInput" type="text" placeholder="Loading intakes…" autocomplete="off" disabled>
           <datalist id="intakeOptions"></datalist>
           <div class="form-help" id="intakeHelp"></div>
         </div>
-        <div class="form-group">
+        <div class="form-group phase-field">
   <label for="phase">Phase</label>
           <div class="dropdown" id="phaseDropdown">
             <button class="dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
