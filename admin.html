@@ -222,10 +222,11 @@
   <!-- Semester Dates Config -->
   <div class="card">
     <h2>Semester Dates</h2>
-    <p class="card-desc">Configure semester date boundaries for "Current semester" analysis filters. Saved to browser localStorage.</p>
-    <div class="field">
-      <label>Academic Year</label>
-      <input type="text" id="semYearInput" placeholder="e.g. 2025-26" style="max-width:160px">
+    <p class="card-desc">Configure semester date boundaries per academic year for "Current semester" analysis filters. Saved to browser localStorage.</p>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;flex-wrap:wrap">
+      <select id="semYearSelect" style="min-width:140px;padding:8px 10px;border-radius:8px;border:1px solid var(--border);font-size:13px;background:var(--surface)"></select>
+      <button class="btn btn-secondary" id="addSemYearBtn" style="padding:8px 12px;font-size:12px">+ Add year</button>
+      <button class="btn btn-secondary" id="removeSemYearBtn" style="padding:8px 12px;font-size:12px;color:var(--red);border-color:rgba(220,38,38,0.3)">Remove year</button>
     </div>
     <table class="sem-table" style="width:100%;border-collapse:collapse;margin-bottom:12px">
       <thead><tr><th style="text-align:left;padding:6px 8px">Semester</th><th style="text-align:left;padding:6px 8px">Start</th><th style="text-align:left;padding:6px 8px">End</th></tr></thead>
@@ -235,8 +236,10 @@
         <tr><td style="padding:6px 8px;font-weight:600">Semester 3</td><td style="padding:4px 8px"><input type="date" id="sem3From"></td><td style="padding:4px 8px"><input type="date" id="sem3To"></td></tr>
       </tbody>
     </table>
-    <button class="btn" id="saveSemDatesBtn">Save semester dates</button>
-    <button class="btn btn-secondary" id="resetSemDatesBtn" style="margin-left:8px">Reset to defaults</button>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="saveSemDatesBtn">Save</button>
+      <button class="btn btn-secondary" id="resetSemDatesBtn">Reset to defaults</button>
+    </div>
     <div id="semMsg" class="status-msg" style="display:none;margin-top:10px"></div>
   </div>
 
@@ -681,7 +684,7 @@ $('tplTextarea').addEventListener('input', () => {
 
 switchTplTab('Absent');
 
-// ── Semester Dates Config ──
+// ── Semester Dates Config (multi-year register) ──
 function semDefaults(yearLabel) {
   const parts = yearLabel.split('-');
   const startYear = parseInt(parts[0], 10);
@@ -699,13 +702,36 @@ function currentAcademicYearLabel() {
   return (m > 9 || (m === 9 && d >= 15)) ? y + '-' + String(y + 1).slice(2) : (y - 1) + '-' + String(y).slice(2);
 }
 
-function loadSemDates() {
-  const yearInput = $('semYearInput');
-  const yearLabel = yearInput.value || currentAcademicYearLabel();
-  yearInput.value = yearLabel;
-  let stored = null;
-  try { stored = JSON.parse(localStorage.getItem('att_semester_dates') || 'null'); } catch(e) {}
-  const data = (stored && stored[yearLabel]) ? stored[yearLabel] : semDefaults(yearLabel);
+function readAllSemData() {
+  try { return JSON.parse(localStorage.getItem('att_semester_dates') || '{}'); } catch(e) { return {}; }
+}
+
+function writeAllSemData(data) {
+  localStorage.setItem('att_semester_dates', JSON.stringify(data));
+}
+
+function populateSemYearSelect(selectYear) {
+  const sel = $('semYearSelect');
+  const stored = readAllSemData();
+  const years = Object.keys(stored).sort();
+  const curYear = currentAcademicYearLabel();
+  if (years.indexOf(curYear) === -1) years.push(curYear);
+  years.sort();
+  sel.innerHTML = '';
+  years.forEach(y => {
+    const opt = document.createElement('option'); opt.value = y; opt.textContent = y;
+    sel.appendChild(opt);
+  });
+  if (selectYear && years.indexOf(selectYear) !== -1) sel.value = selectYear;
+  else if (years.indexOf(curYear) !== -1) sel.value = curYear;
+  loadSemFields();
+}
+
+function loadSemFields() {
+  const yearLabel = $('semYearSelect').value;
+  if (!yearLabel) return;
+  const stored = readAllSemData();
+  const data = stored[yearLabel] || semDefaults(yearLabel);
   $('sem1From').value = data.sem1 ? data.sem1.from : '';
   $('sem1To').value = data.sem1 ? data.sem1.to : '';
   $('sem2From').value = data.sem2 ? data.sem2.from : '';
@@ -714,31 +740,54 @@ function loadSemDates() {
   $('sem3To').value = data.sem3 ? data.sem3.to : '';
 }
 
+$('semYearSelect').addEventListener('change', loadSemFields);
+
+$('addSemYearBtn').addEventListener('click', () => {
+  const label = prompt('Enter academic year label (e.g. 2026-27):');
+  if (!label || !label.trim()) return;
+  const yr = label.trim();
+  const stored = readAllSemData();
+  if (!stored[yr]) {
+    stored[yr] = semDefaults(yr);
+    writeAllSemData(stored);
+  }
+  populateSemYearSelect(yr);
+  showSemMsg('Added ' + yr, 'success');
+});
+
+$('removeSemYearBtn').addEventListener('click', () => {
+  const yr = $('semYearSelect').value;
+  if (!yr) return;
+  if (!confirm('Remove semester dates for ' + yr + '?')) return;
+  const stored = readAllSemData();
+  delete stored[yr];
+  writeAllSemData(stored);
+  populateSemYearSelect();
+  showSemMsg('Removed ' + yr, 'info');
+});
+
 $('saveSemDatesBtn').addEventListener('click', () => {
-  const yearLabel = $('semYearInput').value.trim();
-  if (!yearLabel) { showSemMsg('Enter an academic year label', 'error'); return; }
-  let stored = {};
-  try { stored = JSON.parse(localStorage.getItem('att_semester_dates') || '{}'); } catch(e) {}
+  const yearLabel = $('semYearSelect').value;
+  if (!yearLabel) { showSemMsg('Select an academic year first', 'error'); return; }
+  const stored = readAllSemData();
   stored[yearLabel] = {
     sem1: { from: $('sem1From').value, to: $('sem1To').value },
     sem2: { from: $('sem2From').value, to: $('sem2To').value },
     sem3: { from: $('sem3From').value, to: $('sem3To').value }
   };
-  localStorage.setItem('att_semester_dates', JSON.stringify(stored));
-  showSemMsg('Semester dates saved for ' + yearLabel, 'success');
+  writeAllSemData(stored);
+  showSemMsg('Saved semester dates for ' + yearLabel, 'success');
 });
 
 $('resetSemDatesBtn').addEventListener('click', () => {
-  const yearLabel = $('semYearInput').value.trim() || currentAcademicYearLabel();
-  $('semYearInput').value = yearLabel;
+  const yearLabel = $('semYearSelect').value;
+  if (!yearLabel) return;
   const defs = semDefaults(yearLabel);
   $('sem1From').value = defs.sem1.from; $('sem1To').value = defs.sem1.to;
   $('sem2From').value = defs.sem2.from; $('sem2To').value = defs.sem2.to;
   $('sem3From').value = defs.sem3.from; $('sem3To').value = defs.sem3.to;
   showSemMsg('Reset to defaults for ' + yearLabel, 'info');
 });
-
-$('semYearInput').addEventListener('change', loadSemDates);
 
 function showSemMsg(msg, type) {
   const el = $('semMsg');
@@ -748,7 +797,7 @@ function showSemMsg(msg, type) {
   setTimeout(() => { el.style.display = 'none'; }, 3000);
 }
 
-loadSemDates();
+populateSemYearSelect();
 
 // ── Init ──
 loadIntakes();

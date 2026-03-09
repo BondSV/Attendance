@@ -960,17 +960,13 @@ function renderSessionView(vc) {
   ];
   statItems.forEach(function(item) {
     var card = document.createElement('div'); card.className = 'stat-card';
-    if (item[3]) card.style.background = 'rgba(220,38,38,0.04)';
+    if (item[3]) { card.style.background = 'rgba(220,38,38,0.12)'; card.style.borderColor = 'rgba(220,38,38,0.25)'; }
     var l = document.createElement('div'); l.className = 'stat-label'; l.textContent = item[1]; card.appendChild(l);
     var v = document.createElement('div'); v.className = 'stat-value'; v.textContent = item[0]; card.appendChild(v);
     if (item[2]) { var m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = item[2]; card.appendChild(m); }
     stats.appendChild(card);
   });
   vc.appendChild(stats);
-
-  var statusCounts = {};
-  a.rows.forEach(function(r) { var ds = r.displayStatus; statusCounts[ds] = (statusCounts[ds] || 0) + 1; });
-  vc.appendChild(buildStackedBar(statusCounts, a.total));
 
   if (a.outOfRoster.length) {
     var alertEl = document.createElement('div'); alertEl.className = 'alert-block warning';
@@ -1004,8 +1000,18 @@ function renderSessionView(vc) {
     { key: 'isU18', label: 'Under 18', render: function(td,r) { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } },
     { key: '_email', label: 'Email', render: function(td,r) {
       if (r.attendance === 'Present' && r.issues.length === 0) return;
-      var mLink = document.createElement('a'); mLink.href = mailtoLink(sess, r); mLink.title = 'Send email'; mLink.textContent = '✉'; mLink.style.cssText = 'font-size:16px;text-decoration:none;margin-right:8px;cursor:pointer'; td.appendChild(mLink);
-      var dlLink = document.createElement('a'); dlLink.href = '#'; dlLink.title = 'Download .eml'; dlLink.textContent = '⬇'; dlLink.style.cssText = 'font-size:16px;text-decoration:none;cursor:pointer';
+      td.style.cssText = 'white-space:nowrap';
+      var mLink = document.createElement('a'); mLink.href = mailtoLink(sess, r); mLink.title = 'Send via email client';
+      mLink.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2563eb" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/></svg>';
+      mLink.style.cssText = 'display:inline-flex;align-items:center;margin-right:12px;cursor:pointer;vertical-align:middle;opacity:0.85;transition:opacity 0.15s';
+      mLink.addEventListener('mouseenter', function() { mLink.style.opacity = '1'; });
+      mLink.addEventListener('mouseleave', function() { mLink.style.opacity = '0.85'; });
+      td.appendChild(mLink);
+      var dlLink = document.createElement('a'); dlLink.href = '#'; dlLink.title = 'Download .eml file';
+      dlLink.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#d97706" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+      dlLink.style.cssText = 'display:inline-flex;align-items:center;cursor:pointer;vertical-align:middle;opacity:0.85;transition:opacity 0.15s';
+      dlLink.addEventListener('mouseenter', function() { dlLink.style.opacity = '1'; });
+      dlLink.addEventListener('mouseleave', function() { dlLink.style.opacity = '0.85'; });
       dlLink.addEventListener('click', function(e) {
         e.preventDefault();
         var blob = new Blob([emlContent(sess, r)], { type: 'message/rfc822' }); var url = URL.createObjectURL(blob);
@@ -1020,8 +1026,12 @@ function renderSessionView(vc) {
 
   if (flagged.length) {
     var emailBar = document.createElement('div'); emailBar.style.cssText = 'display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px';
-    var dlAllZip = document.createElement('button'); dlAllZip.className = 'sb-btn export'; dlAllZip.style.cssText = 'width:auto;display:inline-flex';
-    dlAllZip.textContent = 'Download all emails (ZIP · ' + flagged.length + ')';
+    var dlAllZip = document.createElement('button');
+    dlAllZip.style.cssText = 'display:inline-flex;align-items:center;gap:8px;padding:10px 18px;border-radius:10px;border:1px solid var(--border-strong);background:var(--surface);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.15s;box-shadow:0 1px 3px rgba(0,0,0,0.06)';
+    dlAllZip.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>';
+    var dlSpan = document.createElement('span'); dlSpan.textContent = 'Download all emails (ZIP \u00b7 ' + flagged.length + ')'; dlAllZip.appendChild(dlSpan);
+    dlAllZip.addEventListener('mouseenter', function() { dlAllZip.style.borderColor = 'var(--primary)'; dlAllZip.style.color = 'var(--primary)'; });
+    dlAllZip.addEventListener('mouseleave', function() { dlAllZip.style.borderColor = 'var(--border-strong)'; dlAllZip.style.color = 'var(--text)'; });
     dlAllZip.addEventListener('click', function() {
       if (typeof JSZip === 'undefined') { showToast('JSZip not loaded'); return; }
       var zip = new JSZip();
@@ -1119,9 +1129,17 @@ function renderGroupView(vc) {
     s.students.forEach(function(_, id) { allStudents.add(id); if (!studentGroupMap.has(id)) studentGroupMap.set(id, s.group); });
   });
 
-  var uniqueDates = new Set();
-  relevantSessions.forEach(function(s) { uniqueDates.add(s.date); });
-  var teachingWeeks = uniqueDates.size;
+  var uniqueWeeks = new Set();
+  relevantSessions.forEach(function(s) {
+    var parts = s.date.split('-').map(Number);
+    var d = new Date(parts[0], parts[1] - 1, parts[2]);
+    var dayNum = d.getDay() || 7;
+    d.setDate(d.getDate() + 4 - dayNum);
+    var yearStart = new Date(d.getFullYear(), 0, 1);
+    var weekNo = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+    uniqueWeeks.add(d.getFullYear() + '-W' + weekNo);
+  });
+  var teachingWeeks = uniqueWeeks.size;
 
   var studentRows = [];
   allStudents.forEach(function(studentId) {
@@ -1130,15 +1148,16 @@ function renderGroupView(vc) {
     var sGroup = studentGroupMap.get(studentId) || '_none';
     var mySessions = sessionsByGroup[sGroup] || [];
     var myTotal = mySessions.length;
-    var attended = 0, missed = 0, leftEarly = 0, sigLate = 0, issueCount = 0;
+    var attended = 0, missed = 0, leftEarly = 0, late = 0, lateFromBreak = 0, issueCount = 0;
     mySessions.forEach(function(sess) {
       var a = buildSessionAnalytics(sess);
       var row = a.rows.find(function(r) { return r.studentId === studentId; });
       if (!row || row.attendance === 'Absent') { missed++; return; }
       attended++;
       if (row.issues && row.issues.length > 0) issueCount++;
+      if (row.issues.indexOf('Late') !== -1) late++;
+      if (row.issues.indexOf('Late from break') !== -1) lateFromBreak++;
       if (row.issues.indexOf('Left Early') !== -1) leftEarly++;
-      if (row.issues.indexOf('Late') !== -1) sigLate++;
     });
     var pct = myTotal ? Math.round(attended / myTotal * 100) : 0;
     var onRoster = state.rosterMap.size === 0 || state.rosterMap.has(studentId);
@@ -1146,7 +1165,7 @@ function renderGroupView(vc) {
     var sessGroup = (!grp || grp === 'all') ? sGroup : '';
     var sessIntake = '';
     if (!intake) { var sw = relevantSessions.find(function(s) { return s.students.has(studentId); }); sessIntake = sw ? sw.intake : ''; }
-    studentRows.push({ studentId: studentId, name: name, group: sessGroup, intake: sessIntake, totalSessions: myTotal, attended: attended, missed: missed, leftEarly: leftEarly, late: sigLate, issueCount: issueCount, pct: pct, onRoster: onRoster, isU18: isU18, _rowClass: (!onRoster ? 'not-on-roster ' : '') + (pct < 50 ? 'row-red' : pct < 80 ? 'row-amber' : '') });
+    studentRows.push({ studentId: studentId, name: name, group: sessGroup, intake: sessIntake, totalSessions: myTotal, attended: attended, missed: missed, late: late, lateFromBreak: lateFromBreak, leftEarly: leftEarly, issueCount: issueCount, pct: pct, onRoster: onRoster, isU18: isU18, _rowClass: (!onRoster ? 'not-on-roster ' : '') + (pct < 50 ? 'row-red' : pct < 80 ? 'row-amber' : '') });
   });
 
   var header = document.createElement('div'); header.className = 'main-header';
@@ -1171,13 +1190,17 @@ function renderGroupView(vc) {
   if (!grp || grp === 'all') cols.push({ key: 'group', label: 'Group' });
   if (!intake) cols.push({ key: 'intake', label: 'Intake' });
   cols.push(
-    { key: 'totalSessions', label: 'Total' }, { key: 'attended', label: 'Attended' }, { key: 'missed', label: 'Absent' },
-    { key: 'leftEarly', label: 'Left Early' }, { key: 'late', label: 'Sig. Late' },
+    { key: 'totalSessions', label: 'Total' },
+    { key: 'attended', label: 'Attended' },
+    { key: 'missed', label: 'Absent' },
     { key: 'pct', label: 'Attendance %', render: function(td,r) { td.textContent = r.pct + '%'; td.style.fontWeight = '700'; if (r.pct >= 80) td.style.color = 'var(--green)'; else if (r.pct >= 50) td.style.color = 'var(--amber)'; else td.style.color = 'var(--red)'; } },
+    { key: 'late', label: 'Late' },
+    { key: 'lateFromBreak', label: 'Late from Break' },
+    { key: 'leftEarly', label: 'Left Early' },
     { key: 'isU18', label: 'Under 18', render: function(td,r) { if (r.isU18) { td.textContent = 'YES'; td.className = 'u18-flag'; } } }
   );
   vc.appendChild(buildSortableTable(cols, studentRows));
-  state.exportRows = studentRows.map(function(r) { return { 'Student ID': r.studentId, Name: r.name||'', Group: r.group, Intake: r.intake, 'Total Sessions': r.totalSessions, Attended: r.attended, Absent: r.missed, 'Left Early': r.leftEarly, 'Significantly Late': r.late, 'Attendance %': r.pct, 'Under 18': r.isU18 ? 'YES' : '' }; });
+  state.exportRows = studentRows.map(function(r) { return { 'Student ID': r.studentId, Name: r.name||'', Group: r.group, Intake: r.intake, 'Total Sessions': r.totalSessions, Attended: r.attended, Absent: r.missed, 'Attendance %': r.pct, Late: r.late, 'Late from Break': r.lateFromBreak, 'Left Early': r.leftEarly, 'Under 18': r.isU18 ? 'YES' : '' }; });
   el.exportXlsxBtn.disabled = false; el.exportCsvBtn.disabled = false;
 }
 
@@ -1267,7 +1290,7 @@ function renderStudentView(vc) {
   ];
   statItems.forEach(function(item) {
     var card = document.createElement('div'); card.className = 'stat-card';
-    if (item[3]) card.style.background = 'rgba(220,38,38,0.04)';
+    if (item[3]) { card.style.background = 'rgba(220,38,38,0.12)'; card.style.borderColor = 'rgba(220,38,38,0.25)'; }
     var l = document.createElement('div'); l.className = 'stat-label'; l.textContent = item[1]; card.appendChild(l);
     var v = document.createElement('div'); v.className = 'stat-value'; v.textContent = item[0]; card.appendChild(v);
     if (item[2]) { var m = document.createElement('div'); m.className = 'stat-meta'; m.textContent = item[2]; card.appendChild(m); }
