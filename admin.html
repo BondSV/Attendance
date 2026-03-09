@@ -24,7 +24,7 @@
     .card-desc { font-size: 13px; color: var(--text-sec); margin-bottom: 14px; }
     .field { margin-bottom: 12px; }
     .field label { display: block; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--muted); margin-bottom: 4px; }
-    .field textarea, .field input[type="text"], .field input[type="file"] {
+    .field textarea, .field input[type="text"], .field input[type="file"], .sem-table input[type="date"] {
       width: 100%; border: 1px solid var(--border); border-radius: 8px; padding: 10px 12px;
       font-size: 13px; font-family: "JetBrains Mono", "Fira Code", monospace;
     }
@@ -35,6 +35,10 @@
       padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; border: 1px solid var(--border);
       background: var(--surface); color: var(--text); transition: all 0.15s;
     }
+    .btn-secondary {
+      background: transparent; border-color: var(--border); color: var(--text-muted);
+    }
+    .btn-secondary:hover { background: var(--surface); color: var(--text); }
     .btn:hover { background: var(--bg); }
     .btn.primary { background: var(--primary); color: #fff; border-color: var(--primary); }
     .btn.primary:hover { opacity: 0.9; }
@@ -193,13 +197,13 @@
   <!-- Email Templates -->
   <div class="card">
     <h2>Email Templates</h2>
-    <p class="card-desc">Configure the email body sent to students for each attendance status. Use placeholders: <code>{greeting}</code>, <code>{name}</code>, <code>{student_id}</code>, <code>{module}</code>, <code>{date}</code>, <code>{status_phrase}</code>.</p>
+    <p class="card-desc">Configure the email body sent to students for each attendance status. Use placeholders: <code>{greeting}</code>, <code>{name}</code>, <code>{student_id}</code>, <code>{module}</code>, <code>{date}</code>, <code>{status_phrase}</code>, <code>{issues_detail}</code>.</p>
     <div class="tpl-tabs" id="tplTabs">
       <button class="tpl-tab active" data-status="Absent">Absent</button>
       <button class="tpl-tab" data-status="Late">Late</button>
       <button class="tpl-tab" data-status="Late from break">Late from break</button>
       <button class="tpl-tab" data-status="Left Early">Left Early</button>
-      <button class="tpl-tab" data-status="Partial">Partial</button>
+      <button class="tpl-tab" data-status="Multiple issues">Multiple issues</button>
     </div>
     <div class="field" style="margin-top:0">
       <textarea id="tplTextarea" rows="12"></textarea>
@@ -213,6 +217,27 @@
       <input type="text" id="u18ReportEmail" value="studentattendance@rave.ac.uk" placeholder="studentattendance@rave.ac.uk">
     </div>
     <div class="status-msg info">Email templates are stored in browser localStorage. A server-backed rich text editor will be available in a future update.</div>
+  </div>
+
+  <!-- Semester Dates Config -->
+  <div class="card">
+    <h2>Semester Dates</h2>
+    <p class="card-desc">Configure semester date boundaries for "Current semester" analysis filters. Saved to browser localStorage.</p>
+    <div class="field">
+      <label>Academic Year</label>
+      <input type="text" id="semYearInput" placeholder="e.g. 2025-26" style="max-width:160px">
+    </div>
+    <table class="sem-table" style="width:100%;border-collapse:collapse;margin-bottom:12px">
+      <thead><tr><th style="text-align:left;padding:6px 8px">Semester</th><th style="text-align:left;padding:6px 8px">Start</th><th style="text-align:left;padding:6px 8px">End</th></tr></thead>
+      <tbody>
+        <tr><td style="padding:6px 8px;font-weight:600">Semester 1</td><td style="padding:4px 8px"><input type="date" id="sem1From"></td><td style="padding:4px 8px"><input type="date" id="sem1To"></td></tr>
+        <tr><td style="padding:6px 8px;font-weight:600">Semester 2</td><td style="padding:4px 8px"><input type="date" id="sem2From"></td><td style="padding:4px 8px"><input type="date" id="sem2To"></td></tr>
+        <tr><td style="padding:6px 8px;font-weight:600">Semester 3</td><td style="padding:4px 8px"><input type="date" id="sem3From"></td><td style="padding:4px 8px"><input type="date" id="sem3To"></td></tr>
+      </tbody>
+    </table>
+    <button class="btn" id="saveSemDatesBtn">Save semester dates</button>
+    <button class="btn btn-secondary" id="resetSemDatesBtn" style="margin-left:8px">Reset to defaults</button>
+    <div id="semMsg" class="status-msg" style="display:none;margin-top:10px"></div>
   </div>
 
 </div>
@@ -604,11 +629,14 @@ const TPL_STATUSES = [
   { key: 'late', label: 'Late', phrase: 'were late for' },
   { key: 'latefrombreak', label: 'Late from break', phrase: 'missed a break check-in during' },
   { key: 'leftearly', label: 'Left Early', phrase: 'left early from' },
-  { key: 'partial', label: 'Partial', phrase: 'had incomplete attendance for' }
+  { key: 'multiple', label: 'Multiple issues', phrase: 'had multiple attendance issues during' }
 ];
 
-function defaultTpl(phrase) {
-  return '{greeting},\n\nOur records show you ' + phrase + ' the {module} session on {date}. Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you\'re absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you\'re away for more than 7 days, please send evidence (e.g. a doctor\'s note) to studentattendance@rave.ac.uk\n\nIf you\'re having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.';
+function defaultTpl(phrase, includeIssuesDetail) {
+  var base = '{greeting},\n\nOur records show you ' + phrase + ' the {module} session on {date}.';
+  if (includeIssuesDetail) base += '\n{issues_detail}';
+  base += ' Students MUST maintain at least 70% attendance, which is also a UKVI visa requirement.\n\nIf you\'re absent for fewer than 7 days, please complete this form: https://forms.office.com/e/1RyEs3Bmr6\nIf you\'re away for more than 7 days, please send evidence (e.g. a doctor\'s note) to studentattendance@rave.ac.uk\n\nIf you\'re having difficulties with this module, please contact the Module Leader. For broader course issues, you can contact the Course Leader, Dr Catherine Bedwei-Majdoub (c.bedwei-majdoub@rave.ac.uk).\n\nFor support with health, wellbeing, disability, finance, accommodation or study skills, please contact Student Services: daily Teams drop-in 1.00-2.00pm (Mon-Fri), in person at R1 level 3, by email at studentservices@rave.ac.uk, or by phone on 0203 040 3501.';
+  return base;
 }
 
 let activeTplStatus = 'Absent';
@@ -623,10 +651,15 @@ function loadTplForStatus(statusLabel) {
   if (!key) return '';
   const saved = localStorage.getItem(key);
   if (saved) return saved;
+  // Migrate from old 'partial' key to 'multiple'
+  if (statusLabel === 'Multiple issues') {
+    const oldPartial = localStorage.getItem('att_email_tpl_partial');
+    if (oldPartial) { localStorage.setItem(key, oldPartial); localStorage.removeItem('att_email_tpl_partial'); return oldPartial; }
+  }
   const oldUniversal = localStorage.getItem('att_email_template');
   if (oldUniversal) return oldUniversal;
   const entry = TPL_STATUSES.find(s => s.label === statusLabel);
-  return defaultTpl(entry.phrase);
+  return defaultTpl(entry.phrase, entry.key === 'multiple');
 }
 
 function switchTplTab(statusLabel) {
@@ -647,6 +680,75 @@ $('tplTextarea').addEventListener('input', () => {
 });
 
 switchTplTab('Absent');
+
+// ── Semester Dates Config ──
+function semDefaults(yearLabel) {
+  const parts = yearLabel.split('-');
+  const startYear = parseInt(parts[0], 10);
+  const endYear = startYear + 1;
+  return {
+    sem1: { from: startYear + '-09-15', to: endYear + '-01-14' },
+    sem2: { from: endYear + '-01-15', to: endYear + '-05-14' },
+    sem3: { from: endYear + '-05-15', to: endYear + '-09-14' }
+  };
+}
+
+function currentAcademicYearLabel() {
+  const now = new Date();
+  const y = now.getFullYear(), m = now.getMonth() + 1, d = now.getDate();
+  return (m > 9 || (m === 9 && d >= 15)) ? y + '-' + String(y + 1).slice(2) : (y - 1) + '-' + String(y).slice(2);
+}
+
+function loadSemDates() {
+  const yearInput = $('semYearInput');
+  const yearLabel = yearInput.value || currentAcademicYearLabel();
+  yearInput.value = yearLabel;
+  let stored = null;
+  try { stored = JSON.parse(localStorage.getItem('att_semester_dates') || 'null'); } catch(e) {}
+  const data = (stored && stored[yearLabel]) ? stored[yearLabel] : semDefaults(yearLabel);
+  $('sem1From').value = data.sem1 ? data.sem1.from : '';
+  $('sem1To').value = data.sem1 ? data.sem1.to : '';
+  $('sem2From').value = data.sem2 ? data.sem2.from : '';
+  $('sem2To').value = data.sem2 ? data.sem2.to : '';
+  $('sem3From').value = data.sem3 ? data.sem3.from : '';
+  $('sem3To').value = data.sem3 ? data.sem3.to : '';
+}
+
+$('saveSemDatesBtn').addEventListener('click', () => {
+  const yearLabel = $('semYearInput').value.trim();
+  if (!yearLabel) { showSemMsg('Enter an academic year label', 'error'); return; }
+  let stored = {};
+  try { stored = JSON.parse(localStorage.getItem('att_semester_dates') || '{}'); } catch(e) {}
+  stored[yearLabel] = {
+    sem1: { from: $('sem1From').value, to: $('sem1To').value },
+    sem2: { from: $('sem2From').value, to: $('sem2To').value },
+    sem3: { from: $('sem3From').value, to: $('sem3To').value }
+  };
+  localStorage.setItem('att_semester_dates', JSON.stringify(stored));
+  showSemMsg('Semester dates saved for ' + yearLabel, 'success');
+});
+
+$('resetSemDatesBtn').addEventListener('click', () => {
+  const yearLabel = $('semYearInput').value.trim() || currentAcademicYearLabel();
+  $('semYearInput').value = yearLabel;
+  const defs = semDefaults(yearLabel);
+  $('sem1From').value = defs.sem1.from; $('sem1To').value = defs.sem1.to;
+  $('sem2From').value = defs.sem2.from; $('sem2To').value = defs.sem2.to;
+  $('sem3From').value = defs.sem3.from; $('sem3To').value = defs.sem3.to;
+  showSemMsg('Reset to defaults for ' + yearLabel, 'info');
+});
+
+$('semYearInput').addEventListener('change', loadSemDates);
+
+function showSemMsg(msg, type) {
+  const el = $('semMsg');
+  el.textContent = msg;
+  el.className = 'status-msg ' + type;
+  el.style.display = 'block';
+  setTimeout(() => { el.style.display = 'none'; }, 3000);
+}
+
+loadSemDates();
 
 // ── Init ──
 loadIntakes();
