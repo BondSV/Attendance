@@ -4,15 +4,22 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Teacher Attendance Console</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
-      background: linear-gradient(135deg, #f8fafc 0%, #e0e7ff 50%, #dbeafe 100%);
+      background:
+        radial-gradient(ellipse at top left, rgba(37, 99, 235, 0.10), transparent 55%),
+        radial-gradient(ellipse at bottom right, rgba(16, 24, 40, 0.06), transparent 60%),
+        #f4f6fb;
       font-family: 'Inter', system-ui, -apple-system, sans-serif;
       color: #0f172a;
       padding: 16px;
       overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
     }
     
     .container {
@@ -32,8 +39,8 @@
     .teacher-section {
       grid-area: teacher;
       background: linear-gradient(180deg, #2a3b57 0%, #16233a 100%);
-      border-radius: 14px;
-      padding: 18px;
+      border-radius: 20px;
+      padding: 20px;
       border: 1px solid rgba(255, 255, 255, 0.22);
       box-shadow: 0 12px 28px rgba(2, 6, 23, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.14);
       max-width: 552px;
@@ -63,16 +70,29 @@
       display: grid;
       grid-template-columns: 1fr 1fr 1fr;
       grid-template-areas:
-        "module group intake"
-        "phase phase .";
+        "module group intake";
       gap: 10px;
-      margin-bottom: 14px;
       align-items: start;
     }
     .module-field { grid-area: module; }
     .group-field { grid-area: group; }
     .intake-field { grid-area: intake; }
-    .phase-field { grid-area: phase; }
+
+    .teacher-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      flex: 1;
+      gap: 0;
+    }
+
+    .phase-standalone {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      max-width: 160px;
+      padding: 0 0 18px 0;
+    }
     
     .form-group {
       display: flex;
@@ -167,6 +187,11 @@
     }
     
     .group-input {
+      text-align: center;
+      font-weight: 600;
+    }
+
+    #intakeInput {
       text-align: center;
       font-weight: 600;
     }
@@ -270,78 +295,95 @@
     /* STUDENT-FACING STEPS */
     .step1-section {
       grid-area: step1;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 255, 0.85));
+      background: rgba(255, 255, 255, 0.96);
       border-radius: 24px;
-      padding: 20px 28px 32px;
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      border: 1px solid rgba(15, 23, 42, 0.08);
+      padding: 20px 28px 28px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(15, 23, 42, 0.06);
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: space-between;
       text-align: center;
-      gap: 12px;
+      gap: 8px;
       max-width: 552px;
       align-self: stretch;
     }
 
     .step2-section {
       grid-area: step2;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.98), rgba(244, 247, 255, 0.85));
+      background: rgba(255, 255, 255, 0.96);
       border-radius: 24px;
-      padding: 20px 28px 32px;
-      box-shadow: 0 26px 52px rgba(15, 23, 42, 0.12);
-      border: 1px solid rgba(15, 23, 42, 0.08);
+      padding: 20px 28px 28px;
+      box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      border: 1px solid rgba(37, 99, 235, 0.10);
       display: grid;
       grid-template-rows: auto auto 1fr;
-      row-gap: 16px;
+      row-gap: 10px;
       justify-items: center;
       text-align: center;
       grid-row: 1 / 3;
       align-self: stretch;
     }
-    
+
+    /* Step badge — frosted glass pill */
     .step-badge {
       display: inline-flex;
       align-items: center;
       justify-content: center;
       border-radius: 999px;
       font-weight: 800;
-      letter-spacing: 1.3px;
+      letter-spacing: 1.5px;
       text-transform: uppercase;
+      background: linear-gradient(135deg, #e0edff 0%, #cddcf9 100%);
+      color: #3b6eb5;
+      border: 1px solid rgba(96, 165, 250, 0.30);
+      box-shadow:
+        0 4px 14px rgba(96, 165, 250, 0.20),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70);
     }
-    
+
     .step1-section .step-badge {
-      background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-      color: #1e40af;
-      box-shadow: 0 5px 14px rgba(59, 130, 246, 0.24);
-      font-size: 24px;
-      padding: 10px 24px;
+      font-size: 20px;
+      padding: 10px 26px;
     }
-    
+
     .step2-section .step-badge {
-      background: linear-gradient(135deg, #fef3c7, #fde68a);
-      color: #b45309;
-      box-shadow: 0 6px 16px rgba(245, 158, 11, 0.28);
-      font-size: 26px;
+      font-size: 22px;
       padding: 12px 30px;
+      box-shadow:
+        0 6px 18px rgba(96, 165, 250, 0.24),
+        inset 0 1px 0 rgba(255, 255, 255, 0.70);
     }
-    
+
     .step-desc {
-      font-size: 24px;
       color: #1e293b;
       font-weight: 700;
-      line-height: 1.5;
+      line-height: 1.4;
       margin: 0;
       max-width: 100%;
       padding: 0 8px;
     }
-    
-    .step2-section .step-desc {
+
+    .step-heading {
+      font-size: 22px;
+      font-weight: 800;
+      color: #0f172a;
+    }
+
+    .step-sub {
+      font-size: 16px;
+      font-weight: 500;
+      color: #64748b;
+      margin-top: 2px;
+    }
+
+    .step2-section .step-heading {
       font-size: 24px;
-      color: #1e293b;
-      max-width: 100%;
-      margin: 0;
+    }
+
+    .step2-section .step-sub {
+      font-size: 17px;
     }
     
     .qr-container {
@@ -393,15 +435,35 @@
       color: #64748b;
       font-weight: 500;
     }
-    
+
     .step2-section .status-text {
       font-size: 17px;
       font-weight: 600;
       color: #2563eb;
     }
+
+    /* Inline validation error flash */
+    @keyframes flash-error {
+      0%, 100% { border-color: rgba(255, 255, 255, 0.3); box-shadow: none; }
+      20%, 80% { border-color: #ef4444; box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25); }
+    }
+    .flash-error {
+      animation: flash-error 1s ease;
+    }
+    .validation-msg {
+      font-size: 11px;
+      color: #f87171;
+      min-height: 0;
+      overflow: hidden;
+      transition: all 0.3s ease;
+    }
+    .validation-msg:empty {
+      min-height: 0;
+      margin: 0;
+    }
     
     /* Responsive adjustments */
-    @media (max-width: 1024px) {
+    @media (max-width: 860px) {
       .container {
         grid-template-areas: 
           "teacher"
@@ -462,26 +524,28 @@
     <!-- TEACHER CONTROLS - Compact, top-left -->
     <section class="teacher-section">
       <h1>Teacher Controls</h1>
-      <form class="teacher-form">
-        <div class="form-group module-field">
-          <label for="moduleInput">Module</label>
-          <div class="combo">
-            <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
-            <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
+      <div class="teacher-content">
+        <form class="teacher-form">
+          <div class="form-group module-field">
+            <label for="moduleInput">Module</label>
+            <div class="combo">
+              <input id="moduleInput" type="text" placeholder="BSM24105" autocomplete="off" aria-haspopup="listbox" aria-expanded="false">
+              <div class="combo-list" id="moduleOptions" role="listbox" hidden></div>
+            </div>
           </div>
-        </div>
-        <div class="form-group group-field">
-          <label for="groupInput">Group</label>
-          <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
-        </div>
-        <div class="form-group intake-field" id="intakeGroup" hidden>
-          <label for="intakeInput">Intake</label>
-          <input id="intakeInput" type="text" placeholder="Loading intakes…" autocomplete="off" disabled>
-          <datalist id="intakeOptions"></datalist>
-          <div class="form-help" id="intakeHelp"></div>
-        </div>
-        <div class="form-group phase-field">
-  <label for="phase">Phase</label>
+          <div class="form-group group-field">
+            <label for="groupInput">Group</label>
+            <input id="groupInput" class="group-input" type="text" placeholder="1" autocomplete="off" inputmode="numeric" pattern="[0-9]" maxlength="1">
+          </div>
+          <div class="form-group intake-field" id="intakeGroup" hidden>
+            <label for="intakeInput">Intake</label>
+            <input id="intakeInput" type="text" placeholder="Loading intakes…" autocomplete="off" disabled>
+            <datalist id="intakeOptions"></datalist>
+            <div class="form-help" id="intakeHelp"></div>
+          </div>
+        </form>
+        <div class="form-group phase-standalone">
+          <label for="phase">Phase</label>
           <div class="dropdown" id="phaseDropdown">
             <button class="dropdown-btn" type="button" aria-haspopup="listbox" aria-expanded="false">
               <span id="phaseLabel">Start</span>
@@ -495,17 +559,20 @@
             </div>
           </div>
         </div>
-      </form>
-      <div class="teacher-actions">
-        <button class="btn btn-start" id="startBtn">Start</button>
-        <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
+        <div class="teacher-actions">
+          <button class="btn btn-start" id="startBtn">Start</button>
+          <button class="btn btn-stop" id="stopBtn" disabled>Stop</button>
+        </div>
       </div>
     </section>
 
     <!-- STEP 1 - Student app QR -->
     <section class="step1-section">
       <span class="step-badge">Step 1</span>
-      <p class="step-desc">Use your phone camera to scan this code to launch the attendance check-in app</p>
+      <div class="step-desc">
+        <p class="step-heading">Scan with your phone camera</p>
+        <p class="step-sub">to open the check-in app</p>
+      </div>
       <div class="qr-container" id="sessionQr">
         <div class="qr-placeholder">Press Start to generate the QR code</div>
       </div>
@@ -514,7 +581,10 @@
     <!-- STEP 2 - Verification QR (larger, more prominent) -->
     <section class="step2-section">
       <span class="step-badge">Step 2</span>
-      <p class="step-desc">From inside the app, scan this live code to confirm you're in the classroom</p>
+      <div class="step-desc">
+        <p class="step-heading">Scan this code from inside the app</p>
+        <p class="step-sub">this code refreshes automatically every few seconds</p>
+      </div>
       <div class="qr-container" id="verificationQr">
         <div class="qr-placeholder">Press Start to display the verification code</div>
       </div>
@@ -785,6 +855,7 @@
       startBtn.disabled = false;
       stopBtn.disabled = true;
       clearQr(verificationQrEl);
+      sessionQrEl.innerHTML = '<div class="qr-placeholder">Press Start to generate the QR code</div>';
     }
 
     function buildSessionId(moduleCode, groupNumber, intake) {
@@ -806,15 +877,15 @@
       const phase = selectedPhase;
       const origin = DEFAULT_ORIGIN.replace(/\/$/, '');
       if (!validateModule(moduleCode)) {
-        alert('Please enter a valid module code (e.g. BSM24105).');
+        flashError(moduleInput, 'Enter a valid module code (e.g. BSM24105)');
         moduleInput.focus();
         return;
       }
       if (!validateGroup(groupNumber)) {
-        alert('Group must be a single digit (0-9).');
+        flashError(groupInput, 'Group must be a single digit (0–9)');
         groupInput.focus();
-      return;
-    }
+        return;
+      }
       const intake = intakeInput.disabled ? selectedIntake : intakeInput.value.trim();
       const sid = buildSessionId(moduleCode, groupNumber, intake);
       const sessionPayload = { v: 1, sid, p: phase, m: moduleCode, g: groupNumber, i: intake };
@@ -882,6 +953,25 @@
         phaseBtn.setAttribute('aria-expanded', 'false');
       }
     });
+
+    /* Inline validation — replaces alert() */
+    function flashError(inputEl, message) {
+      inputEl.classList.remove('flash-error');
+      void inputEl.offsetWidth; /* reflow to restart animation */
+      inputEl.classList.add('flash-error');
+      // Find or create validation message below the input
+      let msgEl = inputEl.parentElement.querySelector('.validation-msg');
+      if (!msgEl) {
+        msgEl = document.createElement('div');
+        msgEl.className = 'validation-msg';
+        inputEl.parentElement.appendChild(msgEl);
+      }
+      msgEl.textContent = message;
+      setTimeout(() => {
+        inputEl.classList.remove('flash-error');
+        msgEl.textContent = '';
+      }, 2500);
+    }
 
     fetchModuleSuggestions();
     updateIntakeSelector(moduleInput.value.trim().toUpperCase());
