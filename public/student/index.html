@@ -2,26 +2,46 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>In-Class Attendance</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/student/styles.css">
 </head>
 <body>
-  <div class="page">
-    <header class="page__header">
-      <div>
-        <p class="session-label" id="sessionLabel">Live session</p>
+  <div class="app">
+
+    <!-- Fixed progress bar -->
+    <header class="progress-bar" id="progressBar">
+      <p class="session-label" id="sessionLabel">Live session</p>
+      <div class="steps-track">
+        <div class="step-node active" id="stepNode2">
+          <span class="step-circle" id="stepCircle2">2</span>
+          <span class="step-label">Scan code</span>
+        </div>
+        <div class="step-line" id="stepLine"></div>
+        <div class="step-node" id="stepNode3">
+          <span class="step-circle" id="stepCircle3">3</span>
+          <span class="step-label">Student ID</span>
+        </div>
       </div>
     </header>
 
-    <main class="page__grid">
-      <section class="card scanner" id="scannerCard">
-        <h2>Step 2 – Verify attendance</h2>
-        <p class="muted small step-note">Use the scanner below to read the verification QR-code in the center of the screen.</p>
+    <!-- ===== SCREEN 1: Scan the check-in code ===== -->
+    <section class="screen screen--active" id="screenScan">
+      <div class="screen__content">
+        <h1 class="screen__heading">Scan the check-in code</h1>
+        <p class="screen__subtitle">Use the scanner below to read the QR&nbsp;code displayed on the projector screen.</p>
+
         <div class="scanner-placeholder" id="scannerPlaceholder">
-          <p>Tap “Start scanning” to open the camera.</p>
-          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while keeping the QR-code in the frame.</p>
+          <div class="scanner-placeholder__icon">
+            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+          </div>
+          <p>Tap the button below to open the camera.</p>
+          <p class="muted small">If the QR is not detected quickly, wait for the next refresh while keeping it in the frame.</p>
         </div>
+
         <div class="camera-frame" id="cameraFrame" hidden>
           <video id="video" autoplay muted playsinline webkit-playsinline></video>
           <div class="camera-overlay">
@@ -32,44 +52,102 @@
             <p class="camera-hint" id="cameraHint">Align the QR inside the frame</p>
           </div>
         </div>
-        <button class="primary" id="scanBtn">Start scanning</button>
-        <p class="muted small" id="scannerStatus" role="status" aria-live="polite"></p>
+
+        <button class="btn-primary btn-primary--large" id="scanBtn">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+          Start scanning
+        </button>
+
+        <p class="scanner-status" id="scannerStatus" role="status" aria-live="polite"></p>
+
+        <!-- Status card (for scanner errors) -->
         <div class="status-card" id="statusCard" hidden>
-          <span class="status-icon" id="statusIcon">✔</span>
-          <div class="status-copy">
-            <h3 id="statusHeading">Presence verified</h3>
-            <p class="muted" id="statusMessage">Great! Now enter your student ID to finish the check-in.</p>
+          <span class="status-card__icon" id="statusIcon">!</span>
+          <div class="status-card__copy">
+            <h3 id="statusHeading"></h3>
+            <p id="statusMessage"></p>
           </div>
         </div>
-      </section>
+      </div>
 
-      <section class="card form" id="idCard" hidden>
-        <h2>Finalise your check-in</h2>
-        <p class="muted small">by submitting your student ID</p>
-        <div class="id-input-row">
-          <input type="text" id="student-id" maxlength="8" placeholder="Enter your student ID" inputmode="numeric" pattern="9\d{7}">
-          <button class="primary" id="submit-btn">Submit</button>
-        </div>
+      <!-- Manual override — accessible via scroll on Screen 1 -->
+      <section class="help-section" id="manualOverrideCard">
+        <details id="manualOverrideDetails" class="help-details">
+          <summary class="help-summary">Need help scanning?</summary>
+          <div class="help-body">
+            <p class="muted small">If the scanner will not read the code, ask your teacher to enter the manual override password on this device.</p>
+            <button class="btn-secondary" id="manual-override-btn">Request manual override</button>
+            <form class="override-form" id="manualOverrideForm" hidden>
+              <label class="override-label" for="manualOverridePassword">Teacher password</label>
+              <div class="override-row">
+                <input type="password" id="manualOverridePassword" autocomplete="off" inputmode="text" minlength="4" maxlength="32" placeholder="Enter password">
+                <button class="btn-primary" id="manualOverrideSubmit">Approve override</button>
+              </div>
+            </form>
+            <p class="muted small" id="manualOverrideStatus" role="status" aria-live="polite"></p>
+          </div>
+        </details>
       </section>
-    </main>
-
-    <section class="card help-card" id="manualOverrideCard">
-      <details id="manualOverrideDetails" class="help-details">
-        <summary class="help-summary">Need help verifying?</summary>
-        <div class="help-body">
-          <p class="muted small">If the live scanner will not verify, ask your teacher to enter the manual override password on this device.</p>
-          <button class="secondary" id="manual-override-btn">Request manual override</button>
-          <form class="override-form" id="manualOverrideForm" hidden>
-            <label class="override-label" for="manualOverridePassword">Teacher password</label>
-            <div class="override-row">
-              <input type="password" id="manualOverridePassword" autocomplete="off" inputmode="text" minlength="4" maxlength="32" placeholder="Enter password">
-              <button class="primary" id="manualOverrideSubmit">Approve override</button>
-            </div>
-          </form>
-          <p class="muted small" id="manualOverrideStatus" role="status" aria-live="polite"></p>
-        </div>
-      </details>
     </section>
+
+    <!-- ===== SCREEN 2: Code accepted (transition) ===== -->
+    <section class="screen screen--transition" id="screenTransition" hidden>
+      <div class="screen__content screen__content--centered">
+        <div class="celebration-icon" id="celebrationIcon">
+          <svg viewBox="0 0 52 52" width="80" height="80">
+            <circle class="celebration-icon__circle" cx="26" cy="26" r="24" fill="none" stroke="#16a34a" stroke-width="3"/>
+            <path class="celebration-icon__check" d="M15 27l7 7 15-15" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="screen__heading screen__heading--success">Code accepted!</h1>
+        <p class="screen__subtitle">Now enter your student ID to complete the check-in.</p>
+        <button class="btn-ghost" id="transitionContinueBtn">Continue →</button>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 3: Enter Student ID ===== -->
+    <section class="screen" id="screenId" hidden>
+      <div class="screen__content screen__content--centered">
+        <h1 class="screen__heading">Enter your Student ID</h1>
+        <p class="screen__subtitle">Your 8-digit student number starting with 9</p>
+        <div class="id-form">
+          <input
+            type="text"
+            id="student-id"
+            maxlength="8"
+            placeholder="e.g. 90012345"
+            inputmode="numeric"
+            pattern="9\d{7}"
+            autocomplete="off"
+          >
+          <button class="btn-primary btn-primary--large btn-primary--full" id="submit-btn">Submit</button>
+        </div>
+        <!-- Status card (for ID input errors / submitting state) -->
+        <div class="status-card" id="idStatusCard" hidden>
+          <span class="status-card__icon" id="idStatusIcon">!</span>
+          <div class="status-card__copy">
+            <h3 id="idStatusHeading"></h3>
+            <p id="idStatusMessage"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== SCREEN 4: All done ===== -->
+    <section class="screen screen--done" id="screenDone" hidden>
+      <div class="screen__content screen__content--centered">
+        <div class="celebration-icon celebration-icon--large" id="doneIcon">
+          <svg viewBox="0 0 52 52" width="100" height="100">
+            <circle class="celebration-icon__circle" cx="26" cy="26" r="24" fill="none" stroke="#16a34a" stroke-width="3"/>
+            <path class="celebration-icon__check" d="M15 27l7 7 15-15" fill="none" stroke="#16a34a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <h1 class="screen__heading screen__heading--done">You're all set!</h1>
+        <p class="screen__subtitle" id="doneDetail"></p>
+        <p class="screen__hint">You can close this page now.</p>
+      </div>
+    </section>
+
   </div>
 
   <script src="/student/jsqr.min.js"></script>
